@@ -1,12 +1,13 @@
 /**
- * @author Richard Ibarra Ram’rez (richard.ibarra@gmail.com)
+ * @author Richard Ibarra Ramï¿½rez (richard.ibarra@gmail.com)
  * 
  *  CC5303 - Primavera 2013
- *  C‡tedra. Javier Bustos.
+ *  Cï¿½tedra. Javier Bustos.
  *  DCC. Universidad de Chile
  */
 
 package cl.dcc.cc5303;
+
 
 import java.util.List;
 import java.awt.event.KeyEvent;
@@ -14,6 +15,7 @@ import java.awt.event.KeyListener;
 import java.util.Arrays;
 
 import javax.swing.JFrame;
+
 
 public class Pong implements KeyListener {
 
@@ -57,6 +59,7 @@ public class Pong implements KeyListener {
 		frame.add(canvas);
 
 		canvas.setSize(WIDTH, HEIGHT);
+		canvas.init();
 		canvas.rectangles.add(bar1);
 		canvas.rectangles.add(bar2);
 		canvas.rectangles.add(ball);
