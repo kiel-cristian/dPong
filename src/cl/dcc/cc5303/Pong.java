@@ -27,15 +27,16 @@ public class Pong implements KeyListener {
 	private MyCanvas canvas;
 	private Client client;
 
-	private Rectangle bar1, bar2;
+	private Rectangle bars[];
 	private PongBall ball;
 
 	private boolean[] keys;
 
 	public Pong(Client client) {
 		this.client = client;
-		bar1 = new Rectangle(10, HEIGHT / 2, 10, 100);
-		bar2 = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
+		bars = new Rectangle[2];
+		bars[0] = new Rectangle(10, HEIGHT / 2, 10, 100);
+		bars[1] = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
 		ball = new PongBall(WIDTH * 0.5, HEIGHT * 0.5, 10, 10);
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
@@ -51,8 +52,8 @@ public class Pong implements KeyListener {
 		frame.add(canvas);
 
 		canvas.setSize(WIDTH, HEIGHT);
-		canvas.rectangles.add(bar1);
-		canvas.rectangles.add(bar2);
+		canvas.rectangles.add(bars[0]);
+		canvas.rectangles.add(bars[1]);
 		canvas.rectangles.add(ball);
 		canvas.addKeyListener(this);
 
@@ -67,13 +68,13 @@ public class Pong implements KeyListener {
 			public void run() {
 				while (true) {
 					handleKeyEvents(client.getPlayerNum());
-					bar1.y = client.getBarPosition(0);
-					bar2.y = client.getBarPosition(1);
+					bars[0].y = client.getBarPosition(0);
+					bars[1].y = client.getBarPosition(1);
 					ball.x = client.getBallX();
 					ball.y = client.getBallY();
 					ball.vx = client.getVelX();
 					ball.vy = client.getVelY();
-					
+					doGameIteration(bars, ball);
 					canvas.repaint();
 					try {
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
@@ -122,9 +123,9 @@ public class Pong implements KeyListener {
 	}
 	
 	private void handleKeyEvents(int playerPos) {
-		Rectangle bar = bar1;
+		Rectangle bar = bars[0];
 		if (playerPos == 1) {
-			bar = bar2;
+			bar = bars[1];
 		}
 		if (keys[KeyEvent.VK_UP] || keys[KeyEvent.VK_W]) {
 			if (bar.y - bar.h * 0.5 - DX >= 0)
