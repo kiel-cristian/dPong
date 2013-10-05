@@ -13,8 +13,8 @@ import java.awt.Graphics;
 
 public class Rectangle {
 
-	double x, y;
-	double w, h;
+	public double x, y;
+	public double w, h;
 
 	public Rectangle(double x, double y, double w, double h) {
 		this.x = x;
@@ -22,7 +22,7 @@ public class Rectangle {
 		this.w = w;
 		this.h = h;
 	}
-
+	
 	public void draw(Graphics graphics) {
 		graphics.fillRect(left(), bottom(), (int) w, (int) h);
 	}

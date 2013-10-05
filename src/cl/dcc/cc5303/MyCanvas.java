@@ -8,7 +8,6 @@
 
 package cl.dcc.cc5303;
 
-
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;

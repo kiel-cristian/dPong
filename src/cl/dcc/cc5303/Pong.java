@@ -9,10 +9,8 @@
 package cl.dcc.cc5303;
 
 
-import java.util.List;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.Arrays;
 
 import javax.swing.JFrame;
 
@@ -25,47 +23,41 @@ public class Pong implements KeyListener {
 	public final static int DX = 5;
 	public final static double DV = 0.1;
 
-	public JFrame frame;
-	public MyCanvas canvas;
+	private JFrame frame;
+	private MyCanvas canvas;
+	private Client client;
 
-	public Rectangle bar1, bar2;
-	public Rectangle ball;
+	private Rectangle bar1, bar2;
+	private PongBall ball;
 
-	private double vx = 0.4, vy = 0.3;
+	private boolean[] keys;
 
-	public boolean[] keys;
-
-	public Pong() {
-
+	public Pong(Client client) {
+		this.client = client;
 		bar1 = new Rectangle(10, HEIGHT / 2, 10, 100);
 		bar2 = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
-		ball = new Rectangle(WIDTH * 0.5, HEIGHT * 0.5, 10, 10);
-
+		ball = new PongBall(WIDTH * 0.5, HEIGHT * 0.5, 10, 10);
 		keys = new boolean[KeyEvent.KEY_LAST];
-
 		init();
-
 	}
 
 	/* Initializes window frame and set it visible */
-	public void init() {
+	private void init() {
 
 		frame = new JFrame(TITLE);
 		// frame.setSize(WIDTH, HEIGHT);
-		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
 		canvas = new MyCanvas();
 		frame.add(canvas);
 
 		canvas.setSize(WIDTH, HEIGHT);
-		canvas.init();
 		canvas.rectangles.add(bar1);
 		canvas.rectangles.add(bar2);
 		canvas.rectangles.add(ball);
 
 		frame.pack();
-
+		frame.setVisible(true);
+		canvas.init();
 		frame.addKeyListener(this);
 
 		Thread game = new Thread(new Runnable() {
@@ -73,68 +65,15 @@ public class Pong implements KeyListener {
 			@Override
 			public void run() {
 				while (true) {
-					if (keys[KeyEvent.VK_UP]) {
-						if (bar1.y - bar1.h * 0.5 - DX >= 0)
-							bar1.y -= DX;
-					}
-					if (keys[KeyEvent.VK_DOWN]) {
-						if (bar1.y + bar1.h * 0.5 + DX < HEIGHT)
-							bar1.y += DX;
-					}
-					if (keys[KeyEvent.VK_W]) {
-						if (bar2.y - bar2.h * 0.5 - DX >= 0)
-							bar2.y -= DX;
-					}
-					if (keys[KeyEvent.VK_S]) {
-						if (bar2.y + bar2.h * 0.5 + DX < HEIGHT)
-							bar2.y += DX;
-					}
-
-					// actualiza posicion
-					ball.x += vx * DX;
-					ball.y += vy * DX;
-
-					// rebote en y
-					if (ball.y + ball.h * 0.5 >= HEIGHT
-							|| ball.y - ball.h * 0.5 <= 0) {
-						vy = -vy;
-					}
-
-					// rebote con paletas
-					List<Rectangle> bars = Arrays.asList(bar1, bar2);
-
-					for (int i = 0; i < bars.size(); i++) {
-						Rectangle bar = bars.get(i);
-						if (ball.bottom() < bar.top()
-								&& ball.top() > bar.bottom()) { // esta dentro
-																// en
-																// Y
-							if ((vx > 0 && ball.left() <= bar.left() && ball
-									.right() >= bar.left()) // esta a la
-															// izquierda y se
-															// mueve a la
-															// derecha
-									// o esta a la derecha y se mueve hacia la
-									// izquierda
-									|| (vx < 0 && ball.right() >= bar.right() && ball
-											.left() <= bar.right())) {
-
-								vx = -vx * (1 + DV);
-								break;
-							}
-						}
-					}
-
-					/*
-					 * for (Rectangle bar : bars) { if (ball.x + ball.w * 0.5 >
-					 * bar.x - bar.w * 0.5 && ball.x - ball.w * 0.5 > bar.x +
-					 * bar.w * 0.5) { if ((vy > 0 && ball.y + ball.h * 0.5 >=
-					 * bar.y - bar.h * 0.5) || (vy < 0 && ball.y - ball.h * 0.5
-					 * <= bar.y + bar.h * 0.5)) { vy = -vy; break; } } }
-					 */
-
+					handleKeyEvents(client.getPlayerNum());
+					bar1.y = client.getBarPosition(0);
+					bar2.y = client.getBarPosition(1);
+					ball.x = client.getBallX();
+					ball.y = client.getBallY();
+					ball.vx = client.getVelX();
+					ball.vy = client.getVelY();
+					
 					canvas.repaint();
-
 					try {
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
 					} catch (InterruptedException ex) {
@@ -144,6 +83,57 @@ public class Pong implements KeyListener {
 		});
 		game.start();
 
+	}
+	
+	public static void doGameIteration(Rectangle[] bars, PongBall ball) {
+		// actualiza posicion
+		ball.x += ball.vx * DX;
+		ball.y += ball.vy * DX;
+
+		// rebote en y
+		if (ball.y + ball.h * 0.5 >= HEIGHT
+				|| ball.y - ball.h * 0.5 <= 0) {
+			ball.vy = -ball.vy;
+		}
+
+		// rebote con paletas
+		for (int i = 0; i < bars.length; i++) {
+			Rectangle bar = bars[i];
+			if (ball.bottom() < bar.top()
+					&& ball.top() > bar.bottom()) { // esta dentro
+													// en
+													// Y
+				if ((ball.vx > 0 && ball.left() <= bar.left() && ball
+						.right() >= bar.left()) // esta a la
+												// izquierda y se
+												// mueve a la
+												// derecha
+						// o esta a la derecha y se mueve hacia la
+						// izquierda
+						|| (ball.vx < 0 && ball.right() >= bar.right() && ball
+								.left() <= bar.right())) {
+
+					ball.vx = -ball.vx * (1 + DV);
+					break;
+				}
+			}
+		}
+	}
+	
+	private void handleKeyEvents(int playerPos) {
+		Rectangle bar = bar1;
+		if (playerPos == 1) {
+			bar = bar2;
+		}
+		if (keys[KeyEvent.VK_UP] || keys[KeyEvent.VK_W]) {
+			if (bar.y - bar.h * 0.5 - DX >= 0)
+				bar.y -= DX;
+		}
+		if (keys[KeyEvent.VK_DOWN] || keys[KeyEvent.VK_S]) {
+			if (bar.y + bar.h * 0.5 + DX < HEIGHT)
+				bar.y += DX;
+		}
+		client.setBarPosition(playerPos, (int) bar.y);
 	}
 
 	@Override
