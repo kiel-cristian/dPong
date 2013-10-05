@@ -54,6 +54,7 @@ public class Pong implements KeyListener {
 		canvas.rectangles.add(bar1);
 		canvas.rectangles.add(bar2);
 		canvas.rectangles.add(ball);
+		canvas.addKeyListener(this);
 
 		frame.pack();
 		frame.setVisible(true);
