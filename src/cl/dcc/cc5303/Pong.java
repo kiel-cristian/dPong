@@ -62,7 +62,7 @@ public class Pong implements KeyListener {
 		for(int i = 0; i < bars.length; i++){
 			if(client.getPlayerStatus(i))
 				canvas.rectangles.add(bars[i]);
-		}		
+		}
 		canvas.rectangles.add(ball);
 		canvas.addKeyListener(this);
 
@@ -76,11 +76,13 @@ public class Pong implements KeyListener {
 			@Override
 			public void run() {
 				while (true) {
-					int playerNum = client.getPlayerNum();
+					int playerNum     = client.getPlayerNum();
+					boolean[] playing = client.getPlaying();
 
 					try {
 						if(client.playersReady()){
 							handleKeyEvents(playerNum);
+							doGameIteration(playing, bars, ball);
 						}
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
@@ -123,16 +125,16 @@ public class Pong implements KeyListener {
 	}
 
 	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball) {
-		int players = 0;
+		// int players = 0;
 
-		for(boolean p : playing){
-			if(p){
-				players++;
-			}
-		}
+		// for(boolean p : playing){
+		// 	if(p){
+		// 		players++;
+		// 	}
+		// }
 
-		if(players <= 1)
-			return;
+		// if(players <= 1)
+		// 	return;
 
 		handleBall(ball);
 

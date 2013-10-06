@@ -23,7 +23,12 @@ public class Client extends UnicastRemoteObject implements Player {
 	public static void main(String[] args) {
 		try {
 			Client client = new Client();
-			client.play();
+			String serverAddress;
+			if (args.length > 0)
+				serverAddress = args[0];
+			else
+				serverAddress = "localhost";
+			client.play(serverAddress);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
@@ -36,12 +41,12 @@ public class Client extends UnicastRemoteObject implements Player {
 	protected Client() throws RemoteException {
 		super();
 	}
-	
-	public void play() throws MalformedURLException, RemoteException, NotBoundException {
-		server = (IServer) Naming.lookup("rmi://localhost:1099/server");
-		playerNum 		 = server.connectPlayer(this);
-		playing[playerNum] = true;
 		
+	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
+		server = (IServer) Naming.lookup("rmi://" + serverAddress + ":1099/server");
+		playerNum = server.connectPlayer(this);
+		playing[playerNum] = true;
+
 		Thread serverUpdate = new Thread(new Runnable() {
 
 			@Override
@@ -61,6 +66,7 @@ public class Client extends UnicastRemoteObject implements Player {
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+						return; // Server muerto
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -71,6 +77,11 @@ public class Client extends UnicastRemoteObject implements Player {
 		});
 		serverUpdate.start();
 		Pong pong = new Pong(this);
+	}
+	
+	public boolean[] getPlaying(){
+		boolean[] play = playing;
+		return play;
 	}
 
 	public int getCurrentPlayers(){
