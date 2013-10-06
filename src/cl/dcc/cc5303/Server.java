@@ -12,26 +12,29 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private Rectangle[] bars;
 	private PongBall ball;
 	private Player[] players;
+	private int playersNum;
 	private boolean running;
 	private Thread simulationThread;
 
-	protected Server() throws RemoteException {
+	protected Server(int numPlayers) throws RemoteException {
 		super();
 		bars = new Rectangle[4];
 		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
 		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
-		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 10, 100);
-		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 10, 100);
+		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
+		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
 
 		ball = new PongBall(Pong.WIDTH * 0.5, Pong.HEIGHT * 0.5, 10, 10);
 
 		playing = new boolean[4];
 		players = new Player[4];
+		playersNum = numPlayers;
 	}
 
 	public static void main(String[] args) {
 		try {
-			IServer server = new Server();
+			int players = 3;
+			IServer server = new Server(players);
 			Naming.rebind("rmi://localhost:1099/server", server);
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
@@ -77,11 +80,11 @@ public class Server extends UnicastRemoteObject implements IServer {
 	}
 	
 	private boolean playersReady() {
-		return this.currentPlayers() >= 2;
+		return this.currentPlayers() >= this.playersNum;
 	}
 	
 	private void startGame() {
-		simulationThread = new PongSimulation(this.currentPlayers());
+		simulationThread = new PongSimulation();
 		running = true;
 		simulationThread.start();
 		System.out.println("Empieza el juego!");
@@ -95,16 +98,11 @@ public class Server extends UnicastRemoteObject implements IServer {
 	}
 	
 	private class PongSimulation extends Thread {
-		private int players;
-
-		public PongSimulation(int currentPlayers){
-			this.players = currentPlayers;
-		}
 
 		public void run() {
 			while (running) {
 				
-				if(this.players > 2){
+				if(currentPlayers() > 2){
 					Pong.doGameIteration(playing, bars, ball);
 				}
 				else{

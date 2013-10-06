@@ -37,8 +37,8 @@ public class Pong implements KeyListener {
 
 		bars[0] = new Rectangle(10, HEIGHT / 2, 10, 100);
 		bars[1] = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
-		bars[2] = new Rectangle(WIDTH/2, HEIGHT - 10, 10, 100);
-		bars[3] = new Rectangle(WIDTH/2, 10, 10, 100);
+		bars[2] = new Rectangle(WIDTH/2, HEIGHT - 10, 100, 10);
+		bars[3] = new Rectangle(WIDTH/2, 10, 100, 10);
 
 		ball = new PongBall(WIDTH * 0.5, HEIGHT * 0.5, 10, 10);
 
@@ -58,7 +58,7 @@ public class Pong implements KeyListener {
 		canvas.setSize(WIDTH, HEIGHT);
 
 		for(int i = 0; i < bars.length; i++){
-			if(this.client.playing[0])
+			if(this.client.playing[i])
 				canvas.rectangles.add(bars[i]);
 		}		
 		canvas.rectangles.add(ball);
@@ -76,6 +76,7 @@ public class Pong implements KeyListener {
 				while (true) {
 					int playerNum = client.getPlayerNum();
 					handleKeyEvents(playerNum);
+					handlePlayerBars();
 
 					for(int i = 0; i < bars.length ; i++){
 						if(i == playerNum)
@@ -180,6 +181,16 @@ public class Pong implements KeyListener {
 					ball.vx = -ball.vx * (1 + DV);
 					break;
 				}
+			}
+		}
+	}
+	
+	private void handlePlayerBars(){
+		for(int i = 0; i < this.client.playing.length; i++){
+			canvas.rectangles.remove(bars[i]);
+
+			if(this.client.playing[i]){
+				canvas.rectangles.add(bars[i]);
 			}
 		}
 	}
