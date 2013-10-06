@@ -7,35 +7,31 @@ import cl.dcc.cc5303.Rectangle;
 
 public class GameState implements Serializable {
 	private static final long serialVersionUID = -6238741276850716574L;
-	public int bar1Pos;
-	public int bar2Pos;
-
-	public int[4] barsPos;
+	public int[] barsPos = new int[4];
+	public int currentPlayers;
+	public boolean[] playing = new boolean[4];
 	public int ballX;
 	public int ballY;
 	public double vx;
 	public double vy;
-	
-	public GameState(Rectangle bar1, Rectangle bar2, PongBall ball) {
-		this.bar1Pos = (int) bar1.y;
-		this.bar2Pos = (int) bar2.y;
-		this.ballX = (int) ball.x;
-		this.ballY = (int) ball.y;
-		this.vx = ball.vx;
-		this.vy = ball.vy;
-	}
 
 	public GameState(boolean[] playing, Rectangle[] bars, PongBall ball) {
-		for( int i = 0, boolean p; i < playing.length, i++){
+		this.currentPlayers = 0;
+		boolean p;
+		for( int i = 0; i < playing.length; i++){
 			p = playing[i];
 			if(p){
-				if(i % 2 == 0)
+				this.playing[i] = true;
+				this.currentPlayers++;
+				if(i == 0 || i == 1)
 					this.barsPos[i] = (int) bars[i].y;
 				else
 					this.barsPos[i] = (int) bars[i].x;
 			}
+			else{
+				this.playing[i] = false;
+			}
 		}
-
 		this.ballX = (int) ball.x;
 		this.ballY = (int) ball.y;
 		this.vx = ball.vx;
