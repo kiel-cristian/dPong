@@ -126,22 +126,28 @@ public class Pong implements KeyListener {
 
 	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball) {
 
-		handleBall(ball);
-
-		for (int i = 0; i < playing.length;  i++){
-			if(playing[i]){
+		for (int i = 0; i < Pong.MAX_PLAYERS;  i++){
+			if(playing[i] == true){
 				handleHumanBounce(i, bars[i], ball);
 			}
 			else{
+				System.out.println("Rebote en borde");
 				handleBounce(i, ball);
 			}
 		}
+
+		handleBall(ball);
 	}
 
 	private static void handleBall(PongBall ball){
 		// actualiza posicion
 		ball.x += ball.vx * DX;
 		ball.y += ball.vy * DX;
+
+		if(ball.x > Pong.WIDTH || ball.x < 0 || ball.y < 0 || ball.y > Pong.HEIGHT){
+			// TODO : MANEJAR SCORE
+			ball.reset();
+		}
 	}
 
 	private static void handleHumanBounce(int i, Rectangle bar, PongBall ball){
@@ -161,7 +167,7 @@ public class Pong implements KeyListener {
 						|| (ball.vx < 0 && ball.right() >= bar.right() && ball
 								.left() <= bar.right())) {
 
-					ball.vx = -ball.vx * (1 + DX);
+					ball.vx = -ball.vx * (1 + DV);
 				}
 			}
 		}
@@ -172,7 +178,7 @@ public class Pong implements KeyListener {
 					||
 					((ball.vy < 0 && ball.bottom() >= bar.top()))){ // se mueve hacia abajo y esta arriba de la barra
 
-					ball.vy = -ball.vy * (1 + DX);
+					ball.vy = -ball.vy * (1 + DV);
 				}
 			}
 		}

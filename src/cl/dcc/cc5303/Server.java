@@ -24,16 +24,20 @@ public class Server extends UnicastRemoteObject implements IServer {
 		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
 		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
 
-		ball = new PongBall(Pong.WIDTH * 0.5, Pong.HEIGHT * 0.5, 10, 10);
+		ball = new PongBall();
 
 		playing = new boolean[4];
+		for(boolean p : playing){
+			p = false;
+		}
+
 		players = new Player[4];
 		playersNum = numPlayers;
 	}
 
 	public static void main(String[] args) {
 		try {
-			int players = 3;
+			int players = 2;
 			IServer server = new Server(players);
 			Naming.rebind("rmi://localhost:1099/server", server);
 			System.out.println("Escuchando...");
