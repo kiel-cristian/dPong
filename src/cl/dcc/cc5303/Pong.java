@@ -54,7 +54,7 @@ public class Pong implements KeyListener {
 		frame = new JFrame(TITLE);
 		// frame.setSize(WIDTH, HEIGHT);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		canvas = new MyCanvas();
+		canvas = new MyCanvas(client.getPlayerNum());
 		frame.add(canvas);
 
 		canvas.setSize(WIDTH, HEIGHT);
@@ -125,16 +125,6 @@ public class Pong implements KeyListener {
 	}
 
 	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball) {
-		// int players = 0;
-
-		// for(boolean p : playing){
-		// 	if(p){
-		// 		players++;
-		// 	}
-		// }
-
-		// if(players <= 1)
-		// 	return;
 
 		handleBall(ball);
 
@@ -233,12 +223,12 @@ public class Pong implements KeyListener {
 		// Jugador posee una barra horizontal
 		else{
 			if (keys[KeyEvent.VK_LEFT] || keys[KeyEvent.VK_A]) {
-				// if (bar.x - bar.w * 0.5 - DX >= 0)
-				bar.x -= DX;
+				if (bar.x - bar.w * 0.5 - DX >= 0)
+					bar.x -= DX;
 			}
 			if (keys[KeyEvent.VK_RIGHT] || keys[KeyEvent.VK_D]) {
-				// if (bar.x + bar.w * 0.5 + DX < WIDTH)
-				bar.x += DX;
+				if (bar.x + bar.w * 0.5 + DX < WIDTH)
+					bar.x += DX;
 			}
 
 			client.setBarPosition(playerPos, (int) bar.x);

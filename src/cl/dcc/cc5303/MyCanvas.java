@@ -26,6 +26,12 @@ public class MyCanvas extends Canvas {
 	private Graphics2D g2d;
 
 	public List<Rectangle> rectangles = new ArrayList<Rectangle>();
+	public int playerNum;
+
+	public MyCanvas(int _playerNum){
+		super();
+		playerNum = _playerNum + 1;
+	}
 	
 	public void init() {
 		image = ((Graphics2D) getGraphics()).getDeviceConfiguration()
@@ -37,8 +43,14 @@ public class MyCanvas extends Canvas {
 		g2d.setColor(Color.BLACK);
 		g2d.fillRect(0, 0, getWidth(), getHeight());
 
-		g2d.setColor(Color.WHITE);
+		int p = 0;
 		for (Rectangle rectangle : rectangles) {
+			if(p++ == playerNum){
+				g2d.setColor(Color.RED);
+			}
+			else{
+				g2d.setColor(Color.WHITE);
+			}
 			rectangle.draw(g2d);
 		}
 
