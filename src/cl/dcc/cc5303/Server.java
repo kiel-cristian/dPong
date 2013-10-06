@@ -66,7 +66,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		return num;
 	}
 
-	private int currentPlayers(){
+	public int currentPlayers(){
 		int readyPlayers = 0;
 		for(boolean p : playing){
 			if(p){
