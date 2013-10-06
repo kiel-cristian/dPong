@@ -17,6 +17,42 @@ public class PongBall extends Rectangle {
     setRandomVelocity();
   }
 
+  public boolean checkIfGoesLeft(int minLeft, int step){
+    if(x + vx*step < minLeft){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+
+  public boolean checkIfGoesRight(int maxRight, int step){
+    if(x + vx*step > maxRight){
+      return true;
+    }
+    else{
+      return false;
+    } 
+  }
+
+  public boolean checkIfGoesDown(int minBottom, int step){
+    if(y + vy*step < minBottom){
+      return true;
+    }
+    else{
+      return false;
+    } 
+  }
+
+  public boolean checkIfGoesUp(int maxTop, int step){
+    if(y + vy*step > maxTop){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+
   public void reset(){
     x = Pong.WIDTH * 0.5;
     y = Pong.HEIGHT * 0.5;

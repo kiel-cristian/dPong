@@ -131,7 +131,6 @@ public class Pong implements KeyListener {
 				handleHumanBounce(i, bars[i], ball);
 			}
 			else{
-				System.out.println("Rebote en borde");
 				handleBounce(i, ball);
 			}
 		}
@@ -185,18 +184,29 @@ public class Pong implements KeyListener {
 	}
 
 	private static void handleBounce(int i, PongBall ball){
-		// rebote en y
-		if(i == 2 || i == 3){
-			if (ball.y + ball.h * 0.5 >= HEIGHT
-					|| ball.y - ball.h * 0.5 <= 0) {
-				ball.vy = -ball.vy;
+		switch(i){
+			// izquierda
+			case(0):{
+				if(ball.checkIfGoesLeft(0, DX))
+					ball.vx = -ball.vx;
 			}
-		}
-		// rebote en x
-		else{
-			if (ball.x + ball.w * 0.5 >= WIDTH
-					|| ball.x - ball.w* 0.5 <= 0) {
-				ball.vx = -ball.vx;
+			// derecha
+			case(1):{
+				if(ball.checkIfGoesRight(WIDTH, DX)){
+					ball.vx = -ball.vx;
+				}
+			}
+			// abajo
+			case(2):{
+				if(ball.checkIfGoesDown(0, DX)){
+					ball.vy = -ball.vy;
+				}
+
+			}
+			// arriba
+			case(3):{
+				if(ball.checkIfGoesUp(HEIGHT, DX))
+					ball.vy = -ball.vy;
 			}
 		}
 	}
