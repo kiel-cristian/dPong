@@ -36,7 +36,7 @@ public class PongBall extends Rectangle {
   }
 
   public boolean checkIfGoesDown(int minBottom, int step){
-    if(y + vy*step < minBottom){
+    if(y + vy*step > minBottom){
       return true;
     }
     else{
@@ -45,7 +45,7 @@ public class PongBall extends Rectangle {
   }
 
   public boolean checkIfGoesUp(int maxTop, int step){
-    if(y + vy*step > maxTop){
+    if(y + vy*step < maxTop){
       return true;
     }
     else{

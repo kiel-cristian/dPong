@@ -198,14 +198,14 @@ public class Pong implements KeyListener {
 			}
 			// abajo
 			case(2):{
-				if(ball.checkIfGoesDown(0, DX)){
+				if(ball.checkIfGoesDown(HEIGHT, DX)){
 					ball.vy = -ball.vy;
 				}
 
 			}
 			// arriba
 			case(3):{
-				if(ball.checkIfGoesUp(HEIGHT, DX))
+				if(ball.checkIfGoesUp(0, DX))
 					ball.vy = -ball.vy;
 			}
 		}
