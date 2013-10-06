@@ -13,6 +13,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private IServer server;
 	private int playerNum;
+	protected boolean[] playing = new boolean[4];
 	private volatile int ballX;
 	private volatile int ballY;
 	private volatile double vx;
@@ -38,8 +39,9 @@ public class Client extends UnicastRemoteObject implements Player {
 	
 	public void play() throws MalformedURLException, RemoteException, NotBoundException {
 		server = (IServer) Naming.lookup("rmi://localhost:1099/server");
-		playerNum = server.connectPlayer(this);
-		barPos = new int[2];
+		playerNum 		 = server.connectPlayer(this);
+		playing[playerNum] = true;
+		barPos = new int[4];
 		Thread serverUpdate = new Thread(new Runnable() {
 
 			@Override
@@ -47,8 +49,10 @@ public class Client extends UnicastRemoteObject implements Player {
 				while (true) {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
-						barPos[0] = state.bar1Pos;
-						barPos[1] = state.bar2Pos;
+						for(int i = 0; i < playing.length; i++){
+							barPos[i] 	= state.barPos[i];
+							playing[i] 	= state.playing[i];
+						}
 						ballX = state.ballX;
 						ballY = state.ballY;
 						vx = state.vx;
