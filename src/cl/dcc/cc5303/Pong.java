@@ -27,16 +27,21 @@ public class Pong implements KeyListener {
 	private MyCanvas canvas;
 	private Client client;
 
-	private Rectangle bar1, bar2;
+	private Rectangle[] bars = new Rectangle[4];
 	private PongBall ball;
 
 	private boolean[] keys;
 
 	public Pong(Client client) {
 		this.client = client;
-		bar1 = new Rectangle(10, HEIGHT / 2, 10, 100);
-		bar2 = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
+
+		bars[0] = new Rectangle(10, HEIGHT / 2, 10, 100);
+		bars[1] = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
+		bars[2] = new Rectangle(WIDTH/2, HEIGHT - 10, 10, 100);
+		bars[3] = new Rectangle(WIDTH/2, 10, 10, 100);
+
 		ball = new PongBall(WIDTH * 0.5, HEIGHT * 0.5, 10, 10);
+
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
 	}
@@ -51,8 +56,11 @@ public class Pong implements KeyListener {
 		frame.add(canvas);
 
 		canvas.setSize(WIDTH, HEIGHT);
-		canvas.rectangles.add(bar1);
-		canvas.rectangles.add(bar2);
+
+		for(int i = 0; i < bars.length; i++){
+			if(this.client.playing[0])
+				canvas.rectangles.add(bars[i]);
+		}		
 		canvas.rectangles.add(ball);
 		canvas.addKeyListener(this);
 
@@ -66,9 +74,21 @@ public class Pong implements KeyListener {
 			@Override
 			public void run() {
 				while (true) {
-					handleKeyEvents(client.getPlayerNum());
-					bar1.y = client.getBarPosition(0);
-					bar2.y = client.getBarPosition(1);
+					int playerNum = client.getPlayerNum();
+					handleKeyEvents(playerNum);
+
+					for(int i = 0; i < bars.length ; i++){
+						if(i == playerNum)
+							continue;
+						if(client.playing[i]){
+							if(i == 0 || i == 1){
+								bars[i].y = client.getBarPosition(i);
+							}
+							else{
+								bars[i].x = client.getBarPosition(i);
+							}
+						}
+					}
 					ball.x = client.getBallX();
 					ball.y = client.getBallY();
 					ball.vx = client.getVelX();
@@ -165,17 +185,28 @@ public class Pong implements KeyListener {
 	}
 	
 	private void handleKeyEvents(int playerPos) {
-		Rectangle bar = bar1;
-		if (playerPos == 1) {
-			bar = bar2;
+		Rectangle bar = bars[playerPos];
+		// Jugador posee una barra vertical
+		if(playerPos == 0 || playerPos == 1){
+			if (keys[KeyEvent.VK_UP] || keys[KeyEvent.VK_W]) {
+				if (bar.y - bar.h * 0.5 - DX >= 0)
+					bar.y -= DX;
+			}
+			if (keys[KeyEvent.VK_DOWN] || keys[KeyEvent.VK_S]) {
+				if (bar.y + bar.h * 0.5 + DX < HEIGHT)
+					bar.y += DX;
+			}
 		}
-		if (keys[KeyEvent.VK_UP] || keys[KeyEvent.VK_W]) {
-			if (bar.y - bar.h * 0.5 - DX >= 0)
-				bar.y -= DX;
-		}
-		if (keys[KeyEvent.VK_DOWN] || keys[KeyEvent.VK_S]) {
-			if (bar.y + bar.h * 0.5 + DX < HEIGHT)
-				bar.y += DX;
+		// Jugador posee una barra horizontal
+		else{
+			if (keys[KeyEvent.VK_LEFT] || keys[KeyEvent.VK_A]) {
+				if (bar.x - bar.w * 0.5 - DV >= 0)
+					bar.x -= DV;
+			}
+			if (keys[KeyEvent.VK_RIGHT] || keys[KeyEvent.VK_D]) {
+				if (bar.x + bar.w * 0.5 + DV < WIDTH)
+					bar.x += DV;
+			}
 		}
 		client.setBarPosition(playerPos, (int) bar.y);
 	}
