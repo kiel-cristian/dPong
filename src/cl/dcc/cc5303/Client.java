@@ -50,7 +50,7 @@ public class Client extends UnicastRemoteObject implements Player {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
 						for(int i = 0; i < playing.length; i++){
-							barPos[i] 	= state.barPos[i];
+							barPos[i] 	= state.barsPos[i];
 							playing[i] 	= state.playing[i];
 						}
 						ballX = state.ballX;
