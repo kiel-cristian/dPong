@@ -13,12 +13,12 @@ public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private IServer server;
 	private int playerNum;
-	protected boolean[] playing = new boolean[4];
+	private volatile boolean[] playing = new boolean[4];
 	private volatile int ballX;
 	private volatile int ballY;
 	private volatile double vx;
 	private volatile double vy;
-	private volatile int[] barPos;
+	private volatile int[] barPos = new int[4];
 	
 	public static void main(String[] args) {
 		try {
@@ -41,7 +41,7 @@ public class Client extends UnicastRemoteObject implements Player {
 		server = (IServer) Naming.lookup("rmi://localhost:1099/server");
 		playerNum 		 = server.connectPlayer(this);
 		playing[playerNum] = true;
-		barPos = new int[4];
+		
 		Thread serverUpdate = new Thread(new Runnable() {
 
 			@Override
@@ -49,7 +49,7 @@ public class Client extends UnicastRemoteObject implements Player {
 				while (true) {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
-						for(int i = 0; i < playing.length; i++){
+						for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
 							barPos[i] 	= state.barsPos[i];
 							playing[i] 	= state.playing[i];
 						}
@@ -71,6 +71,24 @@ public class Client extends UnicastRemoteObject implements Player {
 		});
 		serverUpdate.start();
 		Pong pong = new Pong(this);
+	}
+
+	public int getCurrentPlayers(){
+		int players = 0;
+		for(boolean p: playing){
+			if(p){
+				players++;
+			}
+		}
+		return players;
+	}
+
+	public boolean playersReady() throws RemoteException{
+		return server.playersReady();
+	}
+	
+	public boolean getPlayerStatus(int playerNum){
+		return playing[playerNum];
 	}
 	
 	public int getPlayerNum() {

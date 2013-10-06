@@ -8,7 +8,6 @@ import cl.dcc.cc5303.Rectangle;
 public class GameState implements Serializable {
 	private static final long serialVersionUID = -6238741276850716574L;
 	public int[] barsPos = new int[4];
-	public int currentPlayers;
 	public boolean[] playing = new boolean[4];
 	public int ballX;
 	public int ballY;
@@ -16,13 +15,11 @@ public class GameState implements Serializable {
 	public double vy;
 
 	public GameState(boolean[] playing, Rectangle[] bars, PongBall ball) {
-		this.currentPlayers = 0;
 		boolean p;
-		for( int i = 0; i < playing.length; i++){
+		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
 			p = playing[i];
 			if(p){
 				this.playing[i] = true;
-				this.currentPlayers++;
 				if(i == 0 || i == 1)
 					this.barsPos[i] = (int) bars[i].y;
 				else

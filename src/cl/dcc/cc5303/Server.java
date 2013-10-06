@@ -79,7 +79,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		return readyPlayers;
 	}
 	
-	private boolean playersReady() {
+	public boolean playersReady() {
 		return this.currentPlayers() >= this.playersNum;
 	}
 	
@@ -93,7 +93,12 @@ public class Server extends UnicastRemoteObject implements IServer {
 	@Override
 	public GameState updatePositions(int playerNum, int position)
 			throws RemoteException {
-		bars[playerNum].y = position;
+		if(playerNum == 0 || playerNum == 1){
+			bars[playerNum].y = position;
+		}
+		else{
+			bars[playerNum].x = position;	
+		}
 		return new GameState(playing, bars, ball);
 	}
 	
@@ -102,13 +107,8 @@ public class Server extends UnicastRemoteObject implements IServer {
 		public void run() {
 			while (running) {
 				
-				if(currentPlayers() > 2){
-					Pong.doGameIteration(playing, bars, ball);
-				}
-				else{
-					Pong.doGameIteration(bars, ball);
-				}
-				
+				Pong.doGameIteration(playing, bars, ball);
+
 				try {
 					Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
 				} catch (InterruptedException ex) {

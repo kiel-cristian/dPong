@@ -11,6 +11,7 @@ package cl.dcc.cc5303;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.rmi.RemoteException;
 
 import javax.swing.JFrame;
 
@@ -22,6 +23,7 @@ public class Pong implements KeyListener {
 	public final static int UPDATE_RATE = 60;
 	public final static int DX = 5;
 	public final static double DV = 0.1;
+	public final static int MAX_PLAYERS = 4;
 
 	private JFrame frame;
 	private MyCanvas canvas;
@@ -58,7 +60,7 @@ public class Pong implements KeyListener {
 		canvas.setSize(WIDTH, HEIGHT);
 
 		for(int i = 0; i < bars.length; i++){
-			if(this.client.playing[i])
+			if(client.getPlayerStatus(i))
 				canvas.rectangles.add(bars[i]);
 		}		
 		canvas.rectangles.add(ball);
@@ -75,25 +77,19 @@ public class Pong implements KeyListener {
 			public void run() {
 				while (true) {
 					int playerNum = client.getPlayerNum();
-					handleKeyEvents(playerNum);
-					handlePlayerBars();
 
-					for(int i = 0; i < bars.length ; i++){
-						if(i == playerNum)
-							continue;
-						if(client.playing[i]){
-							if(i == 0 || i == 1){
-								bars[i].y = client.getBarPosition(i);
-							}
-							else{
-								bars[i].x = client.getBarPosition(i);
-							}
+					try {
+						if(client.playersReady()){
+							handleKeyEvents(playerNum);
 						}
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						return;
 					}
-					ball.x = client.getBallX();
-					ball.y = client.getBallY();
-					ball.vx = client.getVelX();
-					ball.vy = client.getVelY();
+
+					handlePlayerBars();
+					handleStatus(playerNum);
 					
 					canvas.repaint();
 					try {
@@ -107,63 +103,58 @@ public class Pong implements KeyListener {
 
 	}
 
-	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball) {
-		// actualiza posicion
-		ball.x += ball.vx * DX;
-		ball.y += ball.vy * DX;
-
-		for (int i = 0; i < bars.length && playing[i];  i++){
-			Rectangle bar = bars[i];
-			// rebote con paletas (verticales, jugadores 0 y 1)
-			if(i == 0 || i == 1){
-				if (ball.bottom() < bar.top()
-						&& ball.top() > bar.bottom()) { // esta dentro
-														// en
-														// Y
-					if ((ball.vx > 0 && ball.left() <= bar.left() && ball
-							.right() >= bar.left()) // esta a la
-													// izquierda y se
-													// mueve a la
-													// derecha
-							// o esta a la derecha y se mueve hacia la
-							// izquierda
-							|| (ball.vx < 0 && ball.right() >= bar.right() && ball
-									.left() <= bar.right())) {
-
-						ball.vx = -ball.vx * (1 + DV);
-						break;
-					}
+	private void handleStatus(int playerNum){
+		for(int i = 0; i < MAX_PLAYERS ; i++){
+			if(i == playerNum)
+				continue;
+			if(client.getPlayerStatus(i)){
+				if(i == 0 || i == 1){
+					bars[i].y = client.getBarPosition(i);
+				}
+				else{
+					bars[i].x = client.getBarPosition(i);
 				}
 			}
-			// rebote con paletas (horizontales, jugadores 2 y 3)
-			else{
-				if(ball.left() < bar.left() && ball.right() < bar.right()){
-					if((ball.vy > 0 && ball.top() <= bar.bottom()) // se mueve hacia arriba y esta abajo de la barra
-						||
-						((ball.vy < 0 && ball.bottom() >= bar.top()))){ // se mueve hacia abajo y esta arriba de la barra
+		}
+		ball.x = client.getBallX();
+		ball.y = client.getBallY();
+		ball.vx = client.getVelX();
+		ball.vy = client.getVelY();
+	}
 
-						ball.vy = -ball.vy * (1 + DX);
-						break;
-					}
-				}
+	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball) {
+		int players = 0;
+
+		for(boolean p : playing){
+			if(p){
+				players++;
+			}
+		}
+
+		if(players <= 1)
+			return;
+
+		handleBall(ball);
+
+		for (int i = 0; i < playing.length;  i++){
+			if(playing[i]){
+				handleHumanBounce(i, bars[i], ball);
+			}
+			else{
+				handleBounce(i, ball);
 			}
 		}
 	}
-	
-	public static void doGameIteration(Rectangle[] bars, PongBall ball) {
+
+	private static void handleBall(PongBall ball){
 		// actualiza posicion
 		ball.x += ball.vx * DX;
 		ball.y += ball.vy * DX;
+	}
 
-		// rebote en y
-		if (ball.y + ball.h * 0.5 >= HEIGHT
-				|| ball.y - ball.h * 0.5 <= 0) {
-			ball.vy = -ball.vy;
-		}
-
-		// rebote con paletas
-		for (int i = 0; i < bars.length; i++) {
-			Rectangle bar = bars[i];
+	private static void handleHumanBounce(int i, Rectangle bar, PongBall ball){
+		// rebote con paletas (verticales, jugadores 0 y 1)
+		if(i == 0 || i == 1){
 			if (ball.bottom() < bar.top()
 					&& ball.top() > bar.bottom()) { // esta dentro
 													// en
@@ -178,18 +169,45 @@ public class Pong implements KeyListener {
 						|| (ball.vx < 0 && ball.right() >= bar.right() && ball
 								.left() <= bar.right())) {
 
-					ball.vx = -ball.vx * (1 + DV);
-					break;
+					ball.vx = -ball.vx * (1 + DX);
 				}
+			}
+		}
+		// rebote con paletas (horizontales, jugadores 2 y 3)
+		else{
+			if(ball.left() < bar.left() && ball.right() < bar.right()){
+				if((ball.vy > 0 && ball.top() <= bar.bottom()) // se mueve hacia arriba y esta abajo de la barra
+					||
+					((ball.vy < 0 && ball.bottom() >= bar.top()))){ // se mueve hacia abajo y esta arriba de la barra
+
+					ball.vy = -ball.vy * (1 + DX);
+				}
+			}
+		}
+	}
+
+	private static void handleBounce(int i, PongBall ball){
+		// rebote en y
+		if(i == 2 || i == 3){
+			if (ball.y + ball.h * 0.5 >= HEIGHT
+					|| ball.y - ball.h * 0.5 <= 0) {
+				ball.vy = -ball.vy;
+			}
+		}
+		// rebote en x
+		else{
+			if (ball.x + ball.w * 0.5 >= WIDTH
+					|| ball.x - ball.w* 0.5 <= 0) {
+				ball.vx = -ball.vx;
 			}
 		}
 	}
 	
 	private void handlePlayerBars(){
-		for(int i = 0; i < this.client.playing.length; i++){
+		for(int i = 0; i < MAX_PLAYERS; i++){
 			canvas.rectangles.remove(bars[i]);
 
-			if(this.client.playing[i]){
+			if(this.client.getPlayerStatus(i)){
 				canvas.rectangles.add(bars[i]);
 			}
 		}
@@ -207,19 +225,22 @@ public class Pong implements KeyListener {
 				if (bar.y + bar.h * 0.5 + DX < HEIGHT)
 					bar.y += DX;
 			}
+
+			client.setBarPosition(playerPos, (int) bar.y);
 		}
 		// Jugador posee una barra horizontal
 		else{
 			if (keys[KeyEvent.VK_LEFT] || keys[KeyEvent.VK_A]) {
-				if (bar.x - bar.w * 0.5 - DV >= 0)
-					bar.x -= DV;
+				// if (bar.x - bar.w * 0.5 - DX >= 0)
+				bar.x -= DX;
 			}
 			if (keys[KeyEvent.VK_RIGHT] || keys[KeyEvent.VK_D]) {
-				if (bar.x + bar.w * 0.5 + DV < WIDTH)
-					bar.x += DV;
+				// if (bar.x + bar.w * 0.5 + DX < WIDTH)
+				bar.x += DX;
 			}
+
+			client.setBarPosition(playerPos, (int) bar.x);
 		}
-		client.setBarPosition(playerPos, (int) bar.y);
 	}
 
 	@Override
