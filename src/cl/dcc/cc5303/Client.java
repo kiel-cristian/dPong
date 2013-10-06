@@ -13,11 +13,12 @@ public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private IServer server;
 	private int playerNum;
+	private volatile boolean[] playing = new boolean[4];
 	private volatile int ballX;
 	private volatile int ballY;
 	private volatile double vx;
 	private volatile double vy;
-	private volatile int[] barPos;
+	private volatile int[] barPos = new int[4];
 	
 	public static void main(String[] args) {
 		try {
@@ -40,11 +41,12 @@ public class Client extends UnicastRemoteObject implements Player {
 	protected Client() throws RemoteException {
 		super();
 	}
-	
+		
 	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
 		server = (IServer) Naming.lookup("rmi://" + serverAddress + ":1099/server");
 		playerNum = server.connectPlayer(this);
-		barPos = new int[2];
+		playing[playerNum] = true;
+
 		Thread serverUpdate = new Thread(new Runnable() {
 
 			@Override
@@ -52,8 +54,10 @@ public class Client extends UnicastRemoteObject implements Player {
 				while (true) {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
-						barPos[0] = state.bar1Pos;
-						barPos[1] = state.bar2Pos;
+						for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
+							barPos[i] 	= state.barsPos[i];
+							playing[i] 	= state.playing[i];
+						}
 						ballX = state.ballX;
 						ballY = state.ballY;
 						vx = state.vx;
@@ -62,6 +66,7 @@ public class Client extends UnicastRemoteObject implements Player {
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+						return; // Server muerto
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -72,6 +77,29 @@ public class Client extends UnicastRemoteObject implements Player {
 		});
 		serverUpdate.start();
 		Pong pong = new Pong(this);
+	}
+	
+	public boolean[] getPlaying(){
+		boolean[] play = playing;
+		return play;
+	}
+
+	public int getCurrentPlayers(){
+		int players = 0;
+		for(boolean p: playing){
+			if(p){
+				players++;
+			}
+		}
+		return players;
+	}
+
+	public boolean playersReady() throws RemoteException{
+		return server.playersReady();
+	}
+	
+	public boolean getPlayerStatus(int playerNum){
+		return playing[playerNum];
 	}
 	
 	public int getPlayerNum() {
