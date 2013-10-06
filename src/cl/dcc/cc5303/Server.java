@@ -17,12 +17,16 @@ public class Server extends UnicastRemoteObject implements IServer {
 
 	protected Server() throws RemoteException {
 		super();
-		bars = new Rectangle[2];
+		bars = new Rectangle[4];
 		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
 		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
+		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 10, 100);
+		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 10, 100);
+
 		ball = new PongBall(Pong.WIDTH * 0.5, Pong.HEIGHT * 0.5, 10, 10);
-		playing = new boolean[2];
-		players = new Player[2];
+
+		playing = new boolean[4];
+		players = new Player[4];
 	}
 
 	public static void main(String[] args) {
@@ -46,6 +50,10 @@ public class Server extends UnicastRemoteObject implements IServer {
 			playerNum = addPlayer(player, 0);
 		else if (!playing[1])
 			playerNum = addPlayer(player, 1);
+		else if (!playing[2])
+			playerNum = addPlayer(player, 2);
+		else if (!playing[3])
+			playerNum = addPlayer(player, 3);
 		return playerNum;
 	}
 	
@@ -53,17 +61,27 @@ public class Server extends UnicastRemoteObject implements IServer {
 		players[num] = player;
 		playing[num] = true;
 		System.out.println("Jugador solicita conectarse. Se le asigna player " + (num + 1));
-		if (allPlayersReady())
+		if (playersReady())
 			startGame();
 		return num;
 	}
+
+	private int currentPlayers(){
+		int readyPlayers = 0;
+		for(boolean p : playing){
+			if(p){
+				readyPlayers++;
+			}
+		}
+		return readyPlayers;
+	}
 	
-	private boolean allPlayersReady() {
-		return playing[0] && playing[1];
+	private boolean playersReady() {
+		return this.currentPlayers() >= 2;
 	}
 	
 	private void startGame() {
-		simulationThread = new PongSimulation();
+		simulationThread = new PongSimulation(this.currentPlayers());
 		running = true;
 		simulationThread.start();
 		System.out.println("Empieza el juego!");
@@ -73,14 +91,25 @@ public class Server extends UnicastRemoteObject implements IServer {
 	public GameState updatePositions(int playerNum, int position)
 			throws RemoteException {
 		bars[playerNum].y = position;
-		return new GameState(bars[0], bars[1], ball);
+		return new GameState(playing, bars, ball);
 	}
 	
 	private class PongSimulation extends Thread {
+		private int players;
+
+		public PongSimulation(int currentPlayers){
+			this.players = currentPlayers;
+		}
+
 		public void run() {
 			while (running) {
 				
-				Pong.doGameIteration(bars, ball);
+				if(this.players > 2){
+					Pong.doGameIteration(playing, bars, ball);
+				}
+				else{
+					Pong.doGameIteration(bars, ball);
+				}
 				
 				try {
 					Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds

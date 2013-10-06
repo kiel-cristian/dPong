@@ -85,6 +85,49 @@ public class Pong implements KeyListener {
 		game.start();
 
 	}
+
+	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball) {
+		// actualiza posicion
+		ball.x += ball.vx * DX;
+		ball.y += ball.vy * DX;
+
+		for (int i = 0; i < bars.length && playing[i];  i++){
+			Rectangle bar = bars[i];
+			// rebote con paletas (verticales, jugadores 0 y 1)
+			if(i == 0 || i == 1){
+				if (ball.bottom() < bar.top()
+						&& ball.top() > bar.bottom()) { // esta dentro
+														// en
+														// Y
+					if ((ball.vx > 0 && ball.left() <= bar.left() && ball
+							.right() >= bar.left()) // esta a la
+													// izquierda y se
+													// mueve a la
+													// derecha
+							// o esta a la derecha y se mueve hacia la
+							// izquierda
+							|| (ball.vx < 0 && ball.right() >= bar.right() && ball
+									.left() <= bar.right())) {
+
+						ball.vx = -ball.vx * (1 + DV);
+						break;
+					}
+				}
+			}
+			// rebote con paletas (horizontales, jugadores 2 y 3)
+			else{
+				if(ball.left() < bar.left() && ball.right() < bar.right()){
+					if((ball.vy > 0 && ball.top() <= bar.bottom()) // se mueve hacia arriba y esta abajo de la barra
+						||
+						((ball.vy < 0 && ball.bottom() >= bar.top()))){ // se mueve hacia abajo y esta arriba de la barra
+
+						ball.vy = -ball.vy * (1 + DX);
+						break;
+					}
+				}
+			}
+		}
+	}
 	
 	public static void doGameIteration(Rectangle[] bars, PongBall ball) {
 		// actualiza posicion
