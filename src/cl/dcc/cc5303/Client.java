@@ -22,7 +22,12 @@ public class Client extends UnicastRemoteObject implements Player {
 	public static void main(String[] args) {
 		try {
 			Client client = new Client();
-			client.play();
+			String serverAddress;
+			if (args.length > 0)
+				serverAddress = args[0];
+			else
+				serverAddress = "localhost";
+			client.play(serverAddress);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
@@ -36,8 +41,8 @@ public class Client extends UnicastRemoteObject implements Player {
 		super();
 	}
 	
-	public void play() throws MalformedURLException, RemoteException, NotBoundException {
-		server = (IServer) Naming.lookup("rmi://localhost:1099/server");
+	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
+		server = (IServer) Naming.lookup("rmi://" + serverAddress + ":1099/server");
 		playerNum = server.connectPlayer(this);
 		barPos = new int[2];
 		Thread serverUpdate = new Thread(new Runnable() {
