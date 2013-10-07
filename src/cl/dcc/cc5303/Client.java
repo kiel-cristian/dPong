@@ -21,7 +21,6 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile double vx;
 	private volatile double vy;
 	private volatile int[] barPos = new int[4];
-	private volatile boolean running;
 	
 	public static void main(String[] args) {
 		try {
@@ -43,7 +42,6 @@ public class Client extends UnicastRemoteObject implements Player {
 	
 	protected Client() throws RemoteException {
 		super();
-		running = true;
 	}
 		
 	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
@@ -52,10 +50,12 @@ public class Client extends UnicastRemoteObject implements Player {
 		playing[playerNum] = true;
 		lastPlayer = -1;
 
-		Thread serverUpdate = new ClientThread(playerNum, new Runnable() {
+		Thread serverUpdate = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
+				boolean running = true;
+				
 				while (running) {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
@@ -71,13 +71,13 @@ public class Client extends UnicastRemoteObject implements Player {
 						Thread.sleep(100);
 					} catch (RemoteException e) {
 						System.out.println("Server error");
-						// e.printStackTrace();
 						running = false;
+						
 						return;
 					} catch (InterruptedException e) {
 						System.out.println("Server Update:" + playerNum + " muriendo");
 						running = false;
-						// e.printStackTrace();
+						
 						return;
 					}
 				}
@@ -85,17 +85,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			
 		});
 		
-		Pong pong = new Pong(this, serverUpdate);
-		
-		try {
-			pong.serverUpdate.join();
-			pong.game.join();
-		} catch (InterruptedException e) {
-			System.out.println("Client :" + playerNum + " muriendo");
-			// e.printStackTrace();
-			running = false;
-			return;
-		}
+		new Pong(this, serverUpdate);
 	}
 	
 	public boolean[] getPlaying(){
@@ -157,12 +147,7 @@ public class Client extends UnicastRemoteObject implements Player {
 		barPos[bar] = position;
 	}
 
-	public boolean isRunning() {
-		return running;
-	}
-
 	public void stop(int playerNum) {
-		running = false;
 		try {
 			server.disconnectPlayer(playerNum);
 		} catch (RemoteException e1) {

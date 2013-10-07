@@ -38,14 +38,13 @@ public class Pong implements KeyListener {
 	private boolean[] keys;
 	private boolean[] playing = new boolean[4];
 	private int playerNum;
-	private boolean running;
+	
 	public Thread serverUpdate;
 	public Thread game;
 
 	public Pong(Client client, Thread serverUpdate) {
 		this.client    = client;
 		this.playerNum = client.getPlayerNum();
-		this.running   = client.isRunning();
 		this.serverUpdate = serverUpdate;
 		
 
@@ -102,10 +101,12 @@ public class Pong implements KeyListener {
 		canvas.init();
 		frame.addKeyListener(this);
 
-		game = new ClientThread(this.playerNum, new Runnable() {
+		game = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
+				boolean running = true;
+				
 				while (running) {
 					try {
 						int playerNum     = client.getPlayerNum();
@@ -132,13 +133,14 @@ public class Pong implements KeyListener {
 					}
 					catch (RemoteException e) {
 						System.out.println("Server error");
-						// e.printStackTrace();
 						running = false;
+						
 						return;
 					}
 					catch (InterruptedException ex) {
 						System.out.println("Pong: " + playerNum + " muriendo");
 						running = false;
+						
 						return;
 					}
 				}
@@ -151,9 +153,9 @@ public class Pong implements KeyListener {
 		try {
 			serverUpdate.join();
 			game.join();
+			
 		} catch (InterruptedException e) {
 			System.out.println("Waiting");
-			running = false;
 			// e.printStackTrace();
 			return;
 		}
@@ -161,20 +163,10 @@ public class Pong implements KeyListener {
 	
 	private void stop(){
 		client.stop(this.playerNum);
-		running = false;
 		frame.dispose();
 		scoreFrame.dispose();
-		
 		game.interrupt();
 		serverUpdate.interrupt();
-		
-		try {
-			game.join();
-			serverUpdate.join();
-		} catch (InterruptedException e) {
-			System.out.println("Close error");
-			return;
-		}
 	}
 
 	private void handleStatus(int playerNum){
