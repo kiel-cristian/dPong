@@ -32,18 +32,21 @@ public class Pong implements KeyListener {
 	private Rectangle[] bars = new Rectangle[4];
 	private PongBall ball;
 
+	private ScoreBoard sb;
+	
 	private boolean[] keys;
 
 	public Pong(Client client) {
 		this.client = client;
 
-		bars[0] = new Rectangle(10, HEIGHT / 2, 10, 100);
+		bars[0] = new Rectangle(10, HEIGHT / 2, 10, 100); // jugadores
 		bars[1] = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
 		bars[2] = new Rectangle(WIDTH/2, HEIGHT - 10, 100, 10);
 		bars[3] = new Rectangle(WIDTH/2, 10, 100, 10);
 
 		ball = new PongBall();
-
+		sb = new ScoreBoard();
+		
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
 	}
@@ -63,6 +66,7 @@ public class Pong implements KeyListener {
 			if(client.getPlayerStatus(i))
 				canvas.rectangles.add(bars[i]);
 		}
+		
 		canvas.rectangles.add(ball);
 		canvas.addKeyListener(this);
 
