@@ -201,11 +201,11 @@ public class Pong implements KeyListener {
 			}
 		}
 
-		lastPlayer = handleBall(ball, score, lastPlayer);
+		lastPlayer = handleBall(ball, score, lastPlayer, playing);
 		return lastPlayer;
 	}
 
-	private static int handleBall(PongBall ball, ScoreBoard score, int lastPlayer) {
+	private static int handleBall(PongBall ball, ScoreBoard score, int lastPlayer, boolean[] playing) {
 		// actualiza posicion
 		ball.x += ball.vx * DX;
 		ball.y += ball.vy * DX;
@@ -214,25 +214,25 @@ public class Pong implements KeyListener {
 			switch(lastPlayer){
 				case(0):{
 					// Punto para jugador 1 si no sale por la izquierda
-					if(!(ball.x < 0)){
+					if(!(ball.x < 0) && playing[0]){
 						score.sumPoint(0);
 					}
 				} break;
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
-					if( !(ball.x > Pong.WIDTH)){
+					if( !(ball.x > Pong.WIDTH) && playing[1]){
 						score.sumPoint(1);
 					}
 				} break;
 				case(2):{
 					// Punto para jugador 3 si no sale abjo
-					if( !(ball.y > Pong.HEIGHT)){
+					if( !(ball.y > Pong.HEIGHT) && playing[2]){
 						score.sumPoint(2);
 					}
 				}break;
 				case(3):{
 					// Punto para jugador 4 si no sale arriba
-					if( !(ball.y < 0)){
+					if( !(ball.y < 0) && playing[3]){
 						score.sumPoint(3);
 					}
 				}
