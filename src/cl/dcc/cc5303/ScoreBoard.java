@@ -14,21 +14,21 @@ public class ScoreBoard extends JPanel{
 	 */
 	private static final long serialVersionUID = -9079400188590075139L;
 	//variables
-	private int p1_score;
-	private int p2_score;
-	private int p3_score;
-	private int p4_score;
+	public int p1_score;
+	public int p2_score;
+	public int p3_score;
+	public int p4_score;
 	
 	//final score
-	private final int WINNING_SCORE = 10;
+	public final int WINNING_SCORE = 10;
 	
 	//determine the winners
-	private boolean p1_wins = false;
-	private boolean p2_wins = false;
-	private boolean p3_wins = false;
-	private boolean p4_wins = false;
+	public boolean p1_wins = false;
+	public boolean p2_wins = false;
+	public boolean p3_wins = false;
+	public boolean p4_wins = false;
 	
-	private JLabel score1, score2, score3, score4;
+	public JLabel score1, score2, score3, score4;
 	
 	//constructor
 	public ScoreBoard(){
