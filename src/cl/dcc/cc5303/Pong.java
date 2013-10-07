@@ -9,15 +9,11 @@
 package cl.dcc.cc5303;
 
 
-import java.awt.Color;
-import java.awt.Font;
+
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.rmi.RemoteException;
-
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 
 public class Pong implements KeyListener {
@@ -36,7 +32,7 @@ public class Pong implements KeyListener {
 	private Client client;
 
 	private GameBar[] bars = new GameBar[4];
-	private int[] scores = new int[4];
+	private static int[] scores = new int[4];
 	private int lastPlayer;
 	private PongBall ball;
 	private boolean[] keys;
@@ -124,9 +120,11 @@ public class Pong implements KeyListener {
 						return;
 					}
 
+					handleQuitEvent();
 					handlePlayerBars();
 					handleScore();
 					
+					printScoreText(); // FIXME
 					canvas.playerNum = playerNum;
 					canvas.ball = ball;
 					canvas.repaint();
@@ -141,7 +139,7 @@ public class Pong implements KeyListener {
 
 	}
 	
-	private void handleScore(){
+	private static void printScoreText(){
 		String text = "";
 		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
 			if(playing[i]){
@@ -149,7 +147,10 @@ public class Pong implements KeyListener {
 			}
 		}
 		System.out.println(text);
-//		score.setText(scores, playing);
+	}
+	
+	private void handleScore(){
+		// TODO
 	}
 
 	private void handleStatus(int playerNum){
@@ -196,33 +197,28 @@ public class Pong implements KeyListener {
 					// Punto para jugador 1 si no sale por la izquierda
 					if(!(ball.x < 0)){
 						scores[0]++;
-						// System.out.println("jugardor 1: " + score.getScoreP1());
 					}
 				}
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
 					if( !(ball.x > Pong.WIDTH)){
 						scores[1]++;
-						// System.out.println("jugardor 2: " + score.getScoreP2());
 					}
 				}
 				case(2):{
 					// Punto para jugador 3 si no sale por la derecha
 					if( !(ball.y > Pong.HEIGHT)){
 						scores[2]++;
-						// System.out.println("jugardor 3: " + score.getScoreP3());
 					}
 				}
 				case(3):{
 					// Punto para jugador 4 si no sale por la derecha
 					if( !(ball.y < 0)){
 						scores[3]++;
-						// System.out.println("jugardor 4: " + score.getScoreP4());
 					}
 				}
 			}
 			
-//			updateScore();
 			lastPlayer = -1;
 			ball.reset();
 		}
@@ -300,23 +296,26 @@ public class Pong implements KeyListener {
 		}
 	}
 	
-	private void handleKeyEvents(int playerPos) {
-		// Manejo de Q
+	private void handleQuitEvent(){
+		// Manejo de Q, ESC
 		if(keys[KeyEvent.VK_Q] || keys[KeyEvent.VK_ESCAPE]){
 			try {
 				client.stop();
-				frame.removeAll();
-				scoreFrame.removeAll();
-				
-				
-				
+				frame.dispose();
+				scoreFrame.dispose();
+
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
+				
+				frame.dispose();
+				scoreFrame.dispose();
 				e.printStackTrace();
 			}
 			return;
 		}
-
+	}
+	
+	private void handleKeyEvents(int playerPos) {
 		Rectangle bar = bars[playerPos];
 		// Jugador posee una barra vertical
 		if(playerPos == 0 || playerPos == 1){

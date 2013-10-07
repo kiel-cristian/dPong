@@ -82,7 +82,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			
 		});
 		serverUpdate.start();
-		Pong pong = new Pong(this);
+		new Pong(this);
 	}
 	
 	public boolean[] getPlaying(){

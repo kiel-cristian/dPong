@@ -30,10 +30,6 @@ public class Server extends UnicastRemoteObject implements IServer {
 		ball = new PongBall();
 
 		playing = new boolean[4];
-		for(boolean p : playing){
-			p = false;
-		}
-
 		players = new Player[4];
 		playersNum = numPlayers;
 	}
@@ -68,9 +64,14 @@ public class Server extends UnicastRemoteObject implements IServer {
 	}
 	
 	@Override
-	public synchronized void disconnectPlayer(int playerNum) throws RemoteException {
+	public void disconnectPlayer(int playerNum) throws RemoteException {
 		playing[playerNum] = false;
 		players[playerNum] = null;
+		
+		if(!(this.playersReady())){
+			running = false;
+			System.out.println("Juego pausado por falta de jugadores");
+		}
 	}
 	
 	private int addPlayer(Player player, int num) {
