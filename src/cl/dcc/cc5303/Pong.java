@@ -26,13 +26,14 @@ public class Pong implements KeyListener {
 	public final static int MAX_PLAYERS = 4;
 
 	private JFrame frame;
+	private JFrame scoreFrame;
 	private MyCanvas canvas;
 	private Client client;
 
 	private Rectangle[] bars = new Rectangle[4];
 	private PongBall ball;
 
-	public static int player = 0;
+	public static int lastPlayer;
 	public static ScoreBoard score;
 	
 	private boolean[] keys;
@@ -46,6 +47,7 @@ public class Pong implements KeyListener {
 		bars[3] = new Rectangle(WIDTH/2, 10, 100, 10);
 
 		ball = new PongBall();
+		lastPlayer = 0;
 		
 		
 		keys = new boolean[KeyEvent.KEY_LAST];
@@ -56,14 +58,21 @@ public class Pong implements KeyListener {
 	private void init() {
 
 		score = new ScoreBoard();
+		canvas = new MyCanvas(client.getPlayerNum());
+
+		scoreFrame = new JFrame("Marcador");
+		scoreFrame.setSize(WIDTH, HEIGHT/2);
+		scoreFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		frame = new JFrame(TITLE);
-		// frame.setSize(WIDTH, HEIGHT);
+		frame.setSize(WIDTH, HEIGHT);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		canvas = new MyCanvas(client.getPlayerNum());
+
 		frame.add(canvas);
+		scoreFrame.add(score);
 
 		canvas.setSize(WIDTH, HEIGHT);
+		score.setSize(WIDTH, HEIGHT/2);
 
 		for(int i = 0; i < bars.length; i++){
 			if(client.getPlayerStatus(i))
@@ -75,7 +84,12 @@ public class Pong implements KeyListener {
 
 		frame.pack();
 		frame.setVisible(true);
+
+		scoreFrame.pack();
+		scoreFrame.setVisible(true);
+
 		canvas.init();
+//		score.init();
 		frame.addKeyListener(this);
 
 		Thread game = new Thread(new Runnable() {
@@ -151,75 +165,38 @@ public class Pong implements KeyListener {
 		ball.y += ball.vy * DX;
 
 		if(ball.x > Pong.WIDTH || ball.x < 0 || ball.y < 0 || ball.y > Pong.HEIGHT){
+			switch(lastPlayer){
+				case(1):{
+					// Punto para jugador 1 si no sale por la izquierda
+					if(!(ball.x < 0)){
+						score.pointP1();
+						// System.out.println("jugardor 1: " + score.getScoreP1());
+					}
+				}
+				case(2):{
+					// Punto para jugador 2 si no sale por la derecha
+					if( !(ball.x > Pong.WIDTH)){
+						score.pointP2();
+						// System.out.println("jugardor 2: " + score.getScoreP2());
+					}
+				}
+				case(3):{
+					// Punto para jugador 3 si no sale por la derecha
+					if( !(ball.y > Pong.HEIGHT)){
+						score.pointP3();
+						// System.out.println("jugardor 3: " + score.getScoreP3());
+					}
+				}
+				case(4):{
+					// Punto para jugador 4 si no sale por la derecha
+					if( !(ball.y < 0)){
+						score.pointP4();
+						// System.out.println("jugardor 4: " + score.getScoreP4());
+					}
+				}
+			}
 			
-			if(ball.x > Pong.WIDTH) // salio por la derecha
-			{
-				if (player == 2) // punto para el jugador 2
-				{
-					score.pointP2();
-					System.out.println("jugardor 2: " + score.getScoreP2());
-				}
-				if (player == 3)// punto para el jugador 3
-				{
-					score.pointP3();
-				}
-				if (player == 4)// punto para el jugador 4
-				{
-					score.pointP4();
-				}
-			}
-			
-			if(ball.x < 0) // salio por la izquierda
-			{
-				if (player == 1) // punto para el jugador 1
-				{
-					score.pointP1();
-					System.out.println("jugador1: " + score.getScoreP1());
-				}
-				if (player == 3)// punto para el jugador 3
-				{
-					score.pointP3();
-				}
-				if (player == 4)// punto para el jugador 4
-				{
-					score.pointP4();
-				}
-			}
-			if(ball.y < 0) // salio por arriba
-			{
-				if (player == 2) // punto para el jugador 2
-				{
-					score.pointP2();
-					System.out.println("jugardor 2: " + score.getScoreP2());
-				}
-				if (player == 1)// punto para el jugador 1
-				{
-					score.pointP1();
-					System.out.println("jugador1: " + score.getScoreP1());
-				}
-				if (player == 4)// punto para el jugador 4
-				{
-					score.pointP4();
-				}
-			}
-			if(ball.y > Pong.HEIGHT) // salio por abajo
-			{
-				if (player == 2) // punto para el jugador 2
-				{
-					score.pointP2();
-					System.out.println("jugardor 2: " + score.getScoreP2());
-				}
-				if (player == 3)// punto para el jugador 3
-				{
-					score.pointP3();
-				}
-				if (player == 1)// punto para el jugador 1
-				{
-					score.pointP1();
-					System.out.println("jugador1: " + score.getScoreP1());
-				}
-			}
-			player = 0;
+			lastPlayer = 0;
 			ball.reset();
 		}
 	}
@@ -231,28 +208,28 @@ public class Pong implements KeyListener {
      case(0):{
        if(ball.willCrashWithBarByRight(bar, step)){
          ball.changeXDir(step);
-         player = 1;
+         lastPlayer = 1;
        }
      }
      // jugador a la derecha
      case(1):{ 
        if(ball.willCrashWithBarByLeft(bar, step)){
          ball.changeXDir(step);
-         player = 2;
+         lastPlayer = 2;
        }
      }
      //jugador inferior
      case(2):{
        if(ball.willCrashWithBarByTop(bar, step)){
          ball.changeYDir(step);
-         player = 3;
+         lastPlayer = 3;
        }
      }
      // jugador superior
      case(3):{
        if(ball.willCrashWithBarByBottom(bar, step)){
          ball.changeYDir(step);
-         player = 4;
+         lastPlayer = 4;
        }
      }
     }
