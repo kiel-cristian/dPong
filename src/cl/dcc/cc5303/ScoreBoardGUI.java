@@ -20,22 +20,22 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		score = new ScoreBoardSimple();
 		
 		score1 = new JLabel();
-		score1.setText("P1: " + score.getScoreP1());
+		score1.setText("P1: " + score.getScore(0));
 		score1.setFont(new Font("Monospaced",Font.BOLD,25));
 		score1.setForeground(Color.WHITE);
 		
 		score2 = new JLabel();
-		score2.setText("P2: " + score.getScoreP2());
+		score2.setText("P2: " + score.getScore(1));
 		score2.setFont(new Font("Monospaced",Font.BOLD,25));
 		score2.setForeground(Color.WHITE);
 		
 		score3 = new JLabel();
-		score3.setText("P3: " + score.getScoreP3());
+		score3.setText("P3: " + score.getScore(2));
 		score3.setFont(new Font("Monospaced",Font.BOLD,25));
 		score3.setForeground(Color.WHITE);
 		
 		score4 = new JLabel();
-		score4.setText("P4: " + score.getScoreP4());
+		score4.setText("P4: " + score.getScore(3));
 		score4.setFont(new Font("Monospaced",Font.BOLD,25));
 		score4.setForeground(Color.WHITE);	
 		
@@ -47,10 +47,10 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	}
 	
 	public void updateScores() {
-		score1.setText("P1: " + score.getScoreP1());
-		score2.setText("P2: " + score.getScoreP2());
-		score3.setText("P3: " + score.getScoreP3());
-		score4.setText("P4: " + score.getScoreP4());
+		score1.setText("P1: " + score.getScore(0));
+		score2.setText("P2: " + score.getScore(1));
+		score3.setText("P3: " + score.getScore(2));
+		score4.setText("P4: " + score.getScore(3));
 	}
 	
 	public ScoreBoardSimple getScoreBoard() {
@@ -60,6 +60,17 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	@Override
 	public void sumPoint(int playerNum) {
 		score.sumPoint(playerNum);
+		updateScores();
+	}
+
+	@Override
+	public int[] getScores() {
+		return score.getScores();
+	}
+
+	@Override
+	public void setScores(int[] scores) {
+		score.setScores(scores);
 		updateScores();
 	}
 }

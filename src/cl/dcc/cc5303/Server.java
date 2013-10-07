@@ -10,6 +10,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private static final long serialVersionUID = -8181276888826913071L;
 	private boolean[] playing;
 	private Rectangle[] bars;
+	private int lastPlayer;
 	private PongBall ball;
 	private Player[] players;
 	private int playersNum;
@@ -28,10 +29,6 @@ public class Server extends UnicastRemoteObject implements IServer {
 		ball = new PongBall();
 
 		playing = new boolean[4];
-		for(boolean p : playing){
-			p = false;
-		}
-
 		players = new Player[4];
 		playersNum = numPlayers;
 		score = new ScoreBoardSimple();
@@ -64,6 +61,17 @@ public class Server extends UnicastRemoteObject implements IServer {
 		else if (!playing[3])
 			playerNum = addPlayer(player, 3);
 		return playerNum;
+	}
+	
+	@Override
+	public void disconnectPlayer(int playerNum) throws RemoteException {
+		playing[playerNum] = false;
+		players[playerNum] = null;
+		
+		if(!(this.playersReady())){
+			running = false;
+			System.out.println("Juego pausado por falta de jugadores");
+		}
 	}
 	
 	private int addPlayer(Player player, int num) {
@@ -105,7 +113,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		else{
 			bars[playerNum].x = position;	
 		}
-		return new GameState(playing, bars, ball);
+		return new GameState(playing, bars, ball, score.getScores());
 	}
 	
 	private class PongSimulation extends Thread {
@@ -113,7 +121,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		public void run() {
 			while (running) {
 				
-				Pong.doGameIteration(playing, bars, ball, score);
+				Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
 
 				try {
 					Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
