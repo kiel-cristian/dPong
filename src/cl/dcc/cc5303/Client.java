@@ -70,11 +70,11 @@ public class Client extends UnicastRemoteObject implements Player {
 						vy = state.vy;
 						Thread.sleep(100);
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return; // Server muerto
+						System.out.println("Server error");
+						// e.printStackTrace();
+						running = false;
+						return;
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						System.out.println("Server Update:" + playerNum + " muriendo");
 						running = false;
 						// e.printStackTrace();
@@ -85,7 +85,17 @@ public class Client extends UnicastRemoteObject implements Player {
 			
 		});
 		
-		new Pong(this, serverUpdate);
+		Pong pong = new Pong(this, serverUpdate);
+		
+		try {
+			pong.serverUpdate.join();
+			pong.game.join();
+		} catch (InterruptedException e) {
+			System.out.println("Client :" + playerNum + " muriendo");
+			// e.printStackTrace();
+			running = false;
+			return;
+		}
 	}
 	
 	public boolean[] getPlaying(){

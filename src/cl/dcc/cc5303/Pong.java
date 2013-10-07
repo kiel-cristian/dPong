@@ -39,8 +39,8 @@ public class Pong implements KeyListener {
 	private boolean[] playing = new boolean[4];
 	private int playerNum;
 	private boolean running;
-	private Thread serverUpdate;
-	private Thread game;
+	public Thread serverUpdate;
+	public Thread game;
 
 	public Pong(Client client, Thread serverUpdate) {
 		this.client    = client;
@@ -107,32 +107,36 @@ public class Pong implements KeyListener {
 			@Override
 			public void run() {
 				while (running) {
-					int playerNum     = client.getPlayerNum();
-					playing 		  = client.getPlaying();
-					lastPlayer        = client.getLastPLayer();
-					scores.setScores(client.getScores());
-
 					try {
+						int playerNum     = client.getPlayerNum();
+						playing 		  = client.getPlaying();
+						lastPlayer        = client.getLastPLayer();
+						scores.setScores(client.getScores());
+
+					
 						if(client.playersReady()){
 							handleStatus(playerNum);
 							handleKeyEvents(playerNum);
 							doGameIteration(playing, bars, ball, scores, lastPlayer);
 						}
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+
+						handleQuitEvent();
+						handlePlayerBars();
+						
+						canvas.playerNum = playerNum;
+						canvas.ball = ball;
+						canvas.repaint();
+					
+						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
+						 
+					}
+					catch (RemoteException e) {
+						System.out.println("Server error");
+						// e.printStackTrace();
+						running = false;
 						return;
 					}
-
-					handleQuitEvent();
-					handlePlayerBars();
-					
-					canvas.playerNum = playerNum;
-					canvas.ball = ball;
-					canvas.repaint();
-					try {
-						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
-					} catch (InterruptedException ex) {
+					catch (InterruptedException ex) {
 						System.out.println("Pong: " + playerNum + " muriendo");
 						running = false;
 						return;
@@ -141,19 +145,18 @@ public class Pong implements KeyListener {
 			}
 		});
 		
-		
 		serverUpdate.start();
 		game.start();
 		
 		try {
-			serverUpdate.wait();
-			game.wait();
+			serverUpdate.join();
+			game.join();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.out.println("Wait error");
+			System.out.println("Waiting");
+			running = false;
+			// e.printStackTrace();
+			return;
 		}
-		
 	}
 	
 	private void stop(){
@@ -164,6 +167,14 @@ public class Pong implements KeyListener {
 		
 		game.interrupt();
 		serverUpdate.interrupt();
+		
+		try {
+			game.join();
+			serverUpdate.join();
+		} catch (InterruptedException e) {
+			System.out.println("Close error");
+			return;
+		}
 	}
 
 	private void handleStatus(int playerNum){
