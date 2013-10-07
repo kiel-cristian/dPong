@@ -39,7 +39,12 @@ public class Server extends UnicastRemoteObject implements IServer {
 
 	public static void main(String[] args) {
 		try {
-			int players = 2;
+			int players = 2; // Numero de jugadores por default
+
+			if (args.length > 0){
+				players = Integer.parseInt(args[0]);
+			}
+
 			RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
 			IServer server = new Server(players);
 			LocateRegistry.createRegistry(1099);
