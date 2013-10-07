@@ -21,7 +21,6 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile double vx;
 	private volatile double vy;
 	private volatile int[] barPos = new int[4];
-	private volatile boolean running;
 	
 	public static void main(String[] args) {
 		try {
@@ -43,7 +42,6 @@ public class Client extends UnicastRemoteObject implements Player {
 	
 	protected Client() throws RemoteException {
 		super();
-		running = true;
 	}
 		
 	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
@@ -56,6 +54,8 @@ public class Client extends UnicastRemoteObject implements Player {
 
 			@Override
 			public void run() {
+				boolean running = true;
+				
 				while (running) {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
@@ -70,19 +70,22 @@ public class Client extends UnicastRemoteObject implements Player {
 						vy = state.vy;
 						Thread.sleep(100);
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return; // Server muerto
+						System.out.println("Server error");
+						running = false;
+						
+						return;
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						System.out.println("Server Update:" + playerNum + " muriendo");
+						running = false;
+						
+						return;
 					}
 				}
 			}
 			
 		});
-		serverUpdate.start();
-		new Pong(this);
+		
+		new Pong(this, serverUpdate);
 	}
 	
 	public boolean[] getPlaying(){
@@ -144,13 +147,13 @@ public class Client extends UnicastRemoteObject implements Player {
 		barPos[bar] = position;
 	}
 
-	public boolean isRunning() {
-		return running;
-	}
-
-	public void stop() throws RemoteException {
-		running = false;
-		server.disconnectPlayer(playerNum);
+	public void stop(int playerNum) {
+		try {
+			server.disconnectPlayer(playerNum);
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+			System.out.println("Error al desconectarse del servidor");
+		}
 	}
 
 	public PongBall getBall() {
