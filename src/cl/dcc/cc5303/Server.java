@@ -15,6 +15,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private int playersNum;
 	private boolean running;
 	private Thread simulationThread;
+	private ScoreBoardSimple score;
 
 	protected Server(int numPlayers) throws RemoteException {
 		super();
@@ -33,6 +34,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 
 		players = new Player[4];
 		playersNum = numPlayers;
+		score = new ScoreBoardSimple();
 	}
 
 	public static void main(String[] args) {
@@ -111,7 +113,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		public void run() {
 			while (running) {
 				
-				Pong.doGameIteration(playing, bars, ball);
+				Pong.doGameIteration(playing, bars, ball, score);
 
 				try {
 					Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
