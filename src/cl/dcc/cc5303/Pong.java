@@ -41,11 +41,13 @@ public class Pong implements KeyListener {
 	
 	public Thread serverUpdate;
 	public Thread game;
+	private boolean disposed;
 
 	public Pong(Client client, Thread serverUpdate) {
 		this.client    = client;
 		this.playerNum = client.getPlayerNum();
 		this.serverUpdate = serverUpdate;
+		disposed = false;
 		
 
 		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
@@ -133,8 +135,8 @@ public class Pong implements KeyListener {
 					}
 					catch (RemoteException e) {
 						System.out.println("Server error");
-						running = false;
 						
+						stopClient();
 						return;
 					}
 					catch (InterruptedException ex) {
@@ -149,24 +151,24 @@ public class Pong implements KeyListener {
 		
 		serverUpdate.start();
 		game.start();
+	}
+	
+	public void stopClient(){
+		destroyFrames();
+		serverUpdate.interrupt();
+		game.interrupt();
 		
-		try {
-			serverUpdate.join();
-			game.join();
-			
-		} catch (InterruptedException e) {
-			System.out.println("Waiting");
-			// e.printStackTrace();
-			return;
-		}
+		System.exit(0);// FIXME
+	}
+	
+	private void destroyFrames(){
+		frame.dispose();
+		scoreFrame.dispose();
 	}
 	
 	private void stop(){
-		client.stop(this.playerNum);
-		frame.dispose();
-		scoreFrame.dispose();
-		game.interrupt();
-		serverUpdate.interrupt();
+		client.stop(this.playerNum); // Notificacion al server
+		stopClient();
 	}
 
 	private void handleStatus(int playerNum){
@@ -188,7 +190,7 @@ public class Pong implements KeyListener {
 		ball.vy = client.getVelY();
 	}
 
-	public static int doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, ScoreBoard score, int lastPlayer) {
+	public static synchronized int doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, ScoreBoard score, int lastPlayer) {
 
 		for (int i = 0; i < Pong.MAX_PLAYERS;  i++){
 			if(playing[i] == true){
