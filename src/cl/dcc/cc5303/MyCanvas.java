@@ -25,12 +25,14 @@ public class MyCanvas extends Canvas {
 	private BufferedImage image;
 	private Graphics2D g2d;
 
-	public List<Rectangle> rectangles = new ArrayList<Rectangle>();
+	public List<GameBar> rectangles = new ArrayList<GameBar>();
+	public PongBall ball;
 	public int playerNum;
 
-	public MyCanvas(int _playerNum){
+	public MyCanvas(int playerNum, PongBall ball){
 		super();
-		playerNum = _playerNum + 1;
+		this.playerNum = playerNum;
+		this.ball      = ball;
 	}
 	
 	public void init() {
@@ -43,16 +45,18 @@ public class MyCanvas extends Canvas {
 		g2d.setColor(Color.BLACK);
 		g2d.fillRect(0, 0, getWidth(), getHeight());
 
-		int p = 0;
-		for (Rectangle rectangle : rectangles) {
-			if(p++ == playerNum){
+		for (GameBar bar : rectangles) {
+			if(bar.player == playerNum){
 				g2d.setColor(Color.RED);
 			}
 			else{
 				g2d.setColor(Color.WHITE);
 			}
-			rectangle.draw(g2d);
+			bar.draw(g2d);
 		}
+		
+		g2d.setColor(Color.WHITE);
+		ball.draw(g2d);
 
 		g.drawImage(image, 0, 0, this);
 	}
