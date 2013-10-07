@@ -42,7 +42,7 @@ public class Pong implements KeyListener {
 		bars[2] = new Rectangle(WIDTH/2, HEIGHT - 10, 100, 10);
 		bars[3] = new Rectangle(WIDTH/2, 10, 100, 10);
 
-		ball = new PongBall(WIDTH * 0.5, HEIGHT * 0.5, 10, 10);
+		ball = new PongBall();
 
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
@@ -151,36 +151,36 @@ public class Pong implements KeyListener {
 
 	private static void handleHumanBounce(int i, Rectangle bar, PongBall ball){
 		// rebote con paletas (verticales, jugadores 0 y 1)
-		if(i == 0 || i == 1){
-			if (ball.bottom() < bar.top()
-					&& ball.top() > bar.bottom()) { // esta dentro
-													// en
-													// Y
-				if ((ball.vx > 0 && ball.left() <= bar.left() && ball
-						.right() >= bar.left()) // esta a la
-												// izquierda y se
-												// mueve a la
-												// derecha
-						// o esta a la derecha y se mueve hacia la
-						// izquierda
-						|| (ball.vx < 0 && ball.right() >= bar.right() && ball
-								.left() <= bar.right())) {
+    if(i == 0 || i == 1){
+      if (ball.bottom() < bar.top()
+          && ball.top() > bar.bottom()) { // esta dentro
+                          // en
+                          // Y
+        if ((ball.vx > 0 && ball.left() <= bar.left() && ball
+            .right() >= bar.left()) // esta a la
+                        // izquierda y se
+                        // mueve a la
+                        // derecha
+            // o esta a la derecha y se mueve hacia la
+            // izquierda
+            || (ball.vx < 0 && ball.right() >= bar.right() && ball
+                .left() <= bar.right())) {
 
-					ball.vx = -ball.vx * (1 + DV);
-				}
-			}
-		}
-		// rebote con paletas (horizontales, jugadores 2 y 3)
-		else{
-			if(ball.left() < bar.left() && ball.right() < bar.right()){
-				if((ball.vy > 0 && ball.top() <= bar.bottom()) // se mueve hacia arriba y esta abajo de la barra
-					||
-					((ball.vy < 0 && ball.bottom() >= bar.top()))){ // se mueve hacia abajo y esta arriba de la barra
+          ball.vx = -ball.vx * (1 + DV);
+        }
+      }
+    }
+    // rebote con paletas (horizontales, jugadores 2 y 3)
+    else{
+      if(ball.left() < bar.right() && ball.right() > bar.left()){ // esta dentro en X
+        if((ball.vy > 0 && ball.top() >= bar.bottom() && ball.bottom() <= bar.bottom()) // se mueve hacia abajo y esta arriba de la barra
+          ||
+          ((ball.vy < 0 && ball.bottom() <= bar.top() && ball.top() >= bar.top()))){ // se mueve hacia arriba y esta abajo de la barra
 
-					ball.vy = -ball.vy * (1 + DV);
-				}
-			}
-		}
+          ball.vy = -ball.vy * (1 + DV);
+        }
+      }
+    }
 	}
 
 	private static void handleBounce(int i, PongBall ball){
@@ -188,25 +188,25 @@ public class Pong implements KeyListener {
 			// izquierda
 			case(0):{
 				if(ball.checkIfGoesLeft(0, DX))
-					ball.vx = -ball.vx;
+					ball.changeXDir(1);
 			}
 			// derecha
 			case(1):{
 				if(ball.checkIfGoesRight(WIDTH, DX)){
-					ball.vx = -ball.vx;
+					ball.changeXDir(1);
 				}
 			}
 			// abajo
 			case(2):{
 				if(ball.checkIfGoesDown(HEIGHT, DX)){
-					ball.vy = -ball.vy;
+					ball.changeYDir(1);
 				}
 
 			}
 			// arriba
 			case(3):{
 				if(ball.checkIfGoesUp(0, DX))
-					ball.vy = -ball.vy;
+					ball.changeYDir(1);
 			}
 		}
 	}

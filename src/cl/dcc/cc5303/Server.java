@@ -37,7 +37,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 
 	public static void main(String[] args) {
 		try {
-			int players = 3;
+			int players = 2;
 			IServer server = new Server(players);
 			Naming.rebind("rmi://localhost:1099/server", server);
 			System.out.println("Escuchando...");
