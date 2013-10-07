@@ -5,52 +5,59 @@ import java.util.Random;
 public class PongBall extends Rectangle {
 	public double vx, vy;
 
-	public PongBall(double x, double y, double w, double h) {
-		super(x, y, w, h);
-		vx = 0.4;
-		vy = 0.3;
-	}
-
   public PongBall(){
     super(Pong.WIDTH * 0.5, Pong.HEIGHT * 0.5, 10, 10);
 
     setRandomVelocity();
   }
 
-  public boolean checkIfGoesLeft(int minLeft, int step){
-    if(x + vx*step < minLeft){
-      return true;
-    }
-    else{
-      return false;
-    }
+  public void changeXDir(double pond){
+    vx = -vx * pond;
   }
 
-  public boolean checkIfGoesRight(int maxRight, int step){
-    if(x + vx*step > maxRight){
-      return true;
-    }
-    else{
-      return false;
-    } 
+  public void changeYDir(double pond){
+    vy = -vy * pond;
   }
 
-  public boolean checkIfGoesDown(int minBottom, int step){
-    if(y + vy*step > minBottom){
-      return true;
-    }
-    else{
-      return false;
-    } 
+  private boolean isInBarVerticalRange(Rectangle bar){
+    return top() >= bar.top() && bottom() <= bar.bottom();
   }
 
-  public boolean checkIfGoesUp(int maxTop, int step){
-    if(y + vy*step < maxTop){
-      return true;
-    }
-    else{
-      return false;
-    }
+  private boolean isInBarHorizontalRange(Rectangle bar){
+    return right() <= bar.right() && left() >= bar.left();
+  }
+
+  public boolean willCrashWithBarByRight(Rectangle bar, double step){
+    // return isInBarVerticalRange(bar) && vx < 0 && left() >= bar.right();
+    return isInBarVerticalRange(bar) && checkIfGoesLeft(bar.right(), step);
+  }
+  public boolean willCrashWithBarByLeft(Rectangle bar, double step){
+    // return isInBarVerticalRange(bar) && vx > 0 && left() <= bar.left();
+    return isInBarVerticalRange(bar) && checkIfGoesRight(bar.left(), step);
+  }
+  public boolean willCrashWithBarByTop(Rectangle bar, double step){
+    // return isInBarHorizontalRange(bar) && vy > 0 && bottom() <= bar.top();
+    return isInBarHorizontalRange(bar) && checkIfGoesDown(bar.top(), step);
+  }
+  public boolean willCrashWithBarByBottom(Rectangle bar, double step){
+    // return isInBarHorizontalRange(bar) && vy < 0 && top() >= bar.bottom();
+    return isInBarHorizontalRange(bar) && checkIfGoesUp(bar.bottom(), step);
+  }
+
+  public boolean checkIfGoesLeft(int minLeft, double step){
+    return x + vx*step < minLeft;
+  }
+
+  public boolean checkIfGoesRight(int maxRight, double step){
+    return x + vx*step > maxRight;
+  }
+
+  public boolean checkIfGoesDown(int minBottom, double step){
+    return y + vy*step > minBottom;
+  }
+
+  public boolean checkIfGoesUp(int maxTop, double step){
+    return y + vy*step < maxTop;
   }
 
   public void reset(){
