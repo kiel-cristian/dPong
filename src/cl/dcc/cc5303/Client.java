@@ -98,10 +98,6 @@ public class Client extends UnicastRemoteObject implements Player {
 		return players;
 	}
 
-	// public synchronized void updateScore() throws RemoteException{
-		
-	// }
-
 	public boolean playersReady() throws RemoteException{
 		return server.playersReady();
 	}

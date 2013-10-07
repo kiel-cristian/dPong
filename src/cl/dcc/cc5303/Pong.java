@@ -31,7 +31,7 @@ public class Pong implements KeyListener {
 
 	private JFrame frame;
 	private JFrame scoreFrame;
-	private JLabel score;
+	private ScoreBoard score;
 	private MyCanvas canvas;
 	private Client client;
 
@@ -40,7 +40,6 @@ public class Pong implements KeyListener {
 	private int lastPlayer;
 	private PongBall ball;
 	private boolean[] keys;
-	private JPanel scorePanel;
 	private static boolean[] playing = new boolean[4];
 
 	public Pong(Client client) {
@@ -68,8 +67,7 @@ public class Pong implements KeyListener {
 	/* Initializes window frame and set it visible */
 	private void init() {
 		canvas = new MyCanvas(client.getPlayerNum());
-		scorePanel = new JPanel();
-		score  = new JLabel();
+		score  = new ScoreBoard();
 
 		scoreFrame = new JFrame("Marcador");
 		scoreFrame.setSize(WIDTH, HEIGHT/2);
@@ -79,12 +77,11 @@ public class Pong implements KeyListener {
 		frame.setSize(WIDTH, HEIGHT);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		scorePanel.add(score);
 		frame.add(canvas);
-		scoreFrame.add(scorePanel);
+		scoreFrame.add(score);
 
 		canvas.setSize(WIDTH, HEIGHT);
-		scorePanel.setSize(WIDTH, HEIGHT/2);
+		scoreFrame.setSize(WIDTH, HEIGHT/2);
 
 		for(int i = 0; i < bars.length; i++){
 			if(client.getPlayerStatus(i))
@@ -99,10 +96,6 @@ public class Pong implements KeyListener {
 
 		scoreFrame.pack();
 		scoreFrame.setVisible(true);
-		
-		scorePanel.setOpaque(false);
-		score.setFont(new Font("Monospaced",Font.BOLD,25));
-		score.setForeground(Color.WHITE);
 
 		canvas.init();
 		frame.addKeyListener(this);
@@ -114,12 +107,13 @@ public class Pong implements KeyListener {
 			public void run() {
 				while (true) {
 					int playerNum     = client.getPlayerNum();
-					playing 		  = client.getPlaying();
+					playing 		  		= client.getPlaying();
 					scores            = client.getScores();
 					lastPlayer        = client.getLastPLayer();
 
 					try {
 						if(client.playersReady()){
+							handleStatus(playerNum);
 							handleKeyEvents(playerNum);
 							doGameIteration(playing, bars, ball, scores, lastPlayer);
 						}
@@ -130,7 +124,6 @@ public class Pong implements KeyListener {
 					}
 
 					handlePlayerBars();
-					handleStatus(playerNum);
 					handleScore();
 					
 					canvas.repaint();
@@ -147,14 +140,13 @@ public class Pong implements KeyListener {
 	
 	private void handleScore(){
 		String text = "";
-		for(int i = 0; i < MAX_PLAYERS; i++){
+		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
 			if(playing[i]){
 				text = text + "P" + i + ": " + scores[i] + " ";
 			}
 		}
-		
-//		System.out.println(text);
-		score.setText(text);
+		System.out.println(text);
+//		score.setText(scores, playing);
 	}
 
 	private void handleStatus(int playerNum){
