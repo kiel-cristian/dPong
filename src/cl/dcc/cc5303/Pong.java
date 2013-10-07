@@ -41,11 +41,13 @@ public class Pong implements KeyListener {
 	
 	public Thread serverUpdate;
 	public Thread game;
+	private boolean disposed;
 
 	public Pong(Client client, Thread serverUpdate) {
 		this.client    = client;
 		this.playerNum = client.getPlayerNum();
 		this.serverUpdate = serverUpdate;
+		disposed = false;
 		
 
 		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
@@ -133,8 +135,8 @@ public class Pong implements KeyListener {
 					}
 					catch (RemoteException e) {
 						System.out.println("Server error");
-						running = false;
 						
+						stopClient();
 						return;
 					}
 					catch (InterruptedException ex) {
@@ -149,24 +151,24 @@ public class Pong implements KeyListener {
 		
 		serverUpdate.start();
 		game.start();
+	}
+	
+	public void stopClient(){
+		destroyFrames();
+		serverUpdate.interrupt();
+		game.interrupt();
 		
-		try {
-			serverUpdate.join();
-			game.join();
-			
-		} catch (InterruptedException e) {
-			System.out.println("Waiting");
-			// e.printStackTrace();
-			return;
-		}
+		System.exit(0);// FIXME
+	}
+	
+	private void destroyFrames(){
+		frame.dispose();
+		scoreFrame.dispose();
 	}
 	
 	private void stop(){
-		client.stop(this.playerNum);
-		frame.dispose();
-		scoreFrame.dispose();
-		game.interrupt();
-		serverUpdate.interrupt();
+		client.stop(this.playerNum); // Notificacion al server
+		stopClient();
 	}
 
 	private void handleStatus(int playerNum){
@@ -188,7 +190,7 @@ public class Pong implements KeyListener {
 		ball.vy = client.getVelY();
 	}
 
-	public static int doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, ScoreBoard score, int lastPlayer) {
+	public static synchronized int doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, ScoreBoard score, int lastPlayer) {
 
 		for (int i = 0; i < Pong.MAX_PLAYERS;  i++){
 			if(playing[i] == true){
@@ -199,11 +201,11 @@ public class Pong implements KeyListener {
 			}
 		}
 
-		lastPlayer = handleBall(ball, score, lastPlayer);
+		lastPlayer = handleBall(ball, score, lastPlayer, playing);
 		return lastPlayer;
 	}
 
-	private static int handleBall(PongBall ball, ScoreBoard score, int lastPlayer) {
+	private static int handleBall(PongBall ball, ScoreBoard score, int lastPlayer, boolean[] playing) {
 		// actualiza posicion
 		ball.x += ball.vx * DX;
 		ball.y += ball.vy * DX;
@@ -212,25 +214,25 @@ public class Pong implements KeyListener {
 			switch(lastPlayer){
 				case(0):{
 					// Punto para jugador 1 si no sale por la izquierda
-					if(!(ball.x < 0)){
+					if(!(ball.x < 0) && playing[0]){
 						score.sumPoint(0);
 					}
 				} break;
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
-					if( !(ball.x > Pong.WIDTH)){
+					if( !(ball.x > Pong.WIDTH) && playing[1]){
 						score.sumPoint(1);
 					}
 				} break;
 				case(2):{
 					// Punto para jugador 3 si no sale abjo
-					if( !(ball.y > Pong.HEIGHT)){
+					if( !(ball.y > Pong.HEIGHT) && playing[2]){
 						score.sumPoint(2);
 					}
 				}break;
 				case(3):{
 					// Punto para jugador 4 si no sale arriba
-					if( !(ball.y < 0)){
+					if( !(ball.y < 0) && playing[3]){
 						score.sumPoint(3);
 					}
 				}

@@ -21,6 +21,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile double vx;
 	private volatile double vy;
 	private volatile int[] barPos = new int[4];
+	private volatile Pong pong;
 	
 	public static void main(String[] args) {
 		try {
@@ -70,10 +71,7 @@ public class Client extends UnicastRemoteObject implements Player {
 						vy = state.vy;
 						Thread.sleep(100);
 					} catch (RemoteException e) {
-						System.out.println("Server error");
-						running = false;
-						
-						return;
+
 					} catch (InterruptedException e) {
 						System.out.println("Server Update:" + playerNum + " muriendo");
 						running = false;
@@ -85,7 +83,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			
 		});
 		
-		new Pong(this, serverUpdate);
+		pong =new Pong(this, serverUpdate);
 	}
 	
 	public boolean[] getPlaying(){
