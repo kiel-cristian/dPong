@@ -33,10 +33,10 @@ public class Pong implements KeyListener {
 	private GameBar[] bars = new GameBar[4];
 	private int lastPlayer;
 	private PongBall ball;
-	public static ScoreBoardGUI scores;
+	private ScoreBoardGUI scores;
 
 	private boolean[] keys;
-	private static boolean[] playing = new boolean[4];
+	private boolean[] playing = new boolean[4];
 
 	public Pong(Client client) {
 		this.client = client;
@@ -123,7 +123,6 @@ public class Pong implements KeyListener {
 					handlePlayerBars();
 					handleScore();
 					
-					printScoreText(); // FIXME
 					canvas.playerNum = playerNum;
 					canvas.ball = ball;
 					canvas.repaint();
@@ -136,17 +135,6 @@ public class Pong implements KeyListener {
 		});
 		game.start();
 
-	}
-	
-	private static void printScoreText(){
-		String text = "";
-		int s[] = scores.getScores();
-		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
-			if(playing[i]){
-				text = text + "P" + i + ": " + s[i] + " ";
-			}
-		}
-		System.out.println(text);
 	}
 	
 	private void handleScore(){
@@ -172,21 +160,22 @@ public class Pong implements KeyListener {
 		ball.vy = client.getVelY();
 	}
 
-	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, ScoreBoard score, int lastPlayer) {
+	public static int doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, ScoreBoard score, int lastPlayer) {
 
 		for (int i = 0; i < Pong.MAX_PLAYERS;  i++){
 			if(playing[i] == true){
-				handleHumanBounce(i, bars[i], ball, lastPlayer);
+				lastPlayer = handleHumanBounce(i, bars[i], ball, lastPlayer);
 			}
 			else{
 				handleBounce(i, ball);
 			}
 		}
 
-		handleBall(ball, score, lastPlayer);
+		lastPlayer = handleBall(ball, score, lastPlayer);
+		return lastPlayer;
 	}
 
-	private static void handleBall(PongBall ball, ScoreBoard score, int lastPlayer) {
+	private static int handleBall(PongBall ball, ScoreBoard score, int lastPlayer) {
 		// actualiza posicion
 		ball.x += ball.vx * DX;
 		ball.y += ball.vy * DX;
@@ -198,21 +187,21 @@ public class Pong implements KeyListener {
 					if(!(ball.x < 0)){
 						score.sumPoint(0);
 					}
-				}
+				} break;
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
 					if( !(ball.x > Pong.WIDTH)){
 						score.sumPoint(1);
 					}
-				}
+				} break;
 				case(2):{
-					// Punto para jugador 3 si no sale por la derecha
+					// Punto para jugador 3 si no sale por arriba
 					if( !(ball.y > Pong.HEIGHT)){
 						score.sumPoint(2);
 					}
-				}
+				}break;
 				case(3):{
-					// Punto para jugador 4 si no sale por la derecha
+					// Punto para jugador 4 si no sale por abajo
 					if( !(ball.y < 0)){
 						score.sumPoint(3);
 					}
@@ -222,40 +211,42 @@ public class Pong implements KeyListener {
 			lastPlayer = -1;
 			ball.reset();
 		}
+		return lastPlayer;
 	}
 
-	private static void handleHumanBounce(int i, Rectangle bar, PongBall ball, int lastPlayer){
+	private static int handleHumanBounce(int i, Rectangle bar, PongBall ball, int lastPlayer){
 		double step = 1+DV;
-    switch(i){
-     // jugador a la izquierda
-     case(0):{
-       if(ball.willCrashWithBarByRight(bar, step)){
-         ball.changeXDir(step);
-         lastPlayer = 1;
-       }
-     }
-     // jugador a la derecha
-     case(1):{ 
-       if(ball.willCrashWithBarByLeft(bar, step)){
-         ball.changeXDir(step);
-         lastPlayer = 2;
-       }
-     }
-     //jugador inferior
-     case(2):{
-       if(ball.willCrashWithBarByTop(bar, step)){
-         ball.changeYDir(step);
-         lastPlayer = 3;
-       }
-     }
-     // jugador superior
-     case(3):{
-       if(ball.willCrashWithBarByBottom(bar, step)){
-         ball.changeYDir(step);
-         lastPlayer = 4;
-       }
-     }
-    }
+	    switch(i){
+	    	// jugador a la izquierda
+	    	case(0):{
+	    		if(ball.willCrashWithBarByRight(bar, step)){
+	    			ball.changeXDir(step);
+	    			return 0;
+	    		}
+	    	}
+	    	// jugador a la derecha
+	    	case(1):{ 
+	    		if(ball.willCrashWithBarByLeft(bar, step)){
+	    			ball.changeXDir(step);
+	    			return 1;
+	    		}
+	    	}
+	    	//jugador inferior
+	    	case(2):{
+	    		if(ball.willCrashWithBarByTop(bar, step)){
+	    			ball.changeYDir(step);
+	    			return 2;
+	    		}
+	    	}
+	    	// jugador superior
+	    	case(3):{
+	    		if(ball.willCrashWithBarByBottom(bar, step)){
+	    			ball.changeYDir(step);
+	    			return 3;
+	    		}
+	    	}
+	    }
+	    return lastPlayer;
 	}
 
 	private static void handleBounce(int i, PongBall ball){
@@ -264,20 +255,20 @@ public class Pong implements KeyListener {
 			case(0):{
 				if(ball.checkIfGoesLeft(0, DX))
 					ball.changeXDir(1);
-			}
+			} break;
 			// derecha
 			case(1):{
 				if(ball.checkIfGoesRight(WIDTH, DX)){
 					ball.changeXDir(1);
 				}
-			}
+			} break;
 			// abajo
 			case(2):{
 				if(ball.checkIfGoesDown(HEIGHT, DX)){
 					ball.changeYDir(1);
 				}
 
-			}
+			} break;
 			// arriba
 			case(3):{
 				if(ball.checkIfGoesUp(0, DX))

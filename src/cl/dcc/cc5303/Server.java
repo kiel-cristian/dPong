@@ -100,6 +100,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private void startGame() {
 		simulationThread = new PongSimulation();
 		running = true;
+		lastPlayer = -1;
 		simulationThread.start();
 		System.out.println("Empieza el juego!");
 	}
@@ -121,7 +122,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		public void run() {
 			while (running) {
 				
-				Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
+				lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
 
 				try {
 					Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
