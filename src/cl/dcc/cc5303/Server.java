@@ -1,8 +1,11 @@
 package cl.dcc.cc5303;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 
 
@@ -37,13 +40,19 @@ public class Server extends UnicastRemoteObject implements IServer {
 	public static void main(String[] args) {
 		try {
 			int players = 2;
+			RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
 			IServer server = new Server(players);
+			LocateRegistry.createRegistry(1099);
 			Naming.rebind("rmi://localhost:1099/server", server);
+			
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
