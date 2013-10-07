@@ -154,36 +154,32 @@ public class Pong implements KeyListener {
 	}
 
 	private static void handleHumanBounce(int i, Rectangle bar, PongBall ball){
-		// rebote con paletas (verticales, jugadores 0 y 1)
-    if(i == 0 || i == 1){
-      if (ball.bottom() < bar.top()
-          && ball.top() > bar.bottom()) { // esta dentro
-                          // en
-                          // Y
-        if ((ball.vx > 0 && ball.left() <= bar.left() && ball
-            .right() >= bar.left()) // esta a la
-                        // izquierda y se
-                        // mueve a la
-                        // derecha
-            // o esta a la derecha y se mueve hacia la
-            // izquierda
-            || (ball.vx < 0 && ball.right() >= bar.right() && ball
-                .left() <= bar.right())) {
-
-          ball.vx = -ball.vx * (1 + DV);
-        }
-      }
-    }
-    // rebote con paletas (horizontales, jugadores 2 y 3)
-    else{
-      if(ball.left() < bar.right() && ball.right() > bar.left()){ // esta dentro en X
-        if((ball.vy > 0 && ball.top() >= bar.bottom() && ball.bottom() <= bar.bottom()) // se mueve hacia abajo y esta arriba de la barra
-          ||
-          ((ball.vy < 0 && ball.bottom() <= bar.top() && ball.top() >= bar.top()))){ // se mueve hacia arriba y esta abajo de la barra
-
-          ball.vy = -ball.vy * (1 + DV);
-        }
-      }
+		double step = 1+DV;
+    switch(i){
+     // jugador a la izquierda
+     case(0):{
+       if(ball.willCrashWithBarByRight(bar, step)){
+         ball.changeXDir(step);
+       }
+     }
+     // jugador a la derecha
+     case(1):{ 
+       if(ball.willCrashWithBarByLeft(bar, step)){
+         ball.changeXDir(step);
+       }
+     }
+     //jugador inferior
+     case(2):{
+       if(ball.willCrashWithBarByTop(bar, step)){
+         ball.changeYDir(step);
+       }
+     }
+     // jugador superior
+     case(3):{
+       if(ball.willCrashWithBarByBottom(bar, step)){
+         ball.changeYDir(step);
+       }
+     }
     }
 	}
 

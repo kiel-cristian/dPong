@@ -20,28 +20,24 @@ public class PongBall extends Rectangle {
   }
 
   private boolean isInBarVerticalRange(Rectangle bar){
-    return top() >= bar.top() && bottom() <= bar.bottom();
+    return bottom() < bar.top() && top() > bar.bottom();
   }
 
   private boolean isInBarHorizontalRange(Rectangle bar){
-    return right() <= bar.right() && left() >= bar.left();
+    return left() < bar.right() && right() > bar.left();
   }
 
   public boolean willCrashWithBarByRight(Rectangle bar, double step){
-    // return isInBarVerticalRange(bar) && vx < 0 && left() >= bar.right();
-    return isInBarVerticalRange(bar) && checkIfGoesLeft(bar.right(), step);
+    return isInBarVerticalRange(bar) && vx < 0 && right() >= bar.right() && left() <= bar.right();
   }
   public boolean willCrashWithBarByLeft(Rectangle bar, double step){
-    // return isInBarVerticalRange(bar) && vx > 0 && left() <= bar.left();
-    return isInBarVerticalRange(bar) && checkIfGoesRight(bar.left(), step);
+    return isInBarVerticalRange(bar) && vx > 0 && left() <= bar.left() && right() >= bar.left();
   }
   public boolean willCrashWithBarByTop(Rectangle bar, double step){
-    // return isInBarHorizontalRange(bar) && vy > 0 && bottom() <= bar.top();
-    return isInBarHorizontalRange(bar) && checkIfGoesDown(bar.top(), step);
+    return isInBarHorizontalRange(bar) && vy > 0 && top() >= bar.bottom() && bottom() <= bar.bottom();
   }
   public boolean willCrashWithBarByBottom(Rectangle bar, double step){
-    // return isInBarHorizontalRange(bar) && vy < 0 && top() >= bar.bottom();
-    return isInBarHorizontalRange(bar) && checkIfGoesUp(bar.bottom(), step);
+    return isInBarHorizontalRange(bar) && vy < 0 && bottom() <= bar.top() && top() >= bar.top();
   }
 
   public boolean checkIfGoesLeft(int minLeft, double step){
@@ -81,8 +77,8 @@ public class PongBall extends Rectangle {
       diry = -1;
     }
     
-    vx = rand.nextFloat()/2*dirx + 0.1*dirx;
-    vy = rand.nextFloat()/2*diry + 0.1*diry;
+    vx = rand.nextFloat()/3*dirx + 0.1*dirx;
+    vy = rand.nextFloat()/3*diry + 0.1*diry;
 
     if(vx == 0){
       vx = 0.2;
