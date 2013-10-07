@@ -9,11 +9,15 @@
 package cl.dcc.cc5303;
 
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.rmi.RemoteException;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 
 public class Pong implements KeyListener {
@@ -27,16 +31,17 @@ public class Pong implements KeyListener {
 
 	private JFrame frame;
 	private JFrame scoreFrame;
+	private JLabel score;
 	private MyCanvas canvas;
 	private Client client;
 
 	private Rectangle[] bars = new Rectangle[4];
+	private int[] scores = new int[4];
+	private int lastPlayer;
 	private PongBall ball;
-
-	public static int lastPlayer;
-	public static ScoreBoard score;
-	
 	private boolean[] keys;
+	private JPanel scorePanel;
+	private static boolean[] playing = new boolean[4];
 
 	public Pong(Client client) {
 		this.client = client;
@@ -47,18 +52,24 @@ public class Pong implements KeyListener {
 		bars[3] = new Rectangle(WIDTH/2, 10, 100, 10);
 
 		ball = new PongBall();
-		lastPlayer = 0;
+		lastPlayer = -1;
 		
-		
+		for(int i = 0; i < MAX_PLAYERS; i++){
+			scores[i] = 0;
+			if(client.getPlayerNum() == i)
+				playing[i] = true;
+			else
+				playing[i] = false;
+		}
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
 	}
 
 	/* Initializes window frame and set it visible */
 	private void init() {
-
-		score = new ScoreBoard();
 		canvas = new MyCanvas(client.getPlayerNum());
+		scorePanel = new JPanel();
+		score  = new JLabel();
 
 		scoreFrame = new JFrame("Marcador");
 		scoreFrame.setSize(WIDTH, HEIGHT/2);
@@ -68,11 +79,12 @@ public class Pong implements KeyListener {
 		frame.setSize(WIDTH, HEIGHT);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+		scorePanel.add(score);
 		frame.add(canvas);
-		scoreFrame.add(score);
+		scoreFrame.add(scorePanel);
 
 		canvas.setSize(WIDTH, HEIGHT);
-		score.setSize(WIDTH, HEIGHT/2);
+		scorePanel.setSize(WIDTH, HEIGHT/2);
 
 		for(int i = 0; i < bars.length; i++){
 			if(client.getPlayerStatus(i))
@@ -87,10 +99,14 @@ public class Pong implements KeyListener {
 
 		scoreFrame.pack();
 		scoreFrame.setVisible(true);
+		
+		scorePanel.setOpaque(false);
+		score.setFont(new Font("Monospaced",Font.BOLD,25));
+		score.setForeground(Color.WHITE);
 
 		canvas.init();
-//		score.init();
 		frame.addKeyListener(this);
+		handleScore();
 
 		Thread game = new Thread(new Runnable() {
 
@@ -98,12 +114,14 @@ public class Pong implements KeyListener {
 			public void run() {
 				while (true) {
 					int playerNum     = client.getPlayerNum();
-					boolean[] playing = client.getPlaying();
+					playing 		  = client.getPlaying();
+					scores            = client.getScores();
+					lastPlayer        = client.getLastPLayer();
 
 					try {
 						if(client.playersReady()){
 							handleKeyEvents(playerNum);
-							doGameIteration(playing, bars, ball);
+							doGameIteration(playing, bars, ball, scores, lastPlayer);
 						}
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
@@ -113,6 +131,7 @@ public class Pong implements KeyListener {
 
 					handlePlayerBars();
 					handleStatus(playerNum);
+					handleScore();
 					
 					canvas.repaint();
 					try {
@@ -124,6 +143,18 @@ public class Pong implements KeyListener {
 		});
 		game.start();
 
+	}
+	
+	private void handleScore(){
+		String text = "";
+		for(int i = 0; i < MAX_PLAYERS; i++){
+			if(playing[i]){
+				text = text + "P" + i + ": " + scores[i] + " ";
+			}
+		}
+		
+//		System.out.println(text);
+		score.setText(text);
 	}
 
 	private void handleStatus(int playerNum){
@@ -145,63 +176,64 @@ public class Pong implements KeyListener {
 		ball.vy = client.getVelY();
 	}
 
-	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball) {
+	public static void doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, int[] scores, int lastPlayer) {
 
 		for (int i = 0; i < Pong.MAX_PLAYERS;  i++){
 			if(playing[i] == true){
-				handleHumanBounce(i, bars[i], ball);
+				handleHumanBounce(i, bars[i], ball, lastPlayer);
 			}
 			else{
 				handleBounce(i, ball);
 			}
 		}
 
-		handleBall(ball);
+		handleBall(ball, scores, lastPlayer);
 	}
 
-	private static void handleBall(PongBall ball){
+	private static void handleBall(PongBall ball, int[] scores, int lastPlayer){
 		// actualiza posicion
 		ball.x += ball.vx * DX;
 		ball.y += ball.vy * DX;
 
 		if(ball.x > Pong.WIDTH || ball.x < 0 || ball.y < 0 || ball.y > Pong.HEIGHT){
 			switch(lastPlayer){
-				case(1):{
+				case(0):{
 					// Punto para jugador 1 si no sale por la izquierda
 					if(!(ball.x < 0)){
-						score.pointP1();
+						scores[0]++;
 						// System.out.println("jugardor 1: " + score.getScoreP1());
 					}
 				}
-				case(2):{
+				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
 					if( !(ball.x > Pong.WIDTH)){
-						score.pointP2();
+						scores[1]++;
 						// System.out.println("jugardor 2: " + score.getScoreP2());
 					}
 				}
-				case(3):{
+				case(2):{
 					// Punto para jugador 3 si no sale por la derecha
 					if( !(ball.y > Pong.HEIGHT)){
-						score.pointP3();
+						scores[2]++;
 						// System.out.println("jugardor 3: " + score.getScoreP3());
 					}
 				}
-				case(4):{
+				case(3):{
 					// Punto para jugador 4 si no sale por la derecha
 					if( !(ball.y < 0)){
-						score.pointP4();
+						scores[3]++;
 						// System.out.println("jugardor 4: " + score.getScoreP4());
 					}
 				}
 			}
 			
-			lastPlayer = 0;
+//			updateScore();
+			lastPlayer = -1;
 			ball.reset();
 		}
 	}
 
-	private static void handleHumanBounce(int i, Rectangle bar, PongBall ball){
+	private static void handleHumanBounce(int i, Rectangle bar, PongBall ball, int lastPlayer){
 		double step = 1+DV;
     switch(i){
      // jugador a la izquierda

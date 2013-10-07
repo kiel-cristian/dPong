@@ -9,15 +9,17 @@ public class GameState implements Serializable {
 	private static final long serialVersionUID = -6238741276850716574L;
 	public int[] barsPos = new int[4];
 	public boolean[] playing = new boolean[4];
+	public int[] scores = new int[4];
 	public int ballX;
 	public int ballY;
 	public double vx;
 	public double vy;
 
-	public GameState(boolean[] playing, Rectangle[] bars, PongBall ball) {
+	public GameState(boolean[] playing, Rectangle[] bars, PongBall ball, int[] scores) {
 		boolean p;
 		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
 			p = playing[i];
+			this.scores[i] = scores[i];
 			if(p){
 				this.playing[i] = true;
 				if(i == 0 || i == 1)

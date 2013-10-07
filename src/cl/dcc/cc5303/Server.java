@@ -10,6 +10,8 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private static final long serialVersionUID = -8181276888826913071L;
 	private boolean[] playing;
 	private Rectangle[] bars;
+	private int[] scores;
+	private int lastPlayer;
 	private PongBall ball;
 	private Player[] players;
 	private int playersNum;
@@ -24,6 +26,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
 		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
 
+		scores = new int[4];
 		ball = new PongBall();
 
 		playing = new boolean[4];
@@ -103,7 +106,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		else{
 			bars[playerNum].x = position;	
 		}
-		return new GameState(playing, bars, ball);
+		return new GameState(playing, bars, ball, scores);
 	}
 	
 	private class PongSimulation extends Thread {
@@ -111,7 +114,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		public void run() {
 			while (running) {
 				
-				Pong.doGameIteration(playing, bars, ball);
+				Pong.doGameIteration(playing, bars, ball, scores, lastPlayer);
 
 				try {
 					Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds

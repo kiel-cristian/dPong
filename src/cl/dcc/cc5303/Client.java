@@ -13,7 +13,9 @@ public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private IServer server;
 	private int playerNum;
+	private int lastPlayer;
 	private volatile boolean[] playing = new boolean[4];
+	private volatile int[] scores = new int[4];
 	private volatile int ballX;
 	private volatile int ballY;
 	private volatile double vx;
@@ -46,6 +48,7 @@ public class Client extends UnicastRemoteObject implements Player {
 		server = (IServer) Naming.lookup("rmi://" + serverAddress + ":1099/server");
 		playerNum = server.connectPlayer(this);
 		playing[playerNum] = true;
+		lastPlayer = -1;
 
 		Thread serverUpdate = new Thread(new Runnable() {
 
@@ -57,6 +60,7 @@ public class Client extends UnicastRemoteObject implements Player {
 						for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
 							barPos[i] 	= state.barsPos[i];
 							playing[i] 	= state.playing[i];
+							scores[i]   = state.scores[i];
 						}
 						ballX = state.ballX;
 						ballY = state.ballY;
@@ -94,6 +98,10 @@ public class Client extends UnicastRemoteObject implements Player {
 		return players;
 	}
 
+	// public synchronized void updateScore() throws RemoteException{
+		
+	// }
+
 	public boolean playersReady() throws RemoteException{
 		return server.playersReady();
 	}
@@ -124,6 +132,14 @@ public class Client extends UnicastRemoteObject implements Player {
 	
 	public double getVelY() {
 		return vy;
+	}
+	
+	public int getLastPLayer(){
+		return lastPlayer;
+	}
+	
+	public int[] getScores(){
+		return scores;
 	}
 	
 	public synchronized void setBarPosition(int bar, int position) {
