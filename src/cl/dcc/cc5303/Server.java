@@ -67,6 +67,12 @@ public class Server extends UnicastRemoteObject implements IServer {
 		return playerNum;
 	}
 	
+	@Override
+	public synchronized void disconnectPlayer(int playerNum) throws RemoteException {
+		playing[playerNum] = false;
+		players[playerNum] = null;
+	}
+	
 	private int addPlayer(Player player, int num) {
 		players[num] = player;
 		playing[num] = true;

@@ -11,7 +11,13 @@ public class PongBall extends Rectangle {
     setRandomVelocity();
   }
 
-  public void changeXDir(double pond){
+  public PongBall(int ballX, int ballY, double vx2, double vy2) {
+	super(ballX, ballY, 10, 10);
+	vx = vx2;
+	vy = vy2;
+  }
+
+public void changeXDir(double pond){
     vx = -vx * pond;
   }
 

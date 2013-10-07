@@ -12,8 +12,8 @@ public class Client extends UnicastRemoteObject implements Player {
 	 */
 	private static final long serialVersionUID = -1910265532826050466L;
 	private IServer server;
-	private int playerNum;
-	private int lastPlayer;
+	private volatile int playerNum;
+	private volatile int lastPlayer;
 	private volatile boolean[] playing = new boolean[4];
 	private volatile int[] scores = new int[4];
 	private volatile int ballX;
@@ -21,6 +21,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile double vx;
 	private volatile double vy;
 	private volatile int[] barPos = new int[4];
+	private volatile boolean running;
 	
 	public static void main(String[] args) {
 		try {
@@ -42,6 +43,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	
 	protected Client() throws RemoteException {
 		super();
+		running = true;
 	}
 		
 	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
@@ -54,7 +56,7 @@ public class Client extends UnicastRemoteObject implements Player {
 
 			@Override
 			public void run() {
-				while (true) {
+				while (running) {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
 						for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
@@ -140,5 +142,18 @@ public class Client extends UnicastRemoteObject implements Player {
 	
 	public synchronized void setBarPosition(int bar, int position) {
 		barPos[bar] = position;
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public void stop() throws RemoteException {
+		running = false;
+		server.disconnectPlayer(playerNum);
+	}
+
+	public PongBall getBall() {
+		return new PongBall(ballX, ballY, vx, vy);
 	}
 }

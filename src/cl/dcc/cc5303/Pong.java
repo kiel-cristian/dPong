@@ -35,7 +35,7 @@ public class Pong implements KeyListener {
 	private MyCanvas canvas;
 	private Client client;
 
-	private Rectangle[] bars = new Rectangle[4];
+	private GameBar[] bars = new GameBar[4];
 	private int[] scores = new int[4];
 	private int lastPlayer;
 	private PongBall ball;
@@ -44,18 +44,20 @@ public class Pong implements KeyListener {
 
 	public Pong(Client client) {
 		this.client = client;
+		
+		int playerNum = client.getPlayerNum();
 
-		bars[0] = new Rectangle(10, HEIGHT / 2, 10, 100); // jugadores
-		bars[1] = new Rectangle(WIDTH - 10, HEIGHT / 2, 10, 100);
-		bars[2] = new Rectangle(WIDTH/2, HEIGHT - 10, 100, 10);
-		bars[3] = new Rectangle(WIDTH/2, 10, 100, 10);
+		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
+		bars[1] = new GameBar(WIDTH - 10, HEIGHT / 2, 10, 100, 1);
+		bars[2] = new GameBar(WIDTH/2, HEIGHT - 10, 100, 10, 2);
+		bars[3] = new GameBar(WIDTH/2, 10, 100, 10, 3);
 
 		ball = new PongBall();
 		lastPlayer = -1;
 		
 		for(int i = 0; i < MAX_PLAYERS; i++){
 			scores[i] = 0;
-			if(client.getPlayerNum() == i)
+			if(playerNum == i)
 				playing[i] = true;
 			else
 				playing[i] = false;
@@ -66,7 +68,7 @@ public class Pong implements KeyListener {
 
 	/* Initializes window frame and set it visible */
 	private void init() {
-		canvas = new MyCanvas(client.getPlayerNum());
+		canvas = new MyCanvas(client.getPlayerNum(), client.getBall());
 		score  = new ScoreBoard();
 
 		scoreFrame = new JFrame("Marcador");
@@ -88,7 +90,6 @@ public class Pong implements KeyListener {
 				canvas.rectangles.add(bars[i]);
 		}
 		
-		canvas.rectangles.add(ball);
 		canvas.addKeyListener(this);
 
 		frame.pack();
@@ -105,9 +106,9 @@ public class Pong implements KeyListener {
 
 			@Override
 			public void run() {
-				while (true) {
+				while (client.isRunning()) {
 					int playerNum     = client.getPlayerNum();
-					playing 		  		= client.getPlaying();
+					playing 		  = client.getPlaying();
 					scores            = client.getScores();
 					lastPlayer        = client.getLastPLayer();
 
@@ -126,6 +127,8 @@ public class Pong implements KeyListener {
 					handlePlayerBars();
 					handleScore();
 					
+					canvas.playerNum = playerNum;
+					canvas.ball = ball;
 					canvas.repaint();
 					try {
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
@@ -298,6 +301,22 @@ public class Pong implements KeyListener {
 	}
 	
 	private void handleKeyEvents(int playerPos) {
+		// Manejo de Q
+		if(keys[KeyEvent.VK_Q] || keys[KeyEvent.VK_ESCAPE]){
+			try {
+				client.stop();
+				frame.removeAll();
+				scoreFrame.removeAll();
+				
+				
+				
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return;
+		}
+
 		Rectangle bar = bars[playerPos];
 		// Jugador posee una barra vertical
 		if(playerPos == 0 || playerPos == 1){
