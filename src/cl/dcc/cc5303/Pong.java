@@ -22,7 +22,7 @@ public class Pong implements KeyListener {
 	public final static int WIDTH = 640, HEIGHT = 480;
 	public final static int UPDATE_RATE = 60;
 	public final static int DX = 5;
-	public final static double DV = 0.1;
+	public final static double DV = 0.2;
 	public final static int MAX_PLAYERS = 4;
 
 	private JFrame frame;
@@ -37,11 +37,17 @@ public class Pong implements KeyListener {
 
 	private boolean[] keys;
 	private boolean[] playing = new boolean[4];
+	private int playerNum;
+	private boolean running;
+	private Thread serverUpdate;
+	private Thread game;
 
-	public Pong(Client client) {
-		this.client = client;
+	public Pong(Client client, Thread serverUpdate) {
+		this.client    = client;
+		this.playerNum = client.getPlayerNum();
+		this.running   = client.isRunning();
+		this.serverUpdate = serverUpdate;
 		
-		int playerNum = client.getPlayerNum();
 
 		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
 		bars[1] = new GameBar(WIDTH - 10, HEIGHT / 2, 10, 100, 1);
@@ -63,7 +69,7 @@ public class Pong implements KeyListener {
 
 	/* Initializes window frame and set it visible */
 	private void init() {
-		canvas = new MyCanvas(client.getPlayerNum(), client.getBall());
+		canvas = new MyCanvas(this.playerNum, client.getBall());
 		scores = new ScoreBoardGUI();
 
 		scoreFrame = new JFrame("Marcador");
@@ -95,13 +101,12 @@ public class Pong implements KeyListener {
 
 		canvas.init();
 		frame.addKeyListener(this);
-		handleScore();
 
-		Thread game = new Thread(new Runnable() {
+		game = new ClientThread(this.playerNum, new Runnable() {
 
 			@Override
 			public void run() {
-				while (client.isRunning()) {
+				while (running) {
 					int playerNum     = client.getPlayerNum();
 					playing 		  = client.getPlaying();
 					lastPlayer        = client.getLastPLayer();
@@ -121,7 +126,6 @@ public class Pong implements KeyListener {
 
 					handleQuitEvent();
 					handlePlayerBars();
-					handleScore();
 					
 					canvas.playerNum = playerNum;
 					canvas.ball = ball;
@@ -129,16 +133,37 @@ public class Pong implements KeyListener {
 					try {
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
 					} catch (InterruptedException ex) {
+						System.out.println("Pong: " + playerNum + " muriendo");
+						running = false;
+						return;
 					}
 				}
 			}
 		});
+		
+		
+		serverUpdate.start();
 		game.start();
-
+		
+		try {
+			serverUpdate.wait();
+			game.wait();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("Wait error");
+		}
+		
 	}
 	
-	private void handleScore(){
-		// TODO
+	private void stop(){
+		client.stop(this.playerNum);
+		running = false;
+		frame.dispose();
+		scoreFrame.dispose();
+		
+		game.interrupt();
+		serverUpdate.interrupt();
 	}
 
 	private void handleStatus(int playerNum){
@@ -195,13 +220,13 @@ public class Pong implements KeyListener {
 					}
 				} break;
 				case(2):{
-					// Punto para jugador 3 si no sale por arriba
+					// Punto para jugador 3 si no sale abjo
 					if( !(ball.y > Pong.HEIGHT)){
 						score.sumPoint(2);
 					}
 				}break;
 				case(3):{
-					// Punto para jugador 4 si no sale por abajo
+					// Punto para jugador 4 si no sale arriba
 					if( !(ball.y < 0)){
 						score.sumPoint(3);
 					}
@@ -290,18 +315,7 @@ public class Pong implements KeyListener {
 	private void handleQuitEvent(){
 		// Manejo de Q, ESC
 		if(keys[KeyEvent.VK_Q] || keys[KeyEvent.VK_ESCAPE]){
-			try {
-				client.stop();
-				frame.dispose();
-				scoreFrame.dispose();
-
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				
-				frame.dispose();
-				scoreFrame.dispose();
-				e.printStackTrace();
-			}
+			stop();
 			return;
 		}
 	}

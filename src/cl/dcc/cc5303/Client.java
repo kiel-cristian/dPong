@@ -52,7 +52,7 @@ public class Client extends UnicastRemoteObject implements Player {
 		playing[playerNum] = true;
 		lastPlayer = -1;
 
-		Thread serverUpdate = new Thread(new Runnable() {
+		Thread serverUpdate = new ClientThread(playerNum, new Runnable() {
 
 			@Override
 			public void run() {
@@ -75,14 +75,17 @@ public class Client extends UnicastRemoteObject implements Player {
 						return; // Server muerto
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
-						e.printStackTrace();
+						System.out.println("Server Update:" + playerNum + " muriendo");
+						running = false;
+						// e.printStackTrace();
+						return;
 					}
 				}
 			}
 			
 		});
-		serverUpdate.start();
-		new Pong(this);
+		
+		new Pong(this, serverUpdate);
 	}
 	
 	public boolean[] getPlaying(){
@@ -148,9 +151,14 @@ public class Client extends UnicastRemoteObject implements Player {
 		return running;
 	}
 
-	public void stop() throws RemoteException {
+	public void stop(int playerNum) {
 		running = false;
-		server.disconnectPlayer(playerNum);
+		try {
+			server.disconnectPlayer(playerNum);
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+			System.out.println("Error al desconectarse del servidor");
+		}
 	}
 
 	public PongBall getBall() {
