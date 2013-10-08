@@ -61,8 +61,19 @@ public class Client extends UnicastRemoteObject implements Player {
 				
 				while (running) {
 					try {
-						if(!getWinner()){
-							GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
+						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
+						
+						if(winner == false && state.winner){
+							pong.scores.setScores(getScores());
+							pong.showWinner();
+							winner = state.winner;
+						}
+						if(winner == true && !state.winner){
+							winner = false;
+							pong.reMatch();
+						}
+
+						if(!state.winner){
 							for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
 								barPos[i] 	= state.barsPos[i];
 								playing[i] 	= state.playing[i];
@@ -73,14 +84,10 @@ public class Client extends UnicastRemoteObject implements Player {
 							vx = state.vx;
 							vy = state.vy;
 							
-							if(winner != state.winner){
-								pong.scores.setScores(getScores());
-								pong.showWinner();
-							}
-							winner = state.winner;
-							
-							
 							Thread.sleep(REFRESH_TIME);
+						
+						}else{
+							winner = getWinner();
 						}
 					} catch (RemoteException e) {
 
@@ -96,11 +103,6 @@ public class Client extends UnicastRemoteObject implements Player {
 		});
 		
 		pong =new Pong(this, serverUpdate);
-	}
-	
-	public synchronized void reMatch() throws RemoteException{
-		winner = false;
-		pong.reMatch();
 	}
 	
 	public boolean getWinner(){
