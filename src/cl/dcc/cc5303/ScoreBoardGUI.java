@@ -53,10 +53,6 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		score4.setText("P4: " + score.getScore(3));
 	}
 	
-	public ScoreBoardSimple getScoreBoard() {
-		return score;
-	}
-
 	@Override
 	public void sumPoint(int playerNum) {
 		score.sumPoint(playerNum);
