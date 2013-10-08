@@ -11,7 +11,7 @@
 <p align="justify"> 7.- El juego termina cuando algún jugador mete 10 goles.</p>
 
 
-<p align="right"> Integrantes : Cristian Carreño <br>
+<p align="right"> Integrantes : Cristian Carreño<br>
 Sergio Maass<br>
 Agustin Lopez
 </p>
