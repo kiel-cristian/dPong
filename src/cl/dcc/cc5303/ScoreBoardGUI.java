@@ -73,6 +73,11 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		score.setScores(scores);
 		updateScores();
 	}
+	
+	public void setWinner(int[] scores, int winner){
+		score.setScores(scores);
+		score.setWinner(winner);
+	}
 
 	@Override
 	public int getWinner() {
@@ -84,6 +89,8 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		score2.setText("");
 		score3.setText("");
 		score4.setText("");
+		
+		System.out.println("GANADOR!!!" + score.getWinner());
 		
 		switch(score.getWinner()){
 			case(0):{

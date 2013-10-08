@@ -8,7 +8,7 @@ public class ScoreBoardSimple implements ScoreBoard {
 	List<Integer> winners = new ArrayList<Integer>();
 	
 	//final score
-	public final int WINNING_SCORE = 10;
+	public final int WINNING_SCORE = 2;
 	
 	//variables
 	private int scores[];
@@ -18,6 +18,10 @@ public class ScoreBoardSimple implements ScoreBoard {
 	public ScoreBoardSimple(){
 		scores = new int[4];
 		winner = -1;
+	}
+	
+	public void setWinner(int winner){
+		this.winner = winner;
 	}
 	
 	public void sumPoint(int playerNum) {

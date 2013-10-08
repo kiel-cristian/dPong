@@ -8,5 +8,4 @@ public interface IServer extends Remote {
   public boolean playersReady() throws RemoteException;
   public GameState updatePositions(int playerNum, int position) throws RemoteException;
   public void disconnectPlayer(int playerNum) throws RemoteException;
-  public boolean checkForWinner() throws RemoteException;
 }

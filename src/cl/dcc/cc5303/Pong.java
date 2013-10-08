@@ -33,7 +33,7 @@ public class Pong implements KeyListener {
 	private GameBar[] bars = new GameBar[4];
 	private int lastPlayer;
 	private PongBall ball;
-	private ScoreBoardGUI scores;
+	public ScoreBoardGUI scores;
 
 	private boolean[] keys;
 	private boolean[] playing = new boolean[4];
@@ -111,9 +111,9 @@ public class Pong implements KeyListener {
 						int playerNum     = client.getPlayerNum();
 						playing 		  = client.getPlaying();
 						lastPlayer        = client.getLastPLayer();
-						scores.setScores(client.getScores());
-					
-						if(client.playersReady() && client.noWinners()){
+						
+						if(client.playersReady() && !client.getWinner()){
+							scores.setScores(client.getScores());
 							handleStatus(playerNum);
 							handleKeyEvents(playerNum);
 							doGameIteration(playing, bars, ball, scores, lastPlayer);

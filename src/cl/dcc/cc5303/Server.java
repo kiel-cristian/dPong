@@ -47,6 +47,18 @@ public class Server extends UnicastRemoteObject implements IServer {
 		lastPlayer = -1;
 		winner     = false;
 		score.reset();
+		
+		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+			// Restaurar juego en cliente
+			if(playing[i]){
+				try {
+					players[i].reMatch();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	public static void main(String[] args) {
@@ -145,12 +157,6 @@ public class Server extends UnicastRemoteObject implements IServer {
 			bars[playerNum].x = position;
 		}
 		return new GameState(playing, bars, ball, score.getScores(), winner);
-	}
-	
-	@Override
-	public synchronized boolean checkForWinner(){
-		// Hay un ganador
-		return score.getWinner() >= 0;
 	}
 	
 	private void checkForWinnerServer(){
