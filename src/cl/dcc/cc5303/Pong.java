@@ -22,7 +22,7 @@ public class Pong implements KeyListener {
 	public final static int WIDTH = 640, HEIGHT = 480;
 	public final static int UPDATE_RATE = 60;
 	public final static int DX = 5;
-	public final static double DV = 0.2;
+	public final static double DV = 0.3;
 	public final static int MAX_PLAYERS = 4;
 
 	private JFrame frame;

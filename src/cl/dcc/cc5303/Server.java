@@ -11,11 +11,13 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Server extends UnicastRemoteObject implements IServer {
 	private static final long serialVersionUID = -8181276888826913071L;
+	private static final long INACTIVITY_TIMEOUT = 3000;
 	private boolean[] playing;
 	private Rectangle[] bars;
 	private int lastPlayer;
 	private PongBall ball;
 	private Player[] players;
+	private long[] lastActivity;
 	private int playersNum;
 	private Thread simulationThread;
 	private ScoreBoardSimple score;
@@ -30,9 +32,9 @@ public class Server extends UnicastRemoteObject implements IServer {
 		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
 
 		ball = new PongBall();
-
-		playing    = new boolean[4];
-		players    = new Player[4];
+		playing = new boolean[4];
+		players = new Player[4];
+		lastActivity = new long[4];
 		playersNum = numPlayers;
 		score      = new ScoreBoardSimple();
 		winner     = false;
@@ -92,7 +94,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		int playerNum = 666;
 		if (!playing[0])
 			playerNum = addPlayer(player, 0);
-		else if (!playing[1])
+		else if (!playing[1])		
 			playerNum = addPlayer(player, 1);
 		else if (!playing[2])
 			playerNum = addPlayer(player, 2);
@@ -103,11 +105,14 @@ public class Server extends UnicastRemoteObject implements IServer {
 	
 	@Override
 	public synchronized void disconnectPlayer(int playerNum) throws RemoteException {
+		removePlayer(playerNum);
+	}
+	
+	private void removePlayer(int playerNum) {
 		playing[playerNum] = false;
 		players[playerNum] = null;
 		
 		// Se pone en 0 el puntaje del jugador que se fue
-		// TODO : Manejar puntajes historicos aca
 		int[] scores = score.getScores();
 		scores[playerNum]  = 0;
 		score.setScores(scores);
@@ -121,6 +126,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private int addPlayer(Player player, int num) {
 		players[num] = player;
 		playing[num] = true;
+		lastActivity[num] = System.currentTimeMillis();
 		System.out.println("Jugador solicita conectarse. Se le asigna player " + (num + 1));
 		if (playersReady())
 			startGame();
@@ -156,6 +162,8 @@ public class Server extends UnicastRemoteObject implements IServer {
 		else{
 			bars[playerNum].x = position;
 		}
+
+		lastActivity[playerNum] = System.currentTimeMillis();
 		return new GameState(playing, bars, ball, score.getScores(), winner);
 	}
 	
@@ -164,7 +172,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 			winner = true;
 		}
 	}
-	
+
 	private class PongSimulation extends Thread {
 
 		public void run() {
@@ -173,7 +181,9 @@ public class Server extends UnicastRemoteObject implements IServer {
 			while (running) {
 				try {
 					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
+
 					checkForWinnerServer();
+					checkPlayersActivity();
 					
 					if(winner){
 						Thread.sleep(3000 / Pong.UPDATE_RATE);
@@ -185,6 +195,14 @@ public class Server extends UnicastRemoteObject implements IServer {
 				} catch (InterruptedException ex) {
 					running = false;
 				}
+			}
+		}
+	}
+	
+	private void checkPlayersActivity() {
+		for (int i=0; i < lastActivity.length; i++) {
+			if (playing[i] && (System.currentTimeMillis() - lastActivity[i] > INACTIVITY_TIMEOUT)) {
+				removePlayer(i);
 			}
 		}
 	}

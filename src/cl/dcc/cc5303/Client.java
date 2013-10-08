@@ -11,6 +11,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	 * 
 	 */
 	private static final long serialVersionUID = -1910265532826050466L;
+	private static int REFRESH_TIME = 50;
 	private IServer server;
 	private volatile int playerNum;
 	private volatile int lastPlayer;
@@ -79,7 +80,7 @@ public class Client extends UnicastRemoteObject implements Player {
 							winner = state.winner;
 							
 							
-							Thread.sleep(100);
+							Thread.sleep(REFRESH_TIME);
 						}
 					} catch (RemoteException e) {
 
