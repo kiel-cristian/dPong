@@ -67,7 +67,8 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	@Override
 	public void setScores(int[] scores) {
 		score.setScores(scores);
-		updateScores();
+		if(score.getWinner() <0)
+			updateScores();
 	}
 	
 	public void setWinner(int[] scores, int winner){
