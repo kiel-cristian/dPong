@@ -33,7 +33,7 @@ public class Pong implements KeyListener {
 	private GameBar[] bars = new GameBar[4];
 	private int lastPlayer;
 	private PongBall ball;
-	private ScoreBoardGUI scores;
+	public ScoreBoardGUI scores;
 
 	private boolean[] keys;
 	private boolean[] playing = new boolean[4];
@@ -41,14 +41,11 @@ public class Pong implements KeyListener {
 	
 	public Thread serverUpdate;
 	public Thread game;
-	private boolean disposed;
 
 	public Pong(Client client, Thread serverUpdate) {
 		this.client    = client;
 		this.playerNum = client.getPlayerNum();
 		this.serverUpdate = serverUpdate;
-		disposed = false;
-		
 
 		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
 		bars[1] = new GameBar(WIDTH - 10, HEIGHT / 2, 10, 100, 1);
@@ -111,25 +108,21 @@ public class Pong implements KeyListener {
 				
 				while (running) {
 					try {
-						int playerNum     = client.getPlayerNum();
-						playing 		  = client.getPlaying();
-						lastPlayer        = client.getLastPLayer();
-						scores.setScores(client.getScores());
+						if(client.playersReady() && !client.getWinner()){
+							int playerNum     = client.getPlayerNum();
+							playing 		  		= client.getPlaying();
+							lastPlayer        = client.getLastPLayer();
 
-					
-						if(client.playersReady()){
 							handleStatus(playerNum);
 							handleKeyEvents(playerNum);
 							doGameIteration(playing, bars, ball, scores, lastPlayer);
+							handlePlayerBars();
+							canvas.playerNum = playerNum;
+							canvas.ball = ball;
 						}
 
-						handleQuitEvent();
-						handlePlayerBars();
-						
-						canvas.playerNum = playerNum;
-						canvas.ball = ball;
 						canvas.repaint();
-					
+						handleQuitEvent();
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
 						 
 					}
@@ -371,5 +364,17 @@ public class Pong implements KeyListener {
 	public void keyTyped(KeyEvent e) {
 		// TODO Auto-generated method stub
 
+	}
+
+	public void reMatch() {
+		ball    = new PongBall();
+		ball.reset();
+		lastPlayer = -1;
+		scores.reset();
+	}
+
+	public void showWinner() {
+		scores.showWinner();
+		
 	}
 }
