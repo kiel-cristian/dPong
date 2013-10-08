@@ -113,19 +113,16 @@ public class Pong implements KeyListener {
 						lastPlayer        = client.getLastPLayer();
 						
 						if(client.playersReady() && !client.getWinner()){
-							scores.setScores(client.getScores());
 							handleStatus(playerNum);
 							handleKeyEvents(playerNum);
 							doGameIteration(playing, bars, ball, scores, lastPlayer);
+							canvas.playerNum = playerNum;
+							canvas.ball = ball;
+							canvas.repaint();
 						}
 
 						handleQuitEvent();
 						handlePlayerBars();
-						
-						canvas.playerNum = playerNum;
-						canvas.ball = ball;
-						canvas.repaint();
-					
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
 						 
 					}

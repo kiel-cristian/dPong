@@ -22,6 +22,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private Thread simulationThread;
 	private ScoreBoardSimple score;
 	private boolean winner;
+	private int winnerPlayer;
 
 	protected Server(int numPlayers) throws RemoteException {
 		super();
@@ -38,6 +39,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		playersNum = numPlayers;
 		score      = new ScoreBoardSimple();
 		winner     = false;
+		winnerPlayer = -1;
 	}
 	
 	private void resetGame(){
@@ -152,10 +154,11 @@ public class Server extends UnicastRemoteObject implements IServer {
 		}
 
 		lastActivity[playerNum] = System.currentTimeMillis();
-		return new GameState(playing, bars, ball, score.getScores(), winner);
+		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer);
 	}
 	
 	private void checkForWinnerServer(){
+		winnerPlayer = score.getWinner();
 		if(score.getWinner() >= 0){
 			winner = true;
 		}
