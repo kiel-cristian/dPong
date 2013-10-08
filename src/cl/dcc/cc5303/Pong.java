@@ -108,21 +108,21 @@ public class Pong implements KeyListener {
 				
 				while (running) {
 					try {
-						int playerNum     = client.getPlayerNum();
-						playing 		  = client.getPlaying();
-						lastPlayer        = client.getLastPLayer();
-						
 						if(client.playersReady() && !client.getWinner()){
+							int playerNum     = client.getPlayerNum();
+							playing 		  		= client.getPlaying();
+							lastPlayer        = client.getLastPLayer();
+
 							handleStatus(playerNum);
 							handleKeyEvents(playerNum);
 							doGameIteration(playing, bars, ball, scores, lastPlayer);
+							handlePlayerBars();
 							canvas.playerNum = playerNum;
 							canvas.ball = ball;
-							canvas.repaint();
 						}
 
+						canvas.repaint();
 						handleQuitEvent();
-						handlePlayerBars();
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
 						 
 					}
@@ -367,11 +367,8 @@ public class Pong implements KeyListener {
 	}
 
 	public void reMatch() {
-		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
-		bars[1] = new GameBar(WIDTH - 10, HEIGHT / 2, 10, 100, 1);
-		bars[2] = new GameBar(WIDTH/2, HEIGHT - 10, 100, 10, 2);
-		bars[3] = new GameBar(WIDTH/2, 10, 100, 10, 3);
 		ball    = new PongBall();
+		ball.reset();
 		lastPlayer = -1;
 		scores.reset();
 	}

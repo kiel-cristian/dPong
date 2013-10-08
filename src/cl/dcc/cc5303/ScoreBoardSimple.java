@@ -53,5 +53,6 @@ public class ScoreBoardSimple implements ScoreBoard {
 	public void reset() {
 		winners.add(winner);
 		scores = new int[4];
+		winner = -1;
 	}
 }

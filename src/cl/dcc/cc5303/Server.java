@@ -177,7 +177,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 					checkPlayersActivity();
 					
 					if(winner){
-						Thread.sleep(3000 / Pong.UPDATE_RATE);
+						Thread.sleep(10000 / Pong.UPDATE_RATE);
 						resetGame();
 					}
 					else{
