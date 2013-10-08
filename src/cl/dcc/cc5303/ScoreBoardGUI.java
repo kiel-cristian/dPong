@@ -85,21 +85,22 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		score2.setText("");
 		score3.setText("");
 		score4.setText("");
-		
+
+		int winner = score.getWinner();
 		System.out.println("GANADOR!!!" + score.getWinner());
 		
-		switch(score.getWinner()){
+		switch(winner){
 			case(0):{
 				score1.setText("JUGADOR 1 A GANADO!");
 			}
 			case(1):{
-				score2.setText("JUGADOR 1 A GANADO!");
+				score2.setText("JUGADOR 2 A GANADO!");
 			}
 			case(2):{
-				score3.setText("JUGADOR 1 A GANADO!");
+				score3.setText("JUGADOR 3 A GANADO!");
 			}
 			case(3):{
-				score4.setText("JUGADOR 1 A GANADO!");
+				score4.setText("JUGADOR 4 A GANADO!");
 				
 			}
 		}
