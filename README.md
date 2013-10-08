@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
 <head>
-  <title>Using ReMarkdown</title>
+  <title class="rmd-on" >Tarea 1 Sistemas Distruibuidos 2013</title>
   <link rel="stylesheet" href="remarkdown.css">
 </head>
 <body class="rmd-on">
-  <h1>Hello World</h1>
+  <h1>Tarea 1 Sistemas Distruibuidos 2013 </h1>
   <p>Goodnight, and good luck.</p>
 </body>
 </html>
