@@ -22,6 +22,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile double vy;
 	private volatile int[] barPos = new int[4];
 	private volatile Pong pong;
+	private volatile boolean winner;
 	
 	public static void main(String[] args) {
 		try {
@@ -59,17 +60,26 @@ public class Client extends UnicastRemoteObject implements Player {
 				
 				while (running) {
 					try {
-						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
-						for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
-							barPos[i] 	= state.barsPos[i];
-							playing[i] 	= state.playing[i];
-							scores[i]   = state.scores[i];
+						if(!noWinners()){
+							GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
+							for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
+								barPos[i] 	= state.barsPos[i];
+								playing[i] 	= state.playing[i];
+								scores[i]   = state.scores[i];
+							}
+							ballX = state.ballX;
+							ballY = state.ballY;
+							vx = state.vx;
+							vy = state.vy;
+							
+							if(winner != state.winner){
+								pong.showWinner();
+							}
+							winner = state.winner;
+							
+							
+							Thread.sleep(100);
 						}
-						ballX = state.ballX;
-						ballY = state.ballY;
-						vx = state.vx;
-						vy = state.vy;
-						Thread.sleep(100);
 					} catch (RemoteException e) {
 
 					} catch (InterruptedException e) {
@@ -86,6 +96,15 @@ public class Client extends UnicastRemoteObject implements Player {
 		pong =new Pong(this, serverUpdate);
 	}
 	
+	public synchronized void reMatch(){
+		winner = false;
+		pong.reMatch();
+	}
+	
+	public boolean noWinners(){
+		return !winner;
+	}
+
 	public boolean[] getPlaying(){
 		boolean[] play = playing;
 		return play;

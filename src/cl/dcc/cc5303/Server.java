@@ -19,6 +19,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 	private int playersNum;
 	private Thread simulationThread;
 	private ScoreBoardSimple score;
+	private boolean winner;
 
 	protected Server(int numPlayers) throws RemoteException {
 		super();
@@ -30,10 +31,22 @@ public class Server extends UnicastRemoteObject implements IServer {
 
 		ball = new PongBall();
 
-		playing = new boolean[4];
-		players = new Player[4];
+		playing    = new boolean[4];
+		players    = new Player[4];
 		playersNum = numPlayers;
-		score = new ScoreBoardSimple();
+		score      = new ScoreBoardSimple();
+		winner     = false;
+	}
+	
+	private void resetGame(){
+		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
+		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
+		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
+		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
+		ball    = new PongBall();
+		lastPlayer = -1;
+		winner     = false;
+		score.reset();
 	}
 
 	public static void main(String[] args) {
@@ -124,15 +137,26 @@ public class Server extends UnicastRemoteObject implements IServer {
 	}
 
 	@Override
-	public synchronized GameState updatePositions(int playerNum, int position)
-			throws RemoteException {
+	public synchronized GameState updatePositions(int playerNum, int position) throws RemoteException {
 		if(playerNum == 0 || playerNum == 1){
 			bars[playerNum].y = position;
 		}
 		else{
 			bars[playerNum].x = position;
 		}
-		return new GameState(playing, bars, ball, score.getScores());
+		return new GameState(playing, bars, ball, score.getScores(), winner);
+	}
+	
+	@Override
+	public synchronized boolean checkForWinner(){
+		// Hay un ganador
+		return score.getWinner() >= 0;
+	}
+	
+	private void checkForWinnerServer(){
+		if(score.getWinner() >= 0){
+			winner = true;
+		}
 	}
 	
 	private class PongSimulation extends Thread {
@@ -143,7 +167,15 @@ public class Server extends UnicastRemoteObject implements IServer {
 			while (running) {
 				try {
 					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
-					Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
+					checkForWinnerServer();
+					
+					if(winner){
+						Thread.sleep(3000 / Pong.UPDATE_RATE);
+						resetGame();
+					}
+					else{
+						Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
+					}
 				} catch (InterruptedException ex) {
 					running = false;
 				}

@@ -1,6 +1,11 @@
 package cl.dcc.cc5303;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class ScoreBoardSimple implements ScoreBoard {
+	//historical winners
+	List<Integer> winners = new ArrayList<Integer>();
 	
 	//final score
 	public final int WINNING_SCORE = 10;
@@ -12,6 +17,7 @@ public class ScoreBoardSimple implements ScoreBoard {
 	//constructor
 	public ScoreBoardSimple(){
 		scores = new int[4];
+		winner = -1;
 	}
 	
 	public void sumPoint(int playerNum) {
@@ -32,5 +38,16 @@ public class ScoreBoardSimple implements ScoreBoard {
 	@Override
 	public void setScores(int[] scores) {
 		this.scores = scores;
+	}
+
+	@Override
+	public int getWinner() {
+		return winner;
+	}
+
+	@Override
+	public void reset() {
+		winners.add(winner);
+		scores = new int[4];
 	}
 }

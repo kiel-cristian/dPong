@@ -73,4 +73,55 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		score.setScores(scores);
 		updateScores();
 	}
+
+	@Override
+	public int getWinner() {
+		return score.getWinner();
+	}
+
+	public void showWinner() {
+		score1.setText("");
+		score2.setText("");
+		score3.setText("");
+		score4.setText("");
+		
+		switch(score.getWinner()){
+			case(0):{
+				score1.setText("JUGADOR 1 A GANADO!");
+			}
+			case(1):{
+				score2.setText("JUGADOR 1 A GANADO!");
+			}
+			case(2):{
+				score3.setText("JUGADOR 1 A GANADO!");
+			}
+			case(3):{
+				score4.setText("JUGADOR 1 A GANADO!");
+				
+			}
+		}
+		
+	}
+
+	@Override
+	public void reset() {
+		score1.setText("P1: " + score.getScore(0));
+		score1.setFont(new Font("Monospaced",Font.BOLD,25));
+		score1.setForeground(Color.WHITE);
+		
+		score2.setText("P2: " + score.getScore(1));
+		score2.setFont(new Font("Monospaced",Font.BOLD,25));
+		score2.setForeground(Color.WHITE);
+		
+		score3.setText("P3: " + score.getScore(2));
+		score3.setFont(new Font("Monospaced",Font.BOLD,25));
+		score3.setForeground(Color.WHITE);
+		
+		score4.setText("P4: " + score.getScore(3));
+		score4.setFont(new Font("Monospaced",Font.BOLD,25));
+		score4.setForeground(Color.WHITE);
+		
+		score.reset();
+		
+	}
 }

@@ -41,14 +41,11 @@ public class Pong implements KeyListener {
 	
 	public Thread serverUpdate;
 	public Thread game;
-	private boolean disposed;
 
 	public Pong(Client client, Thread serverUpdate) {
 		this.client    = client;
 		this.playerNum = client.getPlayerNum();
 		this.serverUpdate = serverUpdate;
-		disposed = false;
-		
 
 		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
 		bars[1] = new GameBar(WIDTH - 10, HEIGHT / 2, 10, 100, 1);
@@ -115,9 +112,8 @@ public class Pong implements KeyListener {
 						playing 		  = client.getPlaying();
 						lastPlayer        = client.getLastPLayer();
 						scores.setScores(client.getScores());
-
 					
-						if(client.playersReady()){
+						if(client.playersReady() && client.noWinners()){
 							handleStatus(playerNum);
 							handleKeyEvents(playerNum);
 							doGameIteration(playing, bars, ball, scores, lastPlayer);
@@ -371,5 +367,20 @@ public class Pong implements KeyListener {
 	public void keyTyped(KeyEvent e) {
 		// TODO Auto-generated method stub
 
+	}
+
+	public void reMatch() {
+		bars[0] = new GameBar(10, HEIGHT / 2, 10, 100, 0); // jugadores
+		bars[1] = new GameBar(WIDTH - 10, HEIGHT / 2, 10, 100, 1);
+		bars[2] = new GameBar(WIDTH/2, HEIGHT - 10, 100, 10, 2);
+		bars[3] = new GameBar(WIDTH/2, 10, 100, 10, 3);
+		ball    = new PongBall();
+		lastPlayer = -1;
+		scores.reset();
+	}
+
+	public void showWinner() {
+		scores.showWinner();
+		
 	}
 }
