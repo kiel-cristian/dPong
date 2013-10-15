@@ -92,16 +92,16 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		
 		switch(winner){
 			case(0):{
-				score1.setText("JUGADOR 1 A GANADO!");
+				score1.setText("JUGADOR 1 HA GANADO!");
 			}
 			case(1):{
-				score2.setText("JUGADOR 2 A GANADO!");
+				score2.setText("JUGADOR 2 HA GANADO!");
 			}
 			case(2):{
-				score3.setText("JUGADOR 3 A GANADO!");
+				score3.setText("JUGADOR 3 HA GANADO!");
 			}
 			case(3):{
-				score4.setText("JUGADOR 4 A GANADO!");
+				score4.setText("JUGADOR 4 HA GANADO!");
 				
 			}
 		}
