@@ -64,6 +64,11 @@ public class Pong implements KeyListener {
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
 	}
+	
+	public void startGame() {
+		serverUpdate.start();
+		game.start();
+	}
 
 	/* Initializes window frame and set it visible */
 	private void init() {
@@ -141,9 +146,6 @@ public class Pong implements KeyListener {
 				}
 			}
 		});
-		
-		serverUpdate.start();
-		game.start();
 	}
 	
 	public void stopClient(){

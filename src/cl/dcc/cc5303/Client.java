@@ -91,7 +91,8 @@ public class Client extends UnicastRemoteObject implements Player {
 			
 		});
 		
-		pong =new Pong(this, serverUpdate);
+		pong = new Pong(this, serverUpdate);
+		pong.startGame();
 	}
 	
 	protected synchronized void updateScores(int[] scores2) {
