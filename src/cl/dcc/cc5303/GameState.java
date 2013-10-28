@@ -16,7 +16,7 @@ public class GameState implements Serializable {
 	public double vy;
 	public boolean winner;
 	public int winnerPlayer;
-	public int numPlayers;
+	public int minPlayers;
 
 	public GameState(boolean[] playing, Rectangle[] bars, PongBall ball, int[] scores, boolean winner,
 			int winnerPlayer, int numPlayers) {
@@ -41,6 +41,6 @@ public class GameState implements Serializable {
 		this.vy = ball.vy;
 		this.winner = winner;
 		this.winnerPlayer = winnerPlayer;
-		this.numPlayers = numPlayers;
+		this.minPlayers = numPlayers;
 	}
 }

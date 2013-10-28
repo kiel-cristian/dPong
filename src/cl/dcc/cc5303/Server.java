@@ -7,50 +7,19 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.LinkedHashMap;
 
 
 public class Server extends UnicastRemoteObject implements IServer {
 	private static final long serialVersionUID = -8181276888826913071L;
-	private static final long INACTIVITY_TIMEOUT = 3000;
-	private boolean[] playing;
-	private Rectangle[] bars;
-	private int lastPlayer;
-	private PongBall ball;
-	private Player[] players;
-	private long[] lastActivity;
-	private int playersNum;
-	private Thread simulationThread;
-	private ScoreBoardSimple score;
-	private boolean winner;
-	private int winnerPlayer;
+	private LinkedHashMap<Integer, Match> matches;
+	private int numPlayers;
+	private int matchCount;
 
 	protected Server(int numPlayers) throws RemoteException {
 		super();
-		bars = new Rectangle[4];
-		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
-		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
-		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
-		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
-
-		ball = new PongBall();
-		playing = new boolean[4];
-		players = new Player[4];
-		lastActivity = new long[4];
-		playersNum = numPlayers;
-		score      = new ScoreBoardSimple();
-		winner     = false;
-		winnerPlayer = -1;
-	}
-	
-	private void resetGame(){
-		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
-		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
-		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
-		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
-		ball    = new PongBall();
-		lastPlayer = -1;
-		winner     = false;
-		score.reset();
+		this.numPlayers = numPlayers;
+		matches = new LinkedHashMap<Integer, Match>();
 	}
 
 	public static void main(String[] args) {
@@ -80,111 +49,34 @@ public class Server extends UnicastRemoteObject implements IServer {
 	}
 
 	@Override
-	public int connectPlayer(Player player) throws RemoteException {
-		int playerNum = 666;
-		if (!playing[0])
-			playerNum = addPlayer(player, 0);
-		else if (!playing[1])		
-			playerNum = addPlayer(player, 1);
-		else if (!playing[2])
-			playerNum = addPlayer(player, 2);
-		else if (!playing[3])
-			playerNum = addPlayer(player, 3);
-		return playerNum;
+	public synchronized GameInfo connectPlayer(Player player) throws RemoteException {
+		Match match = getAvailableMatch();
+		int playerNum = match.addPlayer(player);
+		return new GameInfo(match.getID(), playerNum);
 	}
 	
-	@Override
-	public synchronized void disconnectPlayer(int playerNum) throws RemoteException {
-		removePlayer(playerNum);
-	}
-	
-	private void removePlayer(int playerNum) {
-		playing[playerNum] = false;
-		players[playerNum] = null;
-		
-		// Se pone en 0 el puntaje del jugador que se fue
-		int[] scores = score.getScores();
-		scores[playerNum]  = 0;
-		score.setScores(scores);
-		
-		if(!(this.playersReady())){
-			System.out.println("Juego pausado por falta de jugadores");
-			simulationThread.interrupt();
+	private Match getAvailableMatch() {
+		Match match = null;
+		for (Match m : matches.values()) {
+			if (m.playersCount() < Match.MAX_PLAYERS) {
+				match = m;
+				break;
+			}
 		}
-	}
-	
-	private int addPlayer(Player player, int num) {
-		players[num] = player;
-		playing[num] = true;
-		lastActivity[num] = System.currentTimeMillis();
-		System.out.println("Jugador solicita conectarse. Se le asigna player " + (num + 1));
-		if (playersReady())
-			startGame();
-		return num;
-	}
-	
-	private boolean playersReady() {
-		return Utils.countTrue(playing) >= this.playersNum;
-	}
-	
-	private void startGame() {
-		simulationThread = new PongSimulation();
-		lastPlayer = -1;
-		simulationThread.start();
-		System.out.println("Empieza el juego!");
+		if (match == null) {
+			match = new Match(++matchCount, numPlayers);
+			matches.put(match.getID(), match);
+		}
+		return match;
 	}
 
 	@Override
-	public synchronized GameState updatePositions(int playerNum, int position) throws RemoteException {
-		if(playerNum == 0 || playerNum == 1){
-			bars[playerNum].y = position;
-		}
-		else{
-			bars[playerNum].x = position;
-		}
-
-		lastActivity[playerNum] = System.currentTimeMillis();
-		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, playersNum);
-	}
-	
-	private void checkForWinnerServer(){
-		winnerPlayer = score.getWinner();
-		if(score.getWinner() >= 0){
-			winner = true;
-		}
+	public synchronized void disconnectPlayer(int matchID, int playerNum) throws RemoteException {
+		matches.get(matchID).removePlayer(playerNum);
 	}
 
-	private class PongSimulation extends Thread {
-
-		public void run() {
-			boolean running = true;
-			
-			while (running) {
-				try {
-					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
-
-					checkForWinnerServer();
-					checkPlayersActivity();
-					
-					if(winner){
-						Thread.sleep(600000 / Pong.UPDATE_RATE);
-						resetGame();
-					}
-					else{
-						Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
-					}
-				} catch (InterruptedException ex) {
-					running = false;
-				}
-			}
-		}
-	}
-	
-	private void checkPlayersActivity() {
-		for (int i=0; i < lastActivity.length; i++) {
-			if (playing[i] && (System.currentTimeMillis() - lastActivity[i] > INACTIVITY_TIMEOUT)) {
-				removePlayer(i);
-			}
-		}
+	@Override
+	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
+		return matches.get(matchID).updatePositions(playerNum, position);
 	}
 }

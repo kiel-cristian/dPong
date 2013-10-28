@@ -13,6 +13,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private static int REFRESH_TIME = 50;
 	private IServer server;
+	private volatile int matchID;
 	private volatile int playerNum;
 	private volatile int lastPlayer;
 	private volatile boolean[] playing = new boolean[4];
@@ -24,7 +25,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile int[] barPos = new int[4];
 	private volatile Pong pong;
 	private volatile boolean winner;
-	private volatile int numPlayers;
+	private volatile int minPlayers;
 	
 	public static void main(String[] args) {
 		try {
@@ -50,7 +51,9 @@ public class Client extends UnicastRemoteObject implements Player {
 		
 	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
 		server = (IServer) Naming.lookup("rmi://" + serverAddress + ":1099/server");
-		playerNum = server.connectPlayer(this);
+		GameInfo info = server.connectPlayer(this);
+		matchID = info.matchID;
+		playerNum = info.playerNum;
 		playing[playerNum] = true;
 		lastPlayer = -1;
 
@@ -62,8 +65,8 @@ public class Client extends UnicastRemoteObject implements Player {
 				
 				while (running) {
 					try {
-						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
-						numPlayers = state.numPlayers;
+						GameState state = server.updatePositions(matchID, playerNum, getBarPosition(playerNum));
+						minPlayers = state.minPlayers;
 						checkWinners(state);
 
 						if(!getWinner()){
@@ -136,7 +139,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	}
 
 	public boolean playersReady() {
-		return Utils.countTrue(playing) >= numPlayers;
+		return Utils.countTrue(playing) >= minPlayers;
 	}
 	
 	public boolean getPlayerStatus(int playerNum){
@@ -181,7 +184,7 @@ public class Client extends UnicastRemoteObject implements Player {
 
 	public void stop(int playerNum) {
 		try {
-			server.disconnectPlayer(playerNum);
+			server.disconnectPlayer(matchID, playerNum);
 		} catch (RemoteException e1) {
 			e1.printStackTrace();
 			System.out.println("Error al desconectarse del servidor");
