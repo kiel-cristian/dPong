@@ -24,6 +24,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile int[] barPos = new int[4];
 	private volatile Pong pong;
 	private volatile boolean winner;
+	private volatile int numPlayers;
 	
 	public static void main(String[] args) {
 		try {
@@ -62,7 +63,7 @@ public class Client extends UnicastRemoteObject implements Player {
 				while (running) {
 					try {
 						GameState state = server.updatePositions(playerNum, getBarPosition(playerNum));
-						
+						numPlayers = state.numPlayers;
 						checkWinners(state);
 
 						if(!getWinner()){
@@ -79,7 +80,7 @@ public class Client extends UnicastRemoteObject implements Player {
 						
 						}
 					} catch (RemoteException e) {
-
+						// TODO: algo
 					} catch (InterruptedException e) {
 						System.out.println("Server Update:" + playerNum + " muriendo");
 						running = false;
@@ -134,8 +135,8 @@ public class Client extends UnicastRemoteObject implements Player {
 		return players;
 	}
 
-	public boolean playersReady() throws RemoteException{
-		return server.playersReady();
+	public boolean playersReady() {
+		return Utils.countTrue(playing) >= numPlayers;
 	}
 	
 	public boolean getPlayerStatus(int playerNum){

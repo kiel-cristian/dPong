@@ -11,7 +11,6 @@ package cl.dcc.cc5303;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.rmi.RemoteException;
 
 import javax.swing.JFrame;
 
@@ -130,12 +129,6 @@ public class Pong implements KeyListener {
 						handleQuitEvent();
 						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
 						 
-					}
-					catch (RemoteException e) {
-						System.out.println("Server error");
-						
-						stopClient();
-						return;
 					}
 					catch (InterruptedException ex) {
 						System.out.println("Pong: " + playerNum + " muriendo");

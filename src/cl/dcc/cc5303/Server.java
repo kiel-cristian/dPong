@@ -122,19 +122,9 @@ public class Server extends UnicastRemoteObject implements IServer {
 			startGame();
 		return num;
 	}
-
-	public int currentPlayers(){
-		int readyPlayers = 0;
-		for(boolean p : playing){
-			if(p){
-				readyPlayers++;
-			}
-		}
-		return readyPlayers;
-	}
 	
-	public boolean playersReady() {
-		return this.currentPlayers() >= this.playersNum;
+	private boolean playersReady() {
+		return Utils.countTrue(playing) >= this.playersNum;
 	}
 	
 	private void startGame() {
@@ -154,7 +144,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 		}
 
 		lastActivity[playerNum] = System.currentTimeMillis();
-		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer);
+		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, playersNum);
 	}
 	
 	private void checkForWinnerServer(){
