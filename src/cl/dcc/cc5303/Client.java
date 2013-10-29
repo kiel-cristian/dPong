@@ -12,6 +12,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	 */
 	private static final long serialVersionUID = -1910265532826050466L;
 	private static int REFRESH_TIME = 50;
+	private ServerFinder serverFinder;
 	private IServer server;
 	private volatile int matchID;
 	private volatile int playerNum;
@@ -50,7 +51,8 @@ public class Client extends UnicastRemoteObject implements Player {
 	}
 		
 	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
-		server = (IServer) Naming.lookup("rmi://" + serverAddress + ":1099/server");
+		serverFinder = (ServerFinder) Naming.lookup("rmi://" + serverAddress + ":1099/serverfinder");
+		server = serverFinder.getServer();
 		GameInfo info = server.connectPlayer(this);
 		matchID = info.matchID;
 		playerNum = info.playerNum;

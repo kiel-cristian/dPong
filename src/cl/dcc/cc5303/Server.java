@@ -3,6 +3,7 @@ package cl.dcc.cc5303;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.RMISocketFactory;
@@ -10,8 +11,9 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedHashMap;
 
 
-public class Server extends UnicastRemoteObject implements IServer {
+public class Server extends UnicastRemoteObject implements IServer, ServerFinder {
 	private static final long serialVersionUID = -8181276888826913071L;
+	private static ILoadBalancer loadBalancer;
 	private LinkedHashMap<Integer, Match> matches;
 	private int numPlayers;
 	private int matchCount;
@@ -20,6 +22,9 @@ public class Server extends UnicastRemoteObject implements IServer {
 		super();
 		this.numPlayers = numPlayers;
 		matches = new LinkedHashMap<Integer, Match>();
+		if (loadBalancer != null) {
+			loadBalancer.connectServer(this);
+		}
 	}
 
 	public static void main(String[] args) {
@@ -29,12 +34,16 @@ public class Server extends UnicastRemoteObject implements IServer {
 			if (args.length > 0){
 				players = Integer.parseInt(args[0]);
 			}
-
-			RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
-			IServer server = new Server(players);
-			LocateRegistry.createRegistry(1099);
-			Naming.rebind("rmi://localhost:1099/server", server);
-			
+			if (args.length > 1){
+				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://" + args[1] + ":1099/serverfinder");
+				new Server(players);
+			}
+			else {
+				ServerFinder server = new Server(players);
+				RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
+				LocateRegistry.createRegistry(1099);
+				Naming.rebind("rmi://localhost:1099/serverfinder", server);
+			}			
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -43,6 +52,9 @@ public class Server extends UnicastRemoteObject implements IServer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotBoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -78,5 +90,10 @@ public class Server extends UnicastRemoteObject implements IServer {
 	@Override
 	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
 		return matches.get(matchID).updatePositions(playerNum, position);
+	}
+
+	@Override
+	public IServer getServer() throws RemoteException {
+		return this;
 	}
 }

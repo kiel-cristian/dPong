@@ -15,4 +15,14 @@ public class Utils {
 		}
 		return count;
 	}
+	
+	public static class MutablePair<L,R> {
+		public L left;
+		public R right;
+
+		public MutablePair(L left, R right) {
+			this.left = left;
+			this.right = right;
+		}
+	}
 }
