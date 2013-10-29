@@ -12,6 +12,14 @@ public interface ILoadBalancer extends Remote {
 	 * @throws RemoteException
 	 */
 	public int connectServer(IServer server) throws RemoteException;
-	
 	public void reportLoad(int serverID, int load) throws RemoteException;
+	
+	/**
+	 * Asks the load balancer for a server to migrate a match into
+	 * 
+	 * @param sourceServerID the ID of the server that requests the migration
+	 * @return the target server of the migration
+	 * @throws RemoteException
+	 */
+	public IServer getServerForMigration(int sourceServerID) throws RemoteException;
 }
