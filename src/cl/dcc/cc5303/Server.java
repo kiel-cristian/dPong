@@ -15,15 +15,17 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ILoadBalancer loadBalancer;
 	private LinkedHashMap<Integer, Match> matches;
-	private int numPlayers;
+	private int minPlayers;
 	private int matchCount;
+	private int playerCount;
+	private int serverID;
 
-	protected Server(int numPlayers) throws RemoteException {
+	protected Server(int minPlayers) throws RemoteException {
 		super();
-		this.numPlayers = numPlayers;
+		this.minPlayers = minPlayers;
 		matches = new LinkedHashMap<Integer, Match>();
 		if (loadBalancer != null) {
-			loadBalancer.connectServer(this);
+			serverID = loadBalancer.connectServer(this);
 		}
 	}
 
@@ -76,7 +78,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			}
 		}
 		if (match == null) {
-			match = new Match(++matchCount, numPlayers);
+			match = new Match(this, ++matchCount, minPlayers);
 			matches.put(match.getID(), match);
 		}
 		return match;
@@ -95,5 +97,25 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	@Override
 	public IServer getServer() throws RemoteException {
 		return this;
+	}
+	
+	protected void increasePlayerNum() {
+		playerCount++;
+		reportLoad();
+	}
+	
+	protected void decreasePlayerNum() {
+		playerCount--;
+		reportLoad();
+	}
+	
+	private void reportLoad() {
+		if (loadBalancer != null) {
+			try {
+				loadBalancer.reportLoad(serverID, playerCount);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }

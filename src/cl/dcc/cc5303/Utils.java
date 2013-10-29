@@ -16,13 +16,21 @@ public class Utils {
 		return count;
 	}
 	
-	public static class MutablePair<L,R> {
-		public L left;
-		public R right;
+	public static class Pair<L,R> {
+		private final L left;
+		private final R right;
 
-		public MutablePair(L left, R right) {
+		public Pair(L left, R right) {
 			this.left = left;
 			this.right = right;
+		}
+		
+		public L left() {
+			return left;
+		}
+		
+		public R right() {
+			return right;
 		}
 	}
 }

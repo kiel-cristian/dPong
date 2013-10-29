@@ -4,6 +4,7 @@ package cl.dcc.cc5303;
 public class Match {
 	public static final int MAX_PLAYERS = 4;
 	private static final long INACTIVITY_TIMEOUT = 3000;
+	private Server server;
 	private int matchID;
 	private boolean[] playing;
 	private Rectangle[] bars;
@@ -17,7 +18,8 @@ public class Match {
 	private boolean winner;
 	private int winnerPlayer;
 	
-	public Match(int matchID, int numPlayers) {
+	public Match(Server server, int matchID, int numPlayers) {
+		this.server = server;
 		bars = new Rectangle[4];
 		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
 		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
@@ -73,6 +75,7 @@ public class Match {
 		System.out.println("Jugador solicita conectarse. Se le asigna player " + (num + 1));
 		if (playersReady())
 			startGame();
+		server.increasePlayerNum();
 		return num;
 	}
 	
@@ -130,6 +133,7 @@ public class Match {
 			System.out.println("Juego pausado por falta de jugadores");
 			simulationThread.interrupt();
 		}
+		server.decreasePlayerNum();
 	}
 	
 	protected GameState updatePositions(int playerNum, int position) {

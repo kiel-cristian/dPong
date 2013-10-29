@@ -10,17 +10,24 @@ import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import cl.dcc.cc5303.Utils.MutablePair;
+import cl.dcc.cc5303.Utils.Pair;
 
 public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, ServerFinder {
 	private static final long serialVersionUID = 8410514211761367368L;
-	private List<ServerEntry> servers;
+	private HashMap<Integer, IServer> servers;		// (ID, Server)
+	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
+	private List<ServerLoad> serverPriority;
+	private int lastServerID;
 
 	protected LoadBalancer() throws RemoteException {
 		super();
-		servers = new ArrayList<ServerEntry>();
+		servers = new HashMap<Integer, IServer>();
+		serversLoad = new HashMap<Integer, Integer>();
+		serverPriority = new ArrayList<ServerLoad>();
 	}
 	
 	public static void main(String[] args) {
@@ -44,34 +51,47 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	}
 
 	@Override
-	public synchronized void connectServer(IServer server) throws RemoteException {
-		servers.add(new ServerEntry(0, server));
-		sortServers();
+	public synchronized int connectServer(IServer server) throws RemoteException {
+		servers.put(++lastServerID, server);
+		serversLoad.put(lastServerID, 0);
+		serverPriority = getPriorityList();
 		try {
 			System.out.println("Servidor conectado: " + getClientHost());
 		} catch (ServerNotActiveException e) {
 			e.printStackTrace();
 		}
+		return lastServerID;
+	}
+	
+	private List<ServerLoad> getPriorityList() {
+		List<ServerLoad> p = new ArrayList<ServerLoad>();
+		for (Map.Entry<Integer, Integer> e : serversLoad.entrySet()) {
+			p.add(new ServerLoad(e.getValue(), servers.get(e.getKey())));
+		}
+		Collections.sort(p);
+		return p;
 	}
 	
 	@Override
 	public synchronized IServer getServer() {
-		return servers.get(0).right;
+		return serverPriority.get(0).right();
 	}
 	
-	private void sortServers() {
-		Collections.sort(servers);
+	@Override
+	public synchronized void reportLoad(int serverID, int load) throws RemoteException {
+		serversLoad.put(serverID, load);
+		serverPriority = getPriorityList();
 	}
 	
-	private class ServerEntry extends MutablePair<Integer, IServer> implements Comparable<ServerEntry> {
+	private class ServerLoad extends Pair<Integer, IServer> implements Comparable<ServerLoad> {
 
-		public ServerEntry(Integer left, IServer right) {
-			super(left, right);
+		public ServerLoad(Integer load, IServer server) {
+			super(load, server);
 		}
 
 		@Override
-		public int compareTo(ServerEntry s) {
-			return this.left.compareTo(s.left);
+		public int compareTo(ServerLoad s) {
+			return this.left().compareTo(s.left());
 		}
 	}
 }
