@@ -1,5 +1,7 @@
 package cl.dcc.cc5303;
 
+import java.rmi.RemoteException;
+
 
 public class Match {
 	public static final int MAX_PLAYERS = 4;
@@ -17,6 +19,7 @@ public class Match {
 	private ScoreBoardSimple score;
 	private boolean winner;
 	private int winnerPlayer;
+	private int migratingPlayers;
 	
 	public Match(Server server, int matchID, int minPlayers) {
 		this.server = server;
@@ -37,7 +40,13 @@ public class Match {
 		this.minPlayers = minPlayers;
 	}
 
-	public void setGameState(GameState migratedGameState){
+	public void receiveMigration(GameState migratingState) {
+		setGameState(migratingState);
+		migratingPlayers = Utils.countTrue(migratingState.playing);
+		playing = new boolean[4]; // todo false para esperar jugadores
+	}
+	
+	private void setGameState(GameState migratedGameState){
 		this.ball.x = migratedGameState.ballX;
 		this.ball.y = migratedGameState.ballY;
 		this.ball.vx = migratedGameState.vx;
@@ -177,5 +186,21 @@ public class Match {
 	
 	public int getID() {
 		return matchID;
+	}
+
+	public boolean migrationReady() {
+		return migratingPlayers <= Utils.countTrue(playing);
+	}
+
+	public GameState startMigration() {
+		return null;
+	}
+
+	public void migratePlayers(IServer targetServer, int targetMatch) throws RemoteException {
+		for (int i=0; i<players.length; i++) {
+			if (players[i] != null) {
+				players[i].migrate(targetServer, targetMatch);
+			}
+		}
 	}
 }

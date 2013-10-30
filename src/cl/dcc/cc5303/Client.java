@@ -179,18 +179,13 @@ public class Client extends UnicastRemoteObject implements Player {
 	}
 
 	@Override
-	public void migrate(IServer server, int matchID, int player)
+	public void migrate(IServer server, int matchID)
 			throws RemoteException {
 
 		// Se reemplaza referencia al nuevo server
 		this.server = server;
 		// conexion
-		this.server.connectPlayer(this);
-
-		// Actualizacion de variables de la partida
-		this.matchID = matchID;
-		this.playerNum = info.playerNum;
-		this.playing[playerNum] = true;
+		this.server.connectPlayer(this, matchID, playerNum);
 
 		// TODO : Verificar mas asignaciones
 	}
