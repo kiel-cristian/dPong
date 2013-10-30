@@ -193,4 +193,8 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	public IServer getServer(int serverID) throws RemoteException {
 		return getServer();
 	}
+	
+	public void heartBeat() throws RemoteException{
+		return;
+	}
 }
