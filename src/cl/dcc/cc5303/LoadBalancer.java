@@ -22,6 +22,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
+	static final int MAX_LOAD = 12; // MAXIMA CARGA DE JUGADORES
 
 	protected LoadBalancer() throws RemoteException {
 		super();
@@ -98,7 +99,13 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	@Override
 	public IServer getServerForMigration(int sourceServerID)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		ServerLoad bestLoad = serverPriority.get(0);
+		
+		if(bestLoad.left() <= MAX_LOAD){
+			return bestLoad.right();
+		}
+		else{
+			return null;
+		}
 	}
 }
