@@ -23,5 +23,5 @@ public interface IServer extends Remote {
    * 
    * @param migrationServer The server for the migration
    */
-  public void migrateMatches(IServer migrationServer);
+  public void migrateMatches(IServer migrationServer) throws RemoteException;
 }

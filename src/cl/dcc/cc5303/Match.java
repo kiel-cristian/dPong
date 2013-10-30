@@ -104,7 +104,6 @@ public class Match {
 		System.out.println("Jugador solicita conectarse. Se le asigna player " + (num + 1));
 		if (playersReady())
 			startGame();
-		server.increasePlayerNum();
 		return num;
 	}
 	
@@ -162,7 +161,6 @@ public class Match {
 			System.out.println("Juego pausado por falta de jugadores");
 			simulationThread.interrupt();
 		}
-		server.decreasePlayerNum();
 		if (Utils.countTrue(playing) == 0) {
 			server.removeMatch(matchID);
 		}

@@ -15,7 +15,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ILoadBalancer loadBalancer;
 	private LinkedHashMap<Integer, Match> matches;
-	private LinkedHashMap<Integer, Match> migratingMatches;
+	private LinkedHashMap<Integer, Match> incomingMatches;
 	private int minPlayers;
 	private volatile int matchCount;
 	private volatile int playerCount;
@@ -67,6 +67,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	public synchronized GameInfo connectPlayer(Player player) throws RemoteException {
 		Match match = getAvailableMatch();
 		int playerNum = match.addPlayer(player);
+		increasePlayerNum();
 		return new GameInfo(match.getID(), playerNum);
 	}
 	
@@ -88,6 +89,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	@Override
 	public synchronized void disconnectPlayer(int matchID, int playerNum) throws RemoteException {
 		matches.get(matchID).removePlayer(playerNum);
+		decreasePlayerNum();
 	}
 
 	@Override
@@ -100,12 +102,12 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		return this;
 	}
 	
-	protected void increasePlayerNum() {
+	private void increasePlayerNum() {
 		playerCount++;
 		reportLoad();
 	}
 	
-	protected void decreasePlayerNum() {
+	private void decreasePlayerNum() {
 		playerCount--;
 		reportLoad();
 	}
@@ -125,30 +127,21 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		return migratedMatchesCount < currentMatches/2;
 	}
 	
-	public void migrateMatches(IServer targetServer){
+	public void migrateMatches(IServer targetServer) throws RemoteException {
 		try {
 			Match selectedMatch;
-			int selectedMatchKey;
 			int migratedMatches = 0;
-			int currentMatches  = matches.values().toArray().length;
+			int currentMatches  = matches.size();
 			
 			for (Map.Entry<Integer, Match> e : matches.entrySet()) {
-				selectedMatchKey = e.getKey();				
-				
-				selectedMatch = matches.remove(selectedMatchKey);
-				migratingMatches.put(selectedMatchKey, selectedMatch);
-				
+				selectedMatch = matches.get(e.getKey());
 				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
-				
-				playerCount -= selectedMatch.playersCount();
 				selectedMatch.migratePlayers(targetServer, targetMatch);
 				migratedMatches++;
-				
 				if(!needToMigrate(migratedMatches, currentMatches)){
 					break;
 				}
 			}
-			
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -173,19 +166,20 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			throws RemoteException {
 		Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
 		match.receiveMigration(stateToMigrate);
-		migratingMatches.put(match.getID(), match);
+		incomingMatches.put(match.getID(), match);
 		return match.getID();
 	}
 	
 	public synchronized void connectPlayer(Player player, int matchID, int playerNum)
 			throws RemoteException {
-		Match m = migratingMatches.remove(matchID);
+		Match m = incomingMatches.remove(matchID);
 		m.addPlayer(player, playerNum);
+		increasePlayerNum();
 		if (m.migrationReady()) {
 			matches.put(matchID, m);
 		}
 		else {
-			migratingMatches.put(matchID, m);
+			incomingMatches.put(matchID, m);
 		}
 	}
 
