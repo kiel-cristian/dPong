@@ -18,7 +18,7 @@ public class Match {
 	private boolean winner;
 	private int winnerPlayer;
 	
-	public Match(Server server, int matchID, int numPlayers) {
+	public Match(Server server, int matchID, int minPlayers) {
 		this.server = server;
 		bars = new Rectangle[4];
 		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
@@ -34,7 +34,7 @@ public class Match {
 		winner     = false;
 		winnerPlayer = -1;
 		this.matchID = matchID;
-		this.minPlayers = numPlayers;
+		this.minPlayers = minPlayers;
 	}
 	
 	private void startGame() {
@@ -55,7 +55,7 @@ public class Match {
 		score.reset();
 	}
 	
-	public int addPlayer(Player player) {
+	protected int addPlayer(Player player) {
 		int playerNum = 666;
 		if (!playing[0])
 			playerNum = addPlayer(player, 0);
@@ -68,7 +68,7 @@ public class Match {
 		return playerNum;
 	}
 	
-	private int addPlayer(Player player, int num) {
+	protected int addPlayer(Player player, int num) {
 		players[num] = player;
 		playing[num] = true;
 		lastActivity[num] = System.currentTimeMillis();

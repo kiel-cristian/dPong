@@ -94,4 +94,11 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 			return this.left().compareTo(s.left());
 		}
 	}
+
+	@Override
+	public IServer getServerForMigration(int sourceServerID)
+			throws RemoteException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

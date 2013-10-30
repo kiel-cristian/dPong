@@ -15,9 +15,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ILoadBalancer loadBalancer;
 	private LinkedHashMap<Integer, Match> matches;
+	private LinkedHashMap<Integer, Match> migratingMatches;
 	private int minPlayers;
-	private int matchCount;
-	private int playerCount;
+	private volatile int matchCount;
+	private volatile int playerCount;
 	private int serverID;
 
 	protected Server(int minPlayers) throws RemoteException {
@@ -117,5 +118,27 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				e.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public synchronized void connectPlayer(Player player, int matchID, int playerNum)
+			throws RemoteException {
+		Match m = migratingMatches.remove(matchID);
+		m.addPlayer(player, playerNum);
+		if (m.migrationReady()) {
+			matches.put(matchID, m);
+		}
+		else {
+			migratingMatches.put(matchID, m);
+		}
+	}
+
+	@Override
+	public synchronized int getMatchForMigration(GameState stateToMigrate)
+			throws RemoteException {
+		Match m = new Match(this, ++matchCount, stateToMigrate.minPlayers);
+		m.setGameState(stateToMigrate);
+		migratingMatches.put(m.getID(), m);
+		return m.getID();
 	}
 }
