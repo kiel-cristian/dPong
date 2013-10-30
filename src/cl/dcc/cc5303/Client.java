@@ -7,9 +7,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 public class Client extends UnicastRemoteObject implements Player {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1910265532826050466L;
 	private static int REFRESH_TIME = 50;
 	private ServerFinder serverFinder;
@@ -27,7 +24,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile Pong pong;
 	private volatile boolean winner;
 	private volatile int minPlayers;
-	
+
 	public static void main(String[] args) {
 		try {
 			Client client = new Client();
@@ -45,11 +42,10 @@ public class Client extends UnicastRemoteObject implements Player {
 			e.printStackTrace();
 		}
 	}
-	
 	protected Client() throws RemoteException {
 		super();
 	}
-		
+
 	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
 		serverFinder = (ServerFinder) Naming.lookup("rmi://" + serverAddress + ":1099/serverfinder");
 		server = serverFinder.getServer();
@@ -64,7 +60,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			@Override
 			public void run() {
 				boolean running = true;
-				
+
 				while (running) {
 					try {
 						GameState state = server.updatePositions(matchID, playerNum, getBarPosition(playerNum));
@@ -80,27 +76,22 @@ public class Client extends UnicastRemoteObject implements Player {
 							ballY = state.ballY;
 							vx = state.vx;
 							vy = state.vy;
-							
+
 							Thread.sleep(REFRESH_TIME);
-						
 						}
 					} catch (RemoteException e) {
 						// TODO: algo
 					} catch (InterruptedException e) {
 						System.out.println("Server Update:" + playerNum + " muriendo");
 						running = false;
-						
 						return;
 					}
 				}
 			}
-			
 		});
-		
 		pong = new Pong(this, serverUpdate);
 		pong.startGame();
 	}
-	
 	protected synchronized void updateScores(int[] scores2) {
 		for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
 			scores[i]   = scores2[i];
@@ -143,43 +134,33 @@ public class Client extends UnicastRemoteObject implements Player {
 	public boolean playersReady() {
 		return Utils.countTrue(playing) >= minPlayers;
 	}
-	
 	public boolean getPlayerStatus(int playerNum){
 		return playing[playerNum];
 	}
-	
 	public int getPlayerNum() {
 		return playerNum;
 	}
-	
 	public int getBarPosition(int bar) {
 		return barPos[bar];
 	}
-	
 	public int getBallX() {
 		return ballX;
 	}
-	
 	public int getBallY() {
 		return ballY;
 	}
-	
 	public double getVelX() {
 		return vx;
 	}
-	
 	public double getVelY() {
 		return vy;
 	}
-	
 	public int getLastPLayer(){
 		return lastPlayer;
 	}
-	
 	public int[] getScores(){
 		return scores;
 	}
-	
 	public synchronized void setBarPosition(int bar, int position) {
 		barPos[bar] = position;
 	}
@@ -200,7 +181,17 @@ public class Client extends UnicastRemoteObject implements Player {
 	@Override
 	public void migrate(IServer server, int matchID, int player)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		
+
+		// Se reemplaza referencia al nuevo server
+		this.server = server;
+		// conexion
+		this.server.connectPlayer(this);
+
+		// Actualizacion de variables de la partida
+		this.matchID = matchID;
+		this.playerNum = info.playerNum;
+		this.playing[playerNum] = true;
+
+		// TODO : Verificar mas asignaciones
 	}
 }
