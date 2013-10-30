@@ -137,7 +137,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			
 			for (Map.Entry<Integer, Match> e : matches.entrySet()) {
 				selectedMatch = matches.get(e.getKey());
-				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
+				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());System.out.println("migrando jugadores!");
 				selectedMatch.migratePlayers(targetServer, targetMatch);
 				migratedMatches++;
 				if(!needToMigrate(migratedMatches, currentMatches)){

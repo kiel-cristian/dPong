@@ -112,21 +112,21 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	@Override
 	public synchronized void reportLoad(int serverID, int load) throws RemoteException {
 		int lastLoad = serversLoad.get(serverID);
+		serversLoad.put(serverID, load);
 		System.out.println("reportando empieza");
 		// Si la carga del servidor es mayor o igual al 70%
-		if(load > lastLoad && load >= MAX_LOAD*0.7){
+		if(load > lastLoad && load >= MAX_LOAD*0.7){System.out.println("migracion!");
 			// Migrar matches
 			IServer server          = servers.get(serverID);
-			IServer migrationServer = getServerForMigration(serverID);
+			IServer migrationServer = getServerForMigration(serverID);System.out.println("obtuve server para migracion!");
 			
 			// Si es que hay donde migrar
-			if(migrationServer != null){
+			if(migrationServer != null){System.out.println("migrando partidas!");
 				// TODO: Algo asi, como el metodo para migrar varios matches del server, en vez de uno solo desde aca, donde falta info ahora
 				server.migrateMatches(migrationServer);
 			}
 		}
 		else{
-			serversLoad.put(serverID, load);
 			serverPriority = getPriorityList();	
 		}System.out.println("reportando fin");
 	}
