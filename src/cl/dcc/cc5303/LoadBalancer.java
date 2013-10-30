@@ -24,6 +24,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
 	static final int MAX_LOAD = Pong.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
+	private ServerHeartBeat heartBeat;
 
 	protected LoadBalancer() throws RemoteException {
 		super();
@@ -31,6 +32,46 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 		serversLoad = new HashMap<Integer, Integer>();
 		serverPriority = new ArrayList<ServerLoad>();
 		lastTargetServer = null;
+		heartBeat = new ServerHeartBeat();
+	}
+	
+	private class ServerHeartBeat extends Thread {
+		public boolean running = true;
+		public LoadBalancer balancer;
+
+		public void run() {
+			System.out.println("Running Heart Beat");
+			List<Integer> disconnectedServers;
+			
+			while (this.running) {
+				disconnectedServers = new ArrayList<Integer>();
+
+				for(Map.Entry<Integer, IServer> e : balancer.servers.entrySet()) {
+					IServer server = e.getValue();
+					try {
+						server.heartBeat();
+					} catch (RemoteException e1) {
+						disconnectedServers.add(e.getKey());
+					}
+				}
+				
+				synchronized(this.balancer){
+					for(int serverId : disconnectedServers){
+						System.out.println("Disconnecting server: " + serverId);
+						balancer.servers.remove(serverId);
+						balancer.serversLoad.remove(serverId);
+					}
+					balancer.serverPriority = getPriorityList();
+				}
+				
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		}
 	}
 	
 	public static void main(String[] args) {
@@ -39,6 +80,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 			ILoadBalancer balancer = new LoadBalancer();
 			LocateRegistry.createRegistry(1099);
 			Naming.rebind("rmi://localhost:1099/serverfinder", balancer);
+			balancer.initHeartBeat();
 			
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
@@ -51,6 +93,12 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	@Override
+	public void initHeartBeat(){
+		heartBeat.balancer = this;
+		heartBeat.run();
 	}
 
 	@Override
@@ -144,8 +192,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	}
 
 	@Override
-	public IServer getServerForMigration(int sourceServerID)
-			throws RemoteException {
+	public IServer getServerForMigration(int sourceServerID) throws RemoteException {
 		
 		IServer sourceServer = servers.get(sourceServerID);
 		ServerLoad bestLoad  = null;

@@ -24,4 +24,9 @@ public interface IServer extends Remote {
    * @param migrationServer The server for the migration
    */
   public void migrateMatches(IServer migrationServer) throws RemoteException;
+  
+  /**
+   * Simple returns. Used for load balancer to check if a server is still alive.
+   */
+  public void heartBeat() throws RemoteException;
 }
