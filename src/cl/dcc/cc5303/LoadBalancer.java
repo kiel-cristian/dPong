@@ -23,7 +23,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
-	static final int MAX_LOAD = Pong.MAX_PLAYERS*3; // MAXIMA CARGA DE JUGADORES
+	static final int MAX_LOAD = Pong.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
 
 	protected LoadBalancer() throws RemoteException {
 		super();

@@ -76,7 +76,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private Match getAvailableMatch() {
 		Match match = null;
 		for (Match m : matches.values()) {
-			if (m.playersCount() < Match.MAX_PLAYERS && !m.migrating()) {
+			if (m.playersCount() < Pong.MAX_PLAYERS && !m.migrating()) {
 				match = m;
 				break;
 			}

@@ -22,7 +22,7 @@ public class Pong implements KeyListener {
 	public final static int UPDATE_RATE = 60;
 	public final static int DX = 5;
 	public final static double DV = 0.3;
-	public final static int MAX_PLAYERS = 4;
+	public final static int MAX_PLAYERS = 2;
 
 	private JFrame frame;
 	private JFrame scoreFrame;
@@ -180,7 +180,7 @@ public class Pong implements KeyListener {
 
 	public static synchronized int doGameIteration(boolean[] playing, Rectangle[] bars, PongBall ball, ScoreBoard score, int lastPlayer) {
 
-		for (int i = 0; i < Pong.MAX_PLAYERS;  i++){
+		for (int i = 0; i < 4;  i++){
 			if(playing[i] == true){
 				lastPlayer = handleHumanBounce(i, bars[i], ball, lastPlayer);
 			}

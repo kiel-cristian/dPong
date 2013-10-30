@@ -4,7 +4,6 @@ import java.rmi.RemoteException;
 
 
 public class Match {
-	public static final int MAX_PLAYERS = 4;
 	private static final long INACTIVITY_TIMEOUT = 3000;
 	private Server server;
 	private int matchID;

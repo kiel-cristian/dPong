@@ -8,7 +8,7 @@ public class ScoreBoardSimple implements ScoreBoard {
 	List<Integer> winners = new ArrayList<Integer>();
 	
 	//final score
-	public final int WINNING_SCORE = 3;
+	public final int WINNING_SCORE = 10;
 	
 	//variables
 	private int scores[];
