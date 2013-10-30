@@ -102,9 +102,9 @@ public class Match {
 		players[num] = player;
 		playing[num] = true;
 		lastActivity[num] = System.currentTimeMillis();
+		System.out.println("Se ha conectado el jugador " + num + " a la partida " + matchID);
 		if (playersReady() && !running)
 			startGame();
-		System.out.println("Se ha conectado el jugador " + num + " a la partida " + matchID);
 		return num;
 	}
 	
