@@ -20,6 +20,7 @@ public class Match {
 	private boolean winner;
 	private int winnerPlayer;
 	private int migratingPlayers;
+	private boolean migrating;
 	
 	public Match(Server server, int matchID, int minPlayers) {
 		this.server = server;
@@ -162,6 +163,9 @@ public class Match {
 			simulationThread.interrupt();
 		}
 		server.decreasePlayerNum();
+		if (Utils.countTrue(playing) == 0) {
+			server.removeMatch(matchID);
+		}
 	}
 	
 	protected GameState updatePositions(int playerNum, int position) {
@@ -193,7 +197,12 @@ public class Match {
 	}
 
 	public GameState startMigration() {
-		return null;
+		migrating = true;
+		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
+	}
+	
+	public boolean migrating() {
+		return migrating;
 	}
 
 	public void migratePlayers(IServer targetServer, int targetMatch) throws RemoteException {
