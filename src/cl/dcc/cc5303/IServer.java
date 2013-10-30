@@ -17,4 +17,11 @@ public interface IServer extends Remote {
    * @throws RemoteException
    */
   public int getMatchForMigration(GameState stateToMigrate) throws RemoteException;
+  
+  /**
+   * Initiates migration for the current server to the migrationServer
+   * 
+   * @param migrationServer The server for the migration
+   */
+  public void migrateMatches(IServer migrationServer);
 }

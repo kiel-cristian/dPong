@@ -106,8 +106,24 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	
 	@Override
 	public synchronized void reportLoad(int serverID, int load) throws RemoteException {
-		serversLoad.put(serverID, load);
-		serverPriority = getPriorityList();
+		int lastLoad = serversLoad.get(serverID);
+		
+		// Si la carga del servidor es mayor o igual al 70%
+		if(load > lastLoad && load >= MAX_LOAD*0.7){
+			// Migrar matches
+			IServer server          = servers.get(serverID);
+			IServer migrationServer = getServerForMigration(serverID);
+			
+			// Si es que hay donde migrar
+			if(migrationServer != null){
+				// TODO: Algo asi, como el metodo para migrar varios matches del server, en vez de uno solo desde aca, donde falta info ahora
+				server.migrateMatches(migrationServer);
+			}
+		}
+		else{
+			serversLoad.put(serverID, load);
+			serverPriority = getPriorityList();	
+		}
 	}
 	
 	private class ServerLoad extends Pair<Integer, IServer> implements Comparable<ServerLoad> {
@@ -125,7 +141,19 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	@Override
 	public IServer getServerForMigration(int sourceServerID)
 			throws RemoteException {
-		ServerLoad bestLoad = serverPriority.get(0);
+		
+		IServer sourceServer = servers.get(sourceServerID);
+		ServerLoad bestLoad  = null;
+		
+		for(ServerLoad s: serverPriority){
+			if(s.right().equals(sourceServer)){
+				continue;
+			}
+			else{
+				bestLoad = s;
+				break;
+			}
+		}
 		
 		if(bestLoad.left() < MAX_LOAD){
 			return bestLoad.right();

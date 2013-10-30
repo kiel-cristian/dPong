@@ -9,6 +9,9 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedHashMap;
+import java.util.Map;
+
+import cl.dcc.cc5303.LoadBalancer.ServerLoad;
 
 
 public class Server extends UnicastRemoteObject implements IServer, ServerFinder {
@@ -117,6 +120,43 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	// Fijado en que el server migre 1/2 de sus matches
+	private boolean needToMigrate(int migratedMatchesCount, int currentMatches){
+		return migratedMatchesCount < currentMatches/2;
+	}
+	
+	public void migrateMatches(IServer targetServer){
+		try {
+			Match selectedMatch;
+			int selectedMatchKey;
+			int migratedMatches = 0;
+			int currentMatches  = matches.values().toArray().length;
+			
+			for (Map.Entry<Integer, Match> e : matches.entrySet()) {
+				selectedMatchKey = e.getKey();				
+				
+				selectedMatch = matches.remove(selectedMatchKey);
+				migratingMatches.put(selectedMatchKey, selectedMatch);
+				
+				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
+				
+				playerCount -= selectedMatch.playersCount();
+				selectedMatch.migratePlayers(targetServer, targetMatch);
+				migratedMatches++;
+				
+				if(!needToMigrate(migratedMatches, currentMatches)){
+					break;
+				}
+			}
+			
+			matchCount -= migratedMatches;
+			
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
