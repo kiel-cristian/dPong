@@ -112,7 +112,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	@Override
 	public synchronized void reportLoad(int serverID, int load) throws RemoteException {
 		int lastLoad = serversLoad.get(serverID);
-		
+		System.out.println("reportando empieza");
 		// Si la carga del servidor es mayor o igual al 70%
 		if(load > lastLoad && load >= MAX_LOAD*0.7){
 			// Migrar matches
@@ -128,7 +128,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 		else{
 			serversLoad.put(serverID, load);
 			serverPriority = getPriorityList();	
-		}
+		}System.out.println("reportando fin");
 	}
 	
 	private class ServerLoad extends Pair<Integer, IServer> implements Comparable<ServerLoad> {
