@@ -118,4 +118,13 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			}
 		}
 	}
+
+	@Override
+	public int getMatchForMigration(GameState stateToMigrate)
+			throws RemoteException {
+		Match match = new Match(this, ++matchCount, minPlayers);
+		match.setGameState(stateToMigrate);
+		matches.put(match.getID(), match);
+		return match.getID();
+	}
 }

@@ -36,6 +36,25 @@ public class Match {
 		this.matchID = matchID;
 		this.minPlayers = numPlayers;
 	}
+
+	public void setGameState(GameState migratedGameState){
+		this.ball.x = migratedGameState.ballX;
+		this.ball.y = migratedGameState.ballY;
+		this.ball.vx = migratedGameState.vx;
+		this.ball.vy = migratedGameState.vy;
+		
+		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+			this.playing[i] = migratedGameState.playing[i];
+			if(migratedGameState.playing[i]){
+				if(i == 0 || i == 1){
+					bars[i].x = migratedGameState.barsPos[i];
+				}
+				else{
+					bars[i].y = migratedGameState.barsPos[i];
+				}
+			}
+		}
+	}
 	
 	private void startGame() {
 		simulationThread = new PongSimulation();

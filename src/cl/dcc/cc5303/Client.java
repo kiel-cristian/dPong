@@ -196,4 +196,11 @@ public class Client extends UnicastRemoteObject implements Player {
 	public PongBall getBall() {
 		return new PongBall(ballX, ballY, vx, vy);
 	}
+
+	@Override
+	public void migrate(IServer server, int matchID, int player)
+			throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
 }
