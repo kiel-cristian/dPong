@@ -24,6 +24,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile Pong pong;
 	private volatile boolean winner;
 	private volatile int minPlayers;
+	private ServerUpdateThread serverUpdate;
 
 	public static void main(String[] args) {
 		try {
@@ -66,61 +67,9 @@ public class Client extends UnicastRemoteObject implements Player {
 		playing[playerNum] = true;
 		lastPlayer = -1;
 
-		Thread serverUpdate = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				boolean running = true;
-
-				while (running) {
-					try {
-						GameState state = server.updatePositions(matchID, playerNum, getBarPosition(playerNum));
-						minPlayers = state.minPlayers;
-						checkWinners(state);
-
-						if(!getWinner()){
-							for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
-								barPos[i] 	= state.barsPos[i];
-								playing[i] 	= state.playing[i];
-							}
-							ballX = state.ballX;
-							ballY = state.ballY;
-							vx = state.vx;
-							vy = state.vy;
-
-							Thread.sleep(REFRESH_TIME);
-						}
-					} catch (RemoteException e) {
-						// TODO: algo
-					} catch (InterruptedException e) {
-						System.out.println("Server Update:" + playerNum + " muriendo");
-						running = false;
-						return;
-					}
-				}
-			}
-		});
+		serverUpdate = new ServerUpdateThread();
 		pong = new Pong(this, serverUpdate);
 		pong.startGame();
-	}
-	protected synchronized void updateScores(int[] scores2) {
-		for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
-			scores[i]   = scores2[i];
-		}
-		pong.scores.setScores(scores);
-	}
-
-	protected synchronized void checkWinners(GameState state) {
-		updateScores(state.scores);
-		if(winner == false && state.winner){
-			pong.scores.setWinner(getScores(), state.winnerPlayer);
-			pong.showWinner();
-			winner = true;
-		}
-		if(winner == true && !state.winner){
-			winner = false;
-			pong.reMatch();
-		}
 	}
 
 	public boolean getWinner(){
@@ -191,14 +140,78 @@ public class Client extends UnicastRemoteObject implements Player {
 
 	@Override
 	public void migrate(IServer server, int targetMatchID)
-			throws RemoteException {System.out.print("a");
-		this.server.disconnectPlayer(this.matchID, playerNum);System.out.print("b");
+			throws RemoteException {
+		serverUpdate.pause();
+		this.server.disconnectPlayer(this.matchID, playerNum);
 		// Se reemplaza referencia al nuevo server
-		this.server = server;System.out.print("c");
+		this.server = server;
 		this.matchID = targetMatchID;
 		// conexion
-		this.server.connectPlayer(this, targetMatchID, playerNum);System.out.print("d");
-
+		this.server.connectPlayer(this, targetMatchID, playerNum);
+		serverUpdate.unPause();
 		// TODO : Verificar mas asignaciones
+	}
+	
+	protected synchronized void updateScores(int[] scores2) {
+		for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
+			scores[i]   = scores2[i];
+		}
+		pong.scores.setScores(scores);
+	}
+
+	protected synchronized void checkWinners(GameState state) {
+		updateScores(state.scores);
+		if(winner == false && state.winner){
+			pong.scores.setWinner(getScores(), state.winnerPlayer);
+			pong.showWinner();
+			winner = true;
+		}
+		if(winner == true && !state.winner){
+			winner = false;
+			pong.reMatch();
+		}
+	}
+	
+	private class ServerUpdateThread extends Thread {
+		private boolean running = true;
+
+		@Override
+		public void run() {
+
+			while (running) {
+				try {
+					GameState state = server.updatePositions(matchID, playerNum, getBarPosition(playerNum));
+					minPlayers = state.minPlayers;
+					checkWinners(state);
+
+					if(!getWinner()){
+						for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
+							barPos[i] 	= state.barsPos[i];
+							playing[i] 	= state.playing[i];
+						}
+						ballX = state.ballX;
+						ballY = state.ballY;
+						vx = state.vx;
+						vy = state.vy;
+
+						Thread.sleep(REFRESH_TIME);
+					}
+				} catch (RemoteException e) {
+					// TODO: algo
+				} catch (InterruptedException e) {
+					System.out.println("Server Update:" + playerNum + " muriendo");
+					running = false;
+					return;
+				}
+			}
+		}
+		
+		public void pause() {
+			running = false;
+		}
+		
+		public void unPause() {
+			running = true;
+		}
 	}
 }
