@@ -119,12 +119,24 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			}
 		}
 	}
+	
+	private void migrateMatch(int matchID) {
+		try {
+			IServer targetServer = loadBalancer.getServerForMigration(serverID);
+			Match m = matches.remove(matchID);
+			int targetMatch = targetServer.getMatchForMigration(m.startMigration());
+			m.migratePlayers(targetServer, targetMatch);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	@Override
 	public synchronized int getMatchForMigration(GameState stateToMigrate)
 			throws RemoteException {
 		Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
-		match.setGameState(stateToMigrate);
+		match.receiveMigration(stateToMigrate);
 		migratingMatches.put(match.getID(), match);
 		return match.getID();
 	}
