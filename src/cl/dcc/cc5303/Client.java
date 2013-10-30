@@ -195,6 +195,7 @@ public class Client extends UnicastRemoteObject implements Player {
 		this.server.disconnectPlayer(this.matchID, playerNum);System.out.print("b");
 		// Se reemplaza referencia al nuevo server
 		this.server = server;System.out.print("c");
+		this.matchID = targetMatchID;
 		// conexion
 		this.server.connectPlayer(this, targetMatchID, playerNum);System.out.print("d");
 

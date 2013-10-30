@@ -18,9 +18,8 @@ public class Match {
 	private ScoreBoardSimple score;
 	private boolean winner;
 	private int winnerPlayer;
-	private int migratingPlayers;
-	private boolean migrating;
 	private boolean running;
+	private MigrationInfo migration;
 	
 	public Match(Server server, int matchID, int minPlayers) {
 		this.server = server;
@@ -37,13 +36,14 @@ public class Match {
 		score      = new ScoreBoardSimple();
 		winner     = false;
 		winnerPlayer = -1;
+		migration = new MigrationInfo();
 		this.matchID = matchID;
 		this.minPlayers = minPlayers;
 	}
 
 	public void receiveMigration(GameState migratingState) {
 		setGameState(migratingState);
-		migratingPlayers = Utils.countTrue(migratingState.playing);
+		migration.migratingPlayers = Utils.countTrue(migratingState.playing);
 		playing = new boolean[4]; // todo false para esperar jugadores
 	}
 	
@@ -122,6 +122,9 @@ public class Match {
 			
 			while (running) {
 				try {
+					if (migration.playersReady) {
+						doPlayerMigration(migration.targetServer, migration.targetMatch);
+					}
 					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
 
 					checkForWinnerServer();
@@ -194,23 +197,41 @@ public class Match {
 	}
 
 	public boolean migrationReady() {
-		return migratingPlayers <= Utils.countTrue(playing);
+		return migration.migratingPlayers <= Utils.countTrue(playing);
 	}
 
 	public GameState startMigration() {
-		migrating = true;
+		migration.migrating = true;
 		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
 	}
 	
 	public boolean migrating() {
-		return migrating;
+		return migration.migrating;
 	}
 
 	public void migratePlayers(IServer targetServer, int targetMatch) throws RemoteException {
+		migration.playersReady = true;
+		migration.targetServer = targetServer;
+		migration.targetMatch = targetMatch;
+	}
+	
+	private void doPlayerMigration(IServer targetServer, int targetMatch) {
 		for (int i=0; i<players.length; i++) {
 			if (players[i] != null) {
-				players[i].migrate(targetServer, targetMatch);
+				try {
+					players[i].migrate(targetServer, targetMatch);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 			}
 		}
+	}
+	
+	private class MigrationInfo {
+		public boolean migrating;
+		public boolean playersReady;
+		public int migratingPlayers;
+		public IServer targetServer;
+		public int targetMatch;
 	}
 }
