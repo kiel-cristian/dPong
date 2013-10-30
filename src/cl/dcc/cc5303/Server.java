@@ -73,7 +73,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private Match getAvailableMatch() {
 		Match match = null;
 		for (Match m : matches.values()) {
-			if (m.playersCount() < Match.MAX_PLAYERS) {
+			if (m.playersCount() < Match.MAX_PLAYERS && migratingMatches.get(m.getID()) == null ) {
 				match = m;
 				break;
 			}
