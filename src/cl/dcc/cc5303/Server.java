@@ -76,7 +76,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private Match getAvailableMatch() {
 		Match match = null;
 		for (Match m : matches.values()) {
-			if (m.playersCount() < Match.MAX_PLAYERS && migratingMatches.get(m.getID()) == null ) {
+			if (m.playersCount() < Match.MAX_PLAYERS && !m.migrating()) {
 				match = m;
 				break;
 			}
@@ -163,7 +163,8 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private void migrateMatch(int matchID) {
 		try {
 			IServer targetServer = loadBalancer.getServerForMigration(serverID);
-			Match m = matches.remove(matchID);
+			if (targetServer == null) return; // No puede migrar a ninguna parte :(
+			Match m = matches.get(matchID);
 			int targetMatch = targetServer.getMatchForMigration(m.startMigration());
 			m.migratePlayers(targetServer, targetMatch);
 		} catch (RemoteException e) {
@@ -191,5 +192,9 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		else {
 			migratingMatches.put(matchID, m);
 		}
+	}
+
+	public void removeMatch(int matchID) {
+		matches.remove(matchID);
 	}
 }
