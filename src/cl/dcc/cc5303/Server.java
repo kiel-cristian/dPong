@@ -149,8 +149,6 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				}
 			}
 			
-			matchCount -= migratedMatches;
-			
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
