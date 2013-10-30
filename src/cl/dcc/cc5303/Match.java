@@ -123,6 +123,7 @@ public class Match {
 			while (running) {
 				try {
 					if (migration.playersReady) {
+						running = false;
 						doPlayerMigration(migration.targetServer, migration.targetMatch);
 					}
 					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
@@ -225,6 +226,7 @@ public class Match {
 				}
 			}
 		}
+		System.out.println("Migracion lista");
 	}
 	
 	private class MigrationInfo {

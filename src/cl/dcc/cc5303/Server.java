@@ -96,7 +96,11 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 
 	@Override
 	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
-		return matches.get(matchID).updatePositions(playerNum, position);
+		Match m = matches.get(matchID);
+		if (m == null) {
+			m = incomingMatches.get(matchID);
+		}
+		return m.updatePositions(playerNum, position);
 	}
 
 	@Override

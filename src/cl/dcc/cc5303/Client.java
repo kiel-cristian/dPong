@@ -149,7 +149,6 @@ public class Client extends UnicastRemoteObject implements Player {
 		// conexion
 		this.server.connectPlayer(this, targetMatchID, playerNum);
 		serverUpdate.unPause();
-		// TODO : Verificar mas asignaciones
 	}
 	
 	protected synchronized void updateScores(int[] scores2) {
@@ -197,7 +196,7 @@ public class Client extends UnicastRemoteObject implements Player {
 						Thread.sleep(REFRESH_TIME);
 					}
 				} catch (RemoteException e) {
-					// TODO: algo
+					e.printStackTrace();
 				} catch (InterruptedException e) {
 					System.out.println("Server Update:" + playerNum + " muriendo");
 					running = false;
