@@ -11,9 +11,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import cl.dcc.cc5303.LoadBalancer.ServerLoad;
-
-
 public class Server extends UnicastRemoteObject implements IServer, ServerFinder {
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ILoadBalancer loadBalancer;
