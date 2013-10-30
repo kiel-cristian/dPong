@@ -25,8 +25,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		super();
 		this.minPlayers = minPlayers;
 		matches = new LinkedHashMap<Integer, Match>();
+		incomingMatches = new LinkedHashMap<Integer, Match>();
 		if (loadBalancer != null) {
 			serverID = loadBalancer.connectServer(this);
+			System.out.println("Server ID: " + serverID);
 		}
 	}
 
@@ -185,5 +187,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 
 	public void removeMatch(int matchID) {
 		matches.remove(matchID);
+	}
+
+	@Override
+	public IServer getServer(int serverID) throws RemoteException {
+		return getServer();
 	}
 }

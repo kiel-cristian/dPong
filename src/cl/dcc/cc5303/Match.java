@@ -21,6 +21,7 @@ public class Match {
 	private int winnerPlayer;
 	private int migratingPlayers;
 	private boolean migrating;
+	private boolean running;
 	
 	public Match(Server server, int matchID, int minPlayers) {
 		this.server = server;
@@ -68,9 +69,10 @@ public class Match {
 	
 	private void startGame() {
 		simulationThread = new PongSimulation();
+		running = true;
 		lastPlayer = -1;
 		simulationThread.start();
-		System.out.println("Empieza el juego!");
+		System.out.println("Empieza el juego! (" + matchID + ")");
 	}
 	
 	private void resetGame() {
@@ -101,9 +103,9 @@ public class Match {
 		players[num] = player;
 		playing[num] = true;
 		lastActivity[num] = System.currentTimeMillis();
-		System.out.println("Jugador solicita conectarse. Se le asigna player " + (num + 1));
-		if (playersReady())
+		if (playersReady() && !running)
 			startGame();
+		System.out.println("Se ha conectado el jugador " + num + " a la partida " + matchID);
 		return num;
 	}
 	
@@ -157,9 +159,11 @@ public class Match {
 		scores[playerNum]  = 0;
 		score.setScores(scores);
 		
+		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID);
 		if(!(this.playersReady())){
-			System.out.println("Juego pausado por falta de jugadores");
+			System.out.println("Juego " + matchID + " pausado por falta de jugadores");
 			simulationThread.interrupt();
+			running = false;
 		}
 		if (Utils.countTrue(playing) == 0) {
 			server.removeMatch(matchID);

@@ -105,6 +105,11 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	}
 	
 	@Override
+	public synchronized IServer getServer(int serverID) throws RemoteException {
+		return servers.get(serverID);
+	}
+	
+	@Override
 	public synchronized void reportLoad(int serverID, int load) throws RemoteException {
 		int lastLoad = serversLoad.get(serverID);
 		

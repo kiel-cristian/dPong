@@ -28,12 +28,17 @@ public class Client extends UnicastRemoteObject implements Player {
 	public static void main(String[] args) {
 		try {
 			Client client = new Client();
-			String serverAddress;
-			if (args.length > 0)
-				serverAddress = args[0];
+			String serverFinderAddress;
+			int serverID = -1;
+			if (args.length > 0) {
+				serverFinderAddress = args[0];
+				if (args.length > 1) {
+					serverID = Integer.parseInt(args[1]);
+				}
+			}
 			else
-				serverAddress = "localhost";
-			client.play(serverAddress);
+				serverFinderAddress = "localhost";
+			client.play(serverFinderAddress, serverID);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
@@ -46,9 +51,15 @@ public class Client extends UnicastRemoteObject implements Player {
 		super();
 	}
 
-	public void play(String serverAddress) throws MalformedURLException, RemoteException, NotBoundException {
-		serverFinder = (ServerFinder) Naming.lookup("rmi://" + serverAddress + ":1099/serverfinder");
-		server = serverFinder.getServer();
+	public void play(String serverFinderAddress, int serverID)
+			throws MalformedURLException, RemoteException, NotBoundException {
+		serverFinder = (ServerFinder) Naming.lookup("rmi://" + serverFinderAddress + ":1099/serverfinder");
+		if (serverID == -1) {
+			server = serverFinder.getServer();
+		}
+		else {
+			server = serverFinder.getServer(serverID);
+		}
 		GameInfo info = server.connectPlayer(this);
 		matchID = info.matchID;
 		playerNum = info.playerNum;
