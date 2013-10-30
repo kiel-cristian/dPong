@@ -22,13 +22,15 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
-	static final int MAX_LOAD = 12; // MAXIMA CARGA DE JUGADORES
+	private ServerLoad lastTargetServer;
+	static final int MAX_LOAD = Pong.MAX_PLAYERS*3; // MAXIMA CARGA DE JUGADORES
 
 	protected LoadBalancer() throws RemoteException {
 		super();
 		servers = new HashMap<Integer, IServer>();
 		serversLoad = new HashMap<Integer, Integer>();
 		serverPriority = new ArrayList<ServerLoad>();
+		lastTargetServer = null;
 	}
 	
 	public static void main(String[] args) {
@@ -73,9 +75,33 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 		return p;
 	}
 	
+	private ServerLoad getBestCandidateServer(){
+		ServerLoad bestServer = null;
+		for(ServerLoad sl : serverPriority){
+			// Busco un server que tenga una carga inferior al 70% y con al menos una partida no llena
+			if(sl.left() < MAX_LOAD*0.7 && sl.left() % Pong.MAX_PLAYERS >= 0){
+				bestServer = sl;
+				break;
+			}
+		}
+		if(bestServer == null){
+			bestServer = serverPriority.get(0);
+		}
+		return bestServer;
+	}
+	
 	@Override
 	public synchronized IServer getServer() {
-		return serverPriority.get(0).right();
+		if(!(lastTargetServer != null && lastTargetServer.left() % Pong.MAX_PLAYERS > 0)){
+			// Es necesario obtener un nuevo candidato para conectar
+			lastTargetServer = getBestCandidateServer();
+		}
+		
+		// Se agrega un jugador al servidor en cuestion escogido
+		int load = lastTargetServer.left();
+		lastTargetServer = new ServerLoad(++load, lastTargetServer.right());
+		
+		return lastTargetServer.right();
 	}
 	
 	@Override
@@ -101,7 +127,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 			throws RemoteException {
 		ServerLoad bestLoad = serverPriority.get(0);
 		
-		if(bestLoad.left() <= MAX_LOAD){
+		if(bestLoad.left() < MAX_LOAD){
 			return bestLoad.right();
 		}
 		else{
