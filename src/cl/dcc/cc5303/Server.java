@@ -182,6 +182,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		m.addPlayer(player, playerNum);
 		increasePlayerNum();
 		if (m.migrationReady()) {
+			m.stopMigration();
 			matches.put(matchID, m);
 		}
 		else {
