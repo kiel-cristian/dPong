@@ -192,9 +192,8 @@ public class Client extends UnicastRemoteObject implements Player {
 						ballY = state.ballY;
 						vx = state.vx;
 						vy = state.vy;
-
-						Thread.sleep(REFRESH_TIME);
 					}
+					Thread.sleep(REFRESH_TIME);
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				} catch (InterruptedException e) {

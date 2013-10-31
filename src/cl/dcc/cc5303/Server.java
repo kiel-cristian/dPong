@@ -168,7 +168,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public synchronized int getMatchForMigration(GameState stateToMigrate)
+	public int getMatchForMigration(GameState stateToMigrate)
 			throws RemoteException {
 		Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
 		match.receiveMigration(stateToMigrate);
@@ -176,17 +176,17 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		return match.getID();
 	}
 	
-	public synchronized void connectPlayer(Player player, int matchID, int playerNum)
+	public void connectPlayer(Player player, int matchID, int playerNum)
 			throws RemoteException {
-		Match m = incomingMatches.remove(matchID);
-		m.addPlayer(player, playerNum);
-		increasePlayerNum();
-		if (m.migrationReady()) {
-			m.stopMigration();
-			matches.put(matchID, m);
-		}
-		else {
-			incomingMatches.put(matchID, m);
+		synchronized (this) {
+			Match m = incomingMatches.get(matchID);
+			m.addPlayer(player, playerNum);
+			increasePlayerNum();
+			if (m.migrationReady()) {
+				m.stopMigration();
+				matches.put(matchID, m);
+				incomingMatches.remove(matchID);
+			}
 		}
 	}
 
