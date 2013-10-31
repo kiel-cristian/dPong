@@ -135,11 +135,7 @@ public class Match {
 						doPlayerMigration(migration.targetServer, migration.targetMatch);
 						return;
 					}
-					if (migration.migrating){
-						// This match cannot start due a migration
-						Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
-						continue;
-					}
+
 					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
 
 					checkForWinnerServer();
