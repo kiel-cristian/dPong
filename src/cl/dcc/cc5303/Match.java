@@ -158,7 +158,8 @@ public class Match {
 	private synchronized void checkPlayersActivity() {
 		for (int i=0; i < lastActivity.length; i++) {
 			if (playing[i] && (System.currentTimeMillis() - lastActivity[i] > INACTIVITY_TIMEOUT)) {
-				removePlayer(i);
+				System.out.println("echando al jugador: " + i + "estado:"+ playing[i]);
+				//removePlayer(i);
 			}
 		}
 	}

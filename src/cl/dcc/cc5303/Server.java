@@ -36,6 +36,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		try {
 			int players = 2; // Numero de jugadores por default
 
+						
 			if (args.length > 0){
 				players = Integer.parseInt(args[0]);
 			}
@@ -44,10 +45,12 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				new Server(players);
 			}
 			else {
-				ServerFinder server = new Server(players);
+				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://localhost:1099/serverfinder");
+				new Server(players);
+				/*ServerFinder server = new Server(players);
 				RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
 				LocateRegistry.createRegistry(1099);
-				Naming.rebind("rmi://localhost:1099/serverfinder", server);
+				Naming.rebind("rmi://localhost:1099/serverfinder", server);*/
 			}			
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
