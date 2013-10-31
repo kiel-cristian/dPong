@@ -85,6 +85,14 @@ public class Match {
 		score.reset();
 	}
 	
+	private void resetGameDueMigration() {
+		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
+		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
+		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
+		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
+		ball    = new PongBall();
+	}
+	
 	protected int addPlayer(Player player) {
 		int playerNum = 666;
 		if (!playing[0])
@@ -214,6 +222,7 @@ public class Match {
 	
 	public void stopMigration(){
 		migration.migrating = false;
+		resetGameDueMigration();
 	}
 	
 	public boolean migrating() {
