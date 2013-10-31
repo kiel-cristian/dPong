@@ -44,7 +44,7 @@ public class Match {
 	public void receiveMigration(GameState migratingState) {
 		setGameState(migratingState);
 		migration.migratingPlayers = Utils.countTrue(migratingState.playing);
-		playing = new boolean[4]; // todo false para esperar jugadores
+		Utils.setFalse(playing); // todo false para esperar jugadores
 	}
 	
 	private void setGameState(GameState migratedGameState){
@@ -126,7 +126,6 @@ public class Match {
 	private class PongSimulation extends Thread {
 
 		public void run() {
-			boolean running = true;
 			
 			while (running) {
 				try {

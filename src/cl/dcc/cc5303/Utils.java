@@ -16,6 +16,12 @@ public class Utils {
 		return count;
 	}
 	
+	public static void setFalse(boolean array[]) {
+		for (int i=0; i<array.length; i++) {
+			array[i] = false;
+		}
+	}
+	
 	public static class Pair<L,R> {
 		private final L left;
 		private final R right;
