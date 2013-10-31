@@ -125,6 +125,12 @@ public class Match {
 					if (migration.playersReady) {
 						running = false;
 						doPlayerMigration(migration.targetServer, migration.targetMatch);
+						return;
+					}
+					if (migration.migrating){
+						// This match cannot start due a migration
+						Thread.sleep(1000 / Pong.UPDATE_RATE); // milliseconds
+						continue;
 					}
 					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
 
@@ -204,6 +210,10 @@ public class Match {
 	public GameState startMigration() {
 		migration.migrating = true;
 		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
+	}
+	
+	public void stopMigration(){
+		migration.migrating = false;
 	}
 	
 	public boolean migrating() {
