@@ -145,7 +145,7 @@ public class Match {
 		}
 	}
 	
-	private void checkPlayersActivity() {
+	private synchronized void checkPlayersActivity() {
 		for (int i=0; i < lastActivity.length; i++) {
 			if (playing[i] && (System.currentTimeMillis() - lastActivity[i] > INACTIVITY_TIMEOUT)) {
 				removePlayer(i);
@@ -211,9 +211,9 @@ public class Match {
 	}
 
 	public void migratePlayers(IServer targetServer, int targetMatch) throws RemoteException {
-		migration.playersReady = true;
 		migration.targetServer = targetServer;
 		migration.targetMatch = targetMatch;
+		migration.playersReady = true;
 	}
 	
 	private void doPlayerMigration(IServer targetServer, int targetMatch) {

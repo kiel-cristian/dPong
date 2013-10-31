@@ -66,11 +66,13 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public synchronized GameInfo connectPlayer(Player player) throws RemoteException {
-		Match match = getAvailableMatch();
-		int playerNum = match.addPlayer(player);
-		increasePlayerNum();
-		return new GameInfo(match.getID(), playerNum);
+	public GameInfo connectPlayer(Player player) throws RemoteException {
+		synchronized (this) {
+			Match match = getAvailableMatch();
+			int playerNum = match.addPlayer(player);
+			increasePlayerNum();
+			return new GameInfo(match.getID(), playerNum);
+		}
 	}
 	
 	private Match getAvailableMatch() {
@@ -89,18 +91,22 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public synchronized void disconnectPlayer(int matchID, int playerNum) throws RemoteException {
-		matches.get(matchID).removePlayer(playerNum);
-		decreasePlayerNum();
+	public void disconnectPlayer(int matchID, int playerNum) throws RemoteException {
+		synchronized (this) {
+			matches.get(matchID).removePlayer(playerNum);
+			decreasePlayerNum();
+		}
 	}
 
 	@Override
-	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
-		Match m = matches.get(matchID);
-		if (m == null) {
-			m = incomingMatches.get(matchID);
+	public GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
+		synchronized (this) {
+			Match m = matches.get(matchID);
+			if (m == null) {
+				m = incomingMatches.get(matchID);
+			}
+			return m.updatePositions(playerNum, position);
 		}
-		return m.updatePositions(playerNum, position);
 	}
 
 	@Override
@@ -168,24 +174,26 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public synchronized int getMatchForMigration(GameState stateToMigrate)
+	public int getMatchForMigration(GameState stateToMigrate)
 			throws RemoteException {
-		Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
-		match.receiveMigration(stateToMigrate);
-		incomingMatches.put(match.getID(), match);
-		return match.getID();
+		synchronized (this) {
+			Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
+			match.receiveMigration(stateToMigrate);
+			incomingMatches.put(match.getID(), match);
+			return match.getID();
+		}
 	}
 	
-	public synchronized void connectPlayer(Player player, int matchID, int playerNum)
+	public void connectPlayer(Player player, int matchID, int playerNum)
 			throws RemoteException {
-		Match m = incomingMatches.remove(matchID);
-		m.addPlayer(player, playerNum);
-		increasePlayerNum();
-		if (m.migrationReady()) {
-			matches.put(matchID, m);
-		}
-		else {
-			incomingMatches.put(matchID, m);
+		synchronized (this) {
+			Match m = incomingMatches.get(matchID);
+			m.addPlayer(player, playerNum);
+			increasePlayerNum();
+			if (m.migrationReady()) {
+				matches.put(matchID, m);
+				incomingMatches.remove(matchID);
+			}
 		}
 	}
 
