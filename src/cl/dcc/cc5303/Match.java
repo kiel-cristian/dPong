@@ -195,6 +195,10 @@ public class Match {
 		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
 	}
 	
+	protected GameState lastPositions(int playerNum, int position) {
+		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
+	}
+	
 	private boolean playersReady() {
 		return playersCount() >= minPlayers;
 	}

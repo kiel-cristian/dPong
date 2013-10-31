@@ -100,10 +100,17 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	@Override
 	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
 		Match m = matches.get(matchID);
+		
 		if (m == null) {
 			m = incomingMatches.get(matchID);
 		}
-		return m.updatePositions(playerNum, position);
+		
+		if(!m.migrating()){
+			return m.updatePositions(playerNum, position);
+		}
+		else{
+			return m.lastPositions(playerNum, position);
+		}
 	}
 
 	@Override
@@ -151,19 +158,6 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 					break;
 				}
 			}
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	private void migrateMatch(int matchID) {
-		try {
-			IServer targetServer = loadBalancer.getServerForMigration(serverID);
-			if (targetServer == null) return; // No puede migrar a ninguna parte :(
-			Match m = matches.get(matchID);
-			int targetMatch = targetServer.getMatchForMigration(m.startMigration());
-			m.migratePlayers(targetServer, targetMatch);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
