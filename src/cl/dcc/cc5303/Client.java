@@ -171,13 +171,13 @@ public class Client extends UnicastRemoteObject implements Player {
 		for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
 			scores[i]   = scores2[i];
 		}
-		pong.scores.setScores(scores);
+		pong.scores.setScores(scores, playing);
 	}
 
 	protected synchronized void checkWinners(GameState state) {
 		updateScores(state.scores);
 		if(winner == false && state.winner){
-			pong.scores.setWinner(getScores(), state.winnerPlayer);
+			pong.scores.setWinner(getScores(), state.winnerPlayer, playing);
 			pong.showWinner();
 			winner = true;
 		}

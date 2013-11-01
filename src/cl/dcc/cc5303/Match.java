@@ -66,7 +66,7 @@ public class Match {
 				}
 			}
 		}
-		score.setScores(migratedGameState.scores);
+		score.setScores(migratedGameState.scores, playing);
 		winner = migratedGameState.winner;
 		winnerPlayer = migratedGameState.winnerPlayer;
 	}
@@ -87,7 +87,7 @@ public class Match {
 		ball    = new PongBall();
 		lastPlayer = -1;
 		winner     = false;
-		score.reset();
+		score.reset(playing);
 	}
 	
 	private void resetGameDueMigration() {
@@ -172,7 +172,7 @@ public class Match {
 		// Se pone en 0 el puntaje del jugador que se fue
 		int[] scores = score.getScores();
 		scores[playerNum]  = 0;
-		score.setScores(scores);
+		score.setScores(scores, playing);
 		
 		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID);
 		if(!(this.playersReady())){

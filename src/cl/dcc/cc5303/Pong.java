@@ -23,7 +23,7 @@ public class Pong implements KeyListener {
 	public final static int UPDATE_RATE = 60;
 	public final static int DX = 5;
 	public final static double DV = 0.3;
-	public final static int MAX_PLAYERS = 2;
+	public final static int MAX_PLAYERS = 4;
 
 	private JFrame frame;
 	private MyCanvas canvas;
@@ -72,7 +72,7 @@ public class Pong implements KeyListener {
 	/* Initializes window frame and set it visible */
 	private void init() {
 		canvas = new MyCanvas(this.playerNum, client.getBall());
-		scores = new ScoreBoardGUI();
+		scores = new ScoreBoardGUI(this.client.getPlaying(), this.playerNum);
 		
 		frame = new JFrame(TITLE);
 		frame.setLayout(new BorderLayout());
@@ -103,7 +103,7 @@ public class Pong implements KeyListener {
 					try {
 						if(client.playersReady() && !client.getWinner()){
 							int playerNum     = client.getPlayerNum();
-							playing 		  		= client.getPlaying();
+							playing 		  = client.getPlaying();
 							lastPlayer        = client.getLastPLayer();
 
 							handleStatus(playerNum);
@@ -186,26 +186,26 @@ public class Pong implements KeyListener {
 			switch(lastPlayer){
 				case(0):{
 					// Punto para jugador 1 si no sale por la izquierda
-					if(!(ball.x < 0) && playing[0]){
-						score.sumPoint(0);
+					if(!(ball.x < 0)){
+						score.sumPoint(0, playing);
 					}
 				} break;
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
-					if( !(ball.x > Pong.WIDTH) && playing[1]){
-						score.sumPoint(1);
+					if( !(ball.x > Pong.WIDTH)){
+						score.sumPoint(1, playing);
 					}
 				} break;
 				case(2):{
 					// Punto para jugador 3 si no sale abjo
-					if( !(ball.y > Pong.HEIGHT) && playing[2]){
-						score.sumPoint(2);
+					if( !(ball.y > Pong.HEIGHT)){
+						score.sumPoint(2, playing);
 					}
 				}break;
 				case(3):{
 					// Punto para jugador 4 si no sale arriba
-					if( !(ball.y < 0) && playing[3]){
-						score.sumPoint(3);
+					if( !(ball.y < 0)){
+						score.sumPoint(3, playing);
 					}
 				}
 			}
@@ -346,10 +346,10 @@ public class Pong implements KeyListener {
 	}
 
 	public void reMatch() {
-		ball    = new PongBall();
+		ball = new PongBall();
 		ball.reset();
 		lastPlayer = -1;
-		scores.reset();
+		scores.reset(client.getPlaying());
 	}
 
 	public void showWinner() {
