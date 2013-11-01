@@ -37,6 +37,7 @@ public class Match {
 		winner     = false;
 		winnerPlayer = -1;
 		migration = new MigrationInfo();
+		simulationThread = null;
 		this.matchID = matchID;
 		this.minPlayers = minPlayers;
 	}
@@ -176,7 +177,9 @@ public class Match {
 		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID);
 		if(!(this.playersReady())){
 			System.out.println("Juego " + matchID + " pausado por falta de jugadores");
-			simulationThread.interrupt();
+			if(simulationThread != null){
+				simulationThread.interrupt();
+			}
 			running = false;
 		}
 		if (Utils.countTrue(playing) == 0) {
