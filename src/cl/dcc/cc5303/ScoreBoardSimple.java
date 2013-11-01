@@ -7,9 +7,6 @@ public class ScoreBoardSimple implements ScoreBoard {
 	//historical winners
 	List<Integer> winners = new ArrayList<Integer>();
 	
-	//final score
-	public final int WINNING_SCORE = 10;
-	
 	//variables
 	private int scores[];
 	private int winner;
@@ -27,7 +24,7 @@ public class ScoreBoardSimple implements ScoreBoard {
 	public void sumPoint(int playerNum, boolean[] playing) {
 		if(playing[playerNum]){
 			scores[playerNum]++;
-			if (scores[playerNum] == WINNING_SCORE)
+			if (scores[playerNum] == Pong.WINNING_SCORE)
 				winner = playerNum;
 		}
 	}

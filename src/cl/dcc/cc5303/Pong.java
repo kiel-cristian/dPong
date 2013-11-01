@@ -24,6 +24,7 @@ public class Pong implements KeyListener {
 	public final static int DX = 5;
 	public final static double DV = 0.3;
 	public final static int MAX_PLAYERS = 4;
+	public final static int WINNING_SCORE = 2;
 
 	private JFrame frame;
 	private MyCanvas canvas;
@@ -32,7 +33,9 @@ public class Pong implements KeyListener {
 	private GameBar[] bars = new GameBar[4];
 	private int lastPlayer;
 	private PongBall ball;
+
 	public ScoreBoardGUI scores;
+	public HistoricalScoreBoardGui historical;
 
 	private boolean[] keys;
 	private boolean[] playing = new boolean[4];
@@ -68,6 +71,7 @@ public class Pong implements KeyListener {
 	private void init() {
 		canvas = new MyCanvas(this.playerNum, client.getBall());
 		scores = new ScoreBoardGUI(this.client.getPlaying(), this.playerNum);
+		historical = new HistoricalScoreBoardGui();
 		
 		frame = new JFrame(TITLE);
 		frame.setLayout(new BorderLayout());
@@ -75,6 +79,7 @@ public class Pong implements KeyListener {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.add(canvas, BorderLayout.CENTER);
 		frame.add(scores, BorderLayout.NORTH);
+		frame.add(historical, BorderLayout.SOUTH);
 		
 		canvas.setSize(WIDTH, HEIGHT);
 		for(int i = 0; i < bars.length; i++){
@@ -133,6 +138,8 @@ public class Pong implements KeyListener {
 						onGame = false;
 						pong.showPauseMessage("Esperando jugadores ...");
 					}
+					
+					pong.historical.showScores();
 
 					pong.canvas.repaint();
 					handleQuitEvent();
@@ -368,11 +375,13 @@ public class Pong implements KeyListener {
 		ball.reset();
 		lastPlayer = -1;
 		scores.reset(client.getPlaying());
+		historical.hideScores();
 	}
 
 	public void showWinner() {
 		scores.showWinner();
-		
+		historical.addWinner(scores.getWinner());
+		historical.showScores();
 	}
 	
 	private void showPauseMessage(String message){

@@ -214,7 +214,8 @@ public class Client extends UnicastRemoteObject implements Player {
 					}
 					Thread.sleep(REFRESH_TIME);
 				} catch (RemoteException e) {
-					e.printStackTrace();
+					System.out.println("Server no responde");
+					System.exit(1); // FIXME
 				} catch (InterruptedException e) {
 					System.out.println("Server Update:" + playerNum + " muriendo");
 					running = false;

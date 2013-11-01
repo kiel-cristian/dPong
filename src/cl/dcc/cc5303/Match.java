@@ -16,6 +16,7 @@ public class Match {
 	private int minPlayers;
 	private Thread simulationThread;
 	private ScoreBoardSimple score;
+	private HistoricalScoreBoardSimple historical;
 	private boolean winner;
 	private int winnerPlayer;
 	private boolean running;
@@ -34,6 +35,7 @@ public class Match {
 		players = new Player[4];
 		lastActivity = new long[4];
 		score      = new ScoreBoardSimple();
+		historical = new HistoricalScoreBoardSimple();
 		winner     = false;
 		winnerPlayer = -1;
 		migration = new MigrationInfo();
@@ -125,6 +127,7 @@ public class Match {
 		winnerPlayer = score.getWinner();
 		if(score.getWinner() >= 0){
 			winner = true;
+			historical.addWinner(winnerPlayer);
 		}
 	}
 
@@ -168,6 +171,9 @@ public class Match {
 	protected void removePlayer(int playerNum) {
 		playing[playerNum] = false;
 		players[playerNum] = null;
+		
+		// Remuevo del score historico el jugador
+		historical.removePlayer(playerNum);
 		
 		// Se pone en 0 el puntaje del jugador que se fue
 		int[] scores = score.getScores();
