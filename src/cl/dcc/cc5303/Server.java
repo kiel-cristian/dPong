@@ -39,6 +39,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 						
 			if (args.length > 0){
 				players = Integer.parseInt(args[0]);
+				if(players < 2){
+					System.out.println("Debe introducir un número válido de jugadores para las partidas (mínimo 2)");
+					return;
+				}
 			}
 			if (args.length > 1){
 				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://" + args[1] + ":1099/serverfinder");
