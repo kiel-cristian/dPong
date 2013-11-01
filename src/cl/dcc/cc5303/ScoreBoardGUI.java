@@ -25,10 +25,10 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		
 		this.setBackground(Color.DARK_GRAY);
 		initScores(playing);
+		add(message);
 		for (int i=0; i<4; i++){
 			add(scores[i]);
 		}
-		add(message);
 		this.setOpaque(true);
 		this.myPlayerNum = playerNum;
 	}
@@ -51,7 +51,7 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 				scores[i].setForeground(Color.WHITE);
 			}
 		}
-		message.setText("");
+		message.setText("Esperando jugadores ...");
 		message.setFont(new Font("Monospaced", Font.BOLD, 15));
 		message.setBorder(new EmptyBorder(0, 20, 0, 20));
 		message.setForeground(Color.WHITE);
@@ -110,6 +110,12 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	public int getWinner() {
 		return score.getWinner();
 	}
+	
+	@Override
+	public void reset(boolean[] playing) {
+		resetScores();
+		score.reset(playing);
+	}
 
 	public void showWinner() {
 		for (int i=0; i<4; i++) {
@@ -125,10 +131,8 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 			message.setText("JUGADOR " + (score.getWinner() + 1) + " HA GANADO!");
 		}
 	}
-
-	@Override
-	public void reset(boolean[] playing) {
-		resetScores();
-		score.reset(playing);
+	
+	public void showPause(String m){
+		message.setText(m);
 	}
 }

@@ -63,11 +63,6 @@ public class Pong implements KeyListener {
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
 	}
-	
-	public void startGame() {
-		serverUpdate.start();
-		game.start();
-	}
 
 	/* Initializes window frame and set it visible */
 	private void init() {
@@ -93,41 +88,64 @@ public class Pong implements KeyListener {
 		canvas.init();
 		frame.addKeyListener(this);
 
-		game = new Thread(new Runnable() {
+		game = new PongGame(this);
+	}
+	
+	public void startGame() {
+		serverUpdate.start();
+		game.start();
+	}
+	
+	private class PongGame extends Thread{
+		Pong pong;
+		public PongGame(Pong game){
+			this.pong = game;
+		}
 
-			@Override
-			public void run() {
-				boolean running = true;
-				
-				while (running) {
-					try {
-						if(client.playersReady() && !client.getWinner()){
-							int playerNum     = client.getPlayerNum();
-							playing 		  = client.getPlaying();
-							lastPlayer        = client.getLastPLayer();
-
-							handleStatus(playerNum);
-							handleKeyEvents(playerNum);
-							doGameIteration(playing, bars, ball, scores, lastPlayer);
-							handlePlayerBars();
-							canvas.playerNum = playerNum;
-							canvas.ball = ball;
-						}
-
-						canvas.repaint();
-						handleQuitEvent();
-						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
-						 
+		public void run() {
+			boolean running = true;
+			boolean winner = false;
+			boolean ready = false;
+			boolean onGame = false;
+			
+			while (running) {
+				try {
+					winner = pong.client.getWinner();
+					ready  = pong.client.playersReady();
+					
+					if(!onGame && ready){
+						onGame = true;
+						pong.showPauseMessage("");
 					}
-					catch (InterruptedException ex) {
-						System.out.println("Pong: " + playerNum + " muriendo");
-						running = false;
-						
-						return;
+					if(ready && !winner){
+						int playerNum     = pong.client.getPlayerNum();
+						pong.playing 	  = pong.client.getPlaying();
+						pong.lastPlayer   = pong.client.getLastPLayer();
+
+						pong.handleStatus(playerNum);
+						pong.handleKeyEvents(playerNum);
+						Pong.doGameIteration(pong.playing, pong.bars, pong.ball, pong.scores, pong.lastPlayer);
+						pong.handlePlayerBars();
+						pong.canvas.playerNum = playerNum;
+						pong.canvas.ball = pong.ball;
 					}
+					else if(!ready && !winner){
+						onGame = false;
+						pong.showPauseMessage("Esperando jugadores ...");
+					}
+
+					pong.canvas.repaint();
+					handleQuitEvent();
+					Thread.sleep(1000 / UPDATE_RATE); // milliseconds
+					 
+				}
+				catch (InterruptedException ex) {
+					System.out.println("Pong: " + pong.playerNum + " muriendo");
+					running = false;
+					return;
 				}
 			}
-		});
+		}
 	}
 	
 	public void stopClient() {
@@ -355,5 +373,9 @@ public class Pong implements KeyListener {
 	public void showWinner() {
 		scores.showWinner();
 		
+	}
+	
+	private void showPauseMessage(String message){
+		scores.showPause(message);
 	}
 }
