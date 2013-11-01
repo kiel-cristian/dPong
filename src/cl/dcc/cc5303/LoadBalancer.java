@@ -158,25 +158,20 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	}
 	
 	@Override
-	public synchronized void reportLoad(int serverID, int load) throws RemoteException {
-		int lastLoad = serversLoad.get(serverID);
-		serversLoad.put(serverID, load);
-		System.out.println("reportando empieza");
-		// Si la carga del servidor es mayor o igual al 70%
-		if(load > lastLoad && load >= MAX_LOAD*0.7){System.out.println("migracion!");
-			// Migrar matches
-			IServer server          = servers.get(serverID);
-			IServer migrationServer = getServerForMigration(serverID);System.out.println("obtuve server para migracion!");
+	public boolean reportLoad(int serverID, int load) throws RemoteException {
+		synchronized (this) {
+			int lastLoad = serversLoad.get(serverID);
+			serversLoad.put(serverID, load);
 			
-			// Si es que hay donde migrar
-			if(migrationServer != null){System.out.println("migrando partidas!");
-				// TODO: Algo asi, como el metodo para migrar varios matches del server, en vez de uno solo desde aca, donde falta info ahora
-				server.migrateMatches(migrationServer);
+			// Si la carga del servidor es mayor o igual al 70%
+			if (load > lastLoad && load >= MAX_LOAD*0.7) {
+				return false;
+			}
+			else {
+				serverPriority = getPriorityList();
+				return true;
 			}
 		}
-		else{
-			serverPriority = getPriorityList();	
-		}System.out.println("reportando fin");
 	}
 	
 	private class ServerLoad extends Pair<Integer, IServer> implements Comparable<ServerLoad> {
@@ -193,25 +188,26 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 
 	@Override
 	public IServer getServerForMigration(int sourceServerID) throws RemoteException {
-		
-		IServer sourceServer = servers.get(sourceServerID);
-		ServerLoad bestLoad  = null;
-		
-		for(ServerLoad s: serverPriority){
-			if(s.right().equals(sourceServer)){
-				continue;
+		synchronized (this) {
+			IServer sourceServer = servers.get(sourceServerID);
+			ServerLoad bestLoad  = null;
+			
+			for(ServerLoad s: serverPriority){
+				if(s.right().equals(sourceServer)){
+					continue;
+				}
+				else{
+					bestLoad = s;
+					break;
+				}
+			}
+			
+			if(bestLoad.left() < MAX_LOAD){
+				return bestLoad.right();
 			}
 			else{
-				bestLoad = s;
-				break;
+				return null;
 			}
-		}
-		
-		if(bestLoad.left() < MAX_LOAD){
-			return bestLoad.right();
-		}
-		else{
-			return null;
 		}
 	}
 }

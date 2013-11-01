@@ -43,6 +43,7 @@ public class Match {
 
 	public void receiveMigration(GameState migratingState) {
 		setGameState(migratingState);
+		migration.immigrating = true;
 		migration.migratingPlayers = Utils.countTrue(migratingState.playing);
 		Utils.setFalse(playing); // todo false para esperar jugadores
 	}
@@ -64,6 +65,9 @@ public class Match {
 				}
 			}
 		}
+		score.setScores(migratedGameState.scores);
+		winner = migratedGameState.winner;
+		winnerPlayer = migratedGameState.winnerPlayer;
 	}
 	
 	private void startGame() {
@@ -86,11 +90,11 @@ public class Match {
 	}
 	
 	private void resetGameDueMigration() {
-		bars[0] = new Rectangle(10, Pong.HEIGHT / 2, 10, 100);
-		bars[1] = new Rectangle(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100);
-		bars[2] = new Rectangle(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10);
-		bars[3] = new Rectangle(Pong.WIDTH/2, 10, 100, 10);
-		ball    = new PongBall();
+        bars[0] = new Rectangle(10, bars[0].y, 10, 100);
+        bars[1] = new Rectangle(Pong.WIDTH - 10, bars[1].y, 10, 100);
+        bars[2] = new Rectangle(bars[2].x, Pong.HEIGHT - 10, 100, 10);
+        bars[3] = new Rectangle(bars[3].x, 10, 100, 10);
+        //ball    = new PongBall();
 	}
 	
 	protected int addPlayer(Player player) {
@@ -129,12 +133,10 @@ public class Match {
 			
 			while (running) {
 				try {
-					if (migration.playersReady) {
+					if (migration.emigrating) {
 						running = false;
-						doPlayerMigration(migration.targetServer, migration.targetMatch);
 						return;
 					}
-
 					lastPlayer = Pong.doGameIteration(playing, bars, ball, score, lastPlayer);
 
 					checkForWinnerServer();
@@ -157,8 +159,7 @@ public class Match {
 	private synchronized void checkPlayersActivity() {
 		for (int i=0; i < lastActivity.length; i++) {
 			if (playing[i] && (System.currentTimeMillis() - lastActivity[i] > INACTIVITY_TIMEOUT)) {
-				System.out.println("echando al jugador: " + i + "estado:"+ playing[i]);
-				//removePlayer(i);
+				removePlayer(i);
 			}
 		}
 	}
@@ -195,7 +196,7 @@ public class Match {
 		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
 	}
 	
-	protected GameState lastPositions(int playerNum, int position) {
+	protected GameState lastPositions() {
 		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
 	}
 	
@@ -216,26 +217,21 @@ public class Match {
 	}
 
 	public GameState startMigration() {
-		migration.migrating = true;
+		migration.emigrating = true;
 		return new GameState(playing, bars, ball, score.getScores(), winner, winnerPlayer, minPlayers);
 	}
 	
 	public void stopMigration(){
-		migration.migrating = false;
+		migration.emigrating = false;
+		migration.immigrating = false;
 		resetGameDueMigration();
 	}
 	
 	public boolean migrating() {
-		return migration.migrating;
+		return migration.emigrating || migration.immigrating;
 	}
 
 	public void migratePlayers(IServer targetServer, int targetMatch) throws RemoteException {
-		migration.targetServer = targetServer;
-		migration.targetMatch = targetMatch;
-		migration.playersReady = true;
-	}
-	
-	private void doPlayerMigration(IServer targetServer, int targetMatch) {
 		for (int i=0; i<players.length; i++) {
 			if (players[i] != null) {
 				try {
@@ -249,10 +245,8 @@ public class Match {
 	}
 	
 	private class MigrationInfo {
-		public boolean migrating;
-		public boolean playersReady;
+		public boolean emigrating;
+		public boolean immigrating;
 		public int migratingPlayers;
-		public IServer targetServer;
-		public int targetMatch;
 	}
 }

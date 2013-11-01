@@ -9,8 +9,8 @@ import java.rmi.server.UnicastRemoteObject;
 public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private static int REFRESH_TIME = 50;
-	private ServerFinder serverFinder;
-	private IServer server;
+	private volatile ServerFinder serverFinder;
+	private volatile IServer server;
 	private volatile int matchID;
 	private volatile int playerNum;
 	private volatile int lastPlayer;
@@ -142,16 +142,29 @@ public class Client extends UnicastRemoteObject implements Player {
 	}
 
 	@Override
-	public void migrate(IServer server, int targetMatchID)
+	public void migrate(final IServer targetServer, final int targetMatchID)
 			throws RemoteException {
 		serverUpdate.pause();
-		this.server.disconnectPlayer(this.matchID, playerNum);
-		// Se reemplaza referencia al nuevo server
-		this.server = server;
-		this.matchID = targetMatchID;
-		// conexion
-		this.server.connectPlayer(this, targetMatchID, playerNum);
-		serverUpdate.unPause();
+		final Client self = this;
+		Thread migrator = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				try {
+					IServer oldServer = self.server;
+					int oldMatch = self.matchID;
+					self.server = targetServer;
+					self.matchID = targetMatchID;
+					oldServer.disconnectPlayer(oldMatch, playerNum);
+					targetServer.connectPlayer(self, targetMatchID, playerNum);
+					serverUpdate.unPause();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+			
+		});
+		migrator.start();
 	}
 	
 	protected synchronized void updateScores(int[] scores2) {
@@ -176,25 +189,28 @@ public class Client extends UnicastRemoteObject implements Player {
 	
 	private class ServerUpdateThread extends Thread {
 		private boolean running = true;
+		private boolean working = true;
 
 		@Override
 		public void run() {
 
 			while (running) {
 				try {
-					GameState state = server.updatePositions(matchID, playerNum, getBarPosition(playerNum));
-					minPlayers = state.minPlayers;
-					checkWinners(state);
+					if (working) {
+						GameState state = server.updatePositions(matchID, playerNum, getBarPosition(playerNum));
+						minPlayers = state.minPlayers;
+						checkWinners(state);
 
-					if(!getWinner()){
-						for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
-							barPos[i] 	= state.barsPos[i];
-							playing[i] 	= state.playing[i];
+						if(!getWinner()){
+							for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
+								barPos[i] 	= state.barsPos[i];
+								playing[i] 	= state.playing[i];
+							}
+							ballX = state.ballX;
+							ballY = state.ballY;
+							vx = state.vx;
+							vy = state.vy;
 						}
-						ballX = state.ballX;
-						ballY = state.ballY;
-						vx = state.vx;
-						vy = state.vy;
 					}
 					Thread.sleep(REFRESH_TIME);
 				} catch (RemoteException e) {
@@ -208,11 +224,11 @@ public class Client extends UnicastRemoteObject implements Player {
 		}
 		
 		public void pause() {
-			running = false;
+			working = false;
 		}
 		
 		public void unPause() {
-			running = true;
+			working = true;
 		}
 	}
 }

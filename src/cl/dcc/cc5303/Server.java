@@ -15,17 +15,17 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ILoadBalancer loadBalancer;
 	private LinkedHashMap<Integer, Match> matches;
-	private LinkedHashMap<Integer, Match> incomingMatches;
 	private int minPlayers;
 	private volatile int matchCount;
 	private volatile int playerCount;
 	private int serverID;
-
+	private MigrationHandler migrationHandler;
+	private boolean migrating;
+	
 	protected Server(int minPlayers) throws RemoteException {
 		super();
 		this.minPlayers = minPlayers;
 		matches = new LinkedHashMap<Integer, Match>();
-		incomingMatches = new LinkedHashMap<Integer, Match>();
 		if (loadBalancer != null) {
 			serverID = loadBalancer.connectServer(this);
 			System.out.println("Server ID: " + serverID);
@@ -45,12 +45,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				new Server(players);
 			}
 			else {
-				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://localhost:1099/serverfinder");
-				new Server(players);
-				/*ServerFinder server = new Server(players);
+				ServerFinder server = new Server(players);
 				RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
 				LocateRegistry.createRegistry(1099);
-				Naming.rebind("rmi://localhost:1099/serverfinder", server);*/
+				Naming.rebind("rmi://localhost:1099/serverfinder", server);
 			}			
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
@@ -59,10 +57,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (NotBoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (NotBoundException e) {
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -100,16 +98,12 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	@Override
 	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
 		Match m = matches.get(matchID);
-		
-		if (m == null) {
-			m = incomingMatches.get(matchID);
-		}
-		
+			
 		if(!m.migrating()){
 			return m.updatePositions(playerNum, position);
 		}
-		else{
-			return m.lastPositions(playerNum, position);
+		else {
+			return m.lastPositions();
 		}
 	}
 
@@ -131,10 +125,21 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private void reportLoad() {
 		if (loadBalancer != null) {
 			try {
-				loadBalancer.reportLoad(serverID, playerCount);
+				boolean acceptableLoad = loadBalancer.reportLoad(serverID, playerCount);
+				if (!acceptableLoad) {
+					migrateMatches();
+				}
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	private void migrateMatches() throws RemoteException {
+		if (!migrating) {
+			migrating = true;
+			migrationHandler = new MigrationHandler();
+			migrationHandler.start();
 		}
 	}
 	
@@ -143,7 +148,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		return migratedMatchesCount < currentMatches/2;
 	}
 	
-	public void migrateMatches(IServer targetServer) throws RemoteException {
+	private void migrateMatches(IServer targetServer) {
 		try {
 			Match selectedMatch;
 			int migratedMatches = 0;
@@ -151,7 +156,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			
 			for (Map.Entry<Integer, Match> e : matches.entrySet()) {
 				selectedMatch = matches.get(e.getKey());
-				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());System.out.println("migrando jugadores!");
+				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
 				selectedMatch.migratePlayers(targetServer, targetMatch);
 				migratedMatches++;
 				if(!needToMigrate(migratedMatches, currentMatches)){
@@ -165,30 +170,28 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public int getMatchForMigration(GameState stateToMigrate)
+	public synchronized int getMatchForMigration(GameState stateToMigrate)
 			throws RemoteException {
 		Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
 		match.receiveMigration(stateToMigrate);
-		incomingMatches.put(match.getID(), match);
+		matches.put(match.getID(), match);
 		return match.getID();
 	}
 	
-	public void connectPlayer(Player player, int matchID, int playerNum)
+	@Override
+	public synchronized void connectPlayer(Player player, int matchID, int playerNum)
 			throws RemoteException {
-		synchronized (this) {
-			Match m = incomingMatches.get(matchID);
-			m.addPlayer(player, playerNum);
-			increasePlayerNum();
-			if (m.migrationReady()) {
-				m.stopMigration();
-				matches.put(matchID, m);
-				incomingMatches.remove(matchID);
-			}
+		Match m = matches.get(matchID);
+		m.addPlayer(player, playerNum);
+		increasePlayerNum();
+		if (m.migrationReady()) {
+			m.stopMigration();
 		}
 	}
 
 	public void removeMatch(int matchID) {
 		matches.remove(matchID);
+		System.out.println("Partida " + matchID + " eliminada por falta de jugadores");
 	}
 
 	@Override
@@ -196,7 +199,25 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		return getServer();
 	}
 	
+	@Override
 	public void heartBeat() throws RemoteException{
 		return;
+	}
+	
+	private class MigrationHandler extends Thread {
+		
+		@Override
+		public void run() {
+			try {
+				IServer migrationServer = loadBalancer.getServerForMigration(serverID);
+				if (migrationServer != null) {
+					migrateMatches(migrationServer);
+				}
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			} finally {
+				migrating = false;
+			}
+		}
 	}
 }
