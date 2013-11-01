@@ -49,10 +49,9 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				new Server(players);
 			}
 			else {
-				ServerFinder server = new Server(players);
-				RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
-				LocateRegistry.createRegistry(1099);
-				Naming.rebind("rmi://localhost:1099/serverfinder", server);
+				
+				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://localhost:1099/serverfinder");
+				new Server(players);
 			}			
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
