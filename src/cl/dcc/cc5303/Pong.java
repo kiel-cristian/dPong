@@ -9,6 +9,7 @@
 package cl.dcc.cc5303;
 
 
+import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -25,7 +26,6 @@ public class Pong implements KeyListener {
 	public final static int MAX_PLAYERS = 2;
 
 	private JFrame frame;
-	private JFrame scoreFrame;
 	private MyCanvas canvas;
 	private Client client;
 
@@ -73,34 +73,23 @@ public class Pong implements KeyListener {
 	private void init() {
 		canvas = new MyCanvas(this.playerNum, client.getBall());
 		scores = new ScoreBoardGUI();
-
-		scoreFrame = new JFrame("Marcador");
-		scoreFrame.setSize(WIDTH, HEIGHT/2);
-		scoreFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		frame = new JFrame(TITLE);
+		frame.setLayout(new BorderLayout());
 		frame.setSize(WIDTH, HEIGHT);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		frame.add(canvas);
-		scoreFrame.add(scores);
-
+		frame.add(canvas, BorderLayout.CENTER);
+		frame.add(scores, BorderLayout.NORTH);
+		
 		canvas.setSize(WIDTH, HEIGHT);
-		scoreFrame.setSize(WIDTH, HEIGHT/2);
-
 		for(int i = 0; i < bars.length; i++){
 			if(client.getPlayerStatus(i))
 				canvas.rectangles.add(bars[i]);
 		}
-		
 		canvas.addKeyListener(this);
-
+		
 		frame.pack();
 		frame.setVisible(true);
-
-		scoreFrame.pack();
-		scoreFrame.setVisible(true);
-
 		canvas.init();
 		frame.addKeyListener(this);
 
@@ -141,17 +130,12 @@ public class Pong implements KeyListener {
 		});
 	}
 	
-	public void stopClient(){
-		destroyFrames();
+	public void stopClient() {
+		frame.dispose();
 		serverUpdate.interrupt();
 		game.interrupt();
 		
 		System.exit(0);// FIXME
-	}
-	
-	private void destroyFrames(){
-		frame.dispose();
-		scoreFrame.dispose();
 	}
 	
 	private void stop(){
