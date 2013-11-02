@@ -97,7 +97,6 @@ public class Match {
         bars[1] = new Rectangle(Pong.WIDTH - 10, bars[1].y, 10, 100);
         bars[2] = new Rectangle(bars[2].x, Pong.HEIGHT - 10, 100, 10);
         bars[3] = new Rectangle(bars[3].x, 10, 100, 10);
-        //ball    = new PongBall();
 	}
 	
 	protected int addPlayer(Player player) {

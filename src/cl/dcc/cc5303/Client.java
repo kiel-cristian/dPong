@@ -40,7 +40,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			else
 			{
 				serverFinderAddress = "localhost";
-				serverID = Integer.parseInt("1");
+				serverID = Integer.parseInt("1"); // por default se va siempre al primer server
 			}
 			client.play(serverFinderAddress, serverID);
 		} catch (RemoteException e) {
