@@ -6,6 +6,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+import cl.dcc.cc5303.CommandLineParser.ParserException;
+
 public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private static int REFRESH_TIME = 50;
@@ -29,19 +31,12 @@ public class Client extends UnicastRemoteObject implements Player {
 	public static void main(String[] args) {
 		try {
 			Client client = new Client();
-			String serverFinderAddress;
-			int serverID = -1;
-			if (args.length > 0) {
-				serverFinderAddress = args[0];
-				if (args.length > 1) {
-					serverID = Integer.parseInt(args[1]);
-				}
-			}
-			else
-			{
-				serverFinderAddress = "localhost";
-				serverID = Integer.parseInt("1"); // por default se va siempre al primer server
-			}
+			CommandLineParser parser = new CommandLineParser(args);
+			parser.addOption("a", "string");
+			parser.addOption("n", "int", "1");
+			parser.parse();
+			String serverFinderAddress = parser.getString("a", "localhost");
+			int serverID = parser.getInt("n", -1);
 			client.play(serverFinderAddress, serverID);
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -49,6 +44,8 @@ public class Client extends UnicastRemoteObject implements Player {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
 			e.printStackTrace();
+		} catch (ParserException e) {
+			System.out.println(e.getMessage());
 		}
 	}
 	protected Client() throws RemoteException {

@@ -11,8 +11,11 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import cl.dcc.cc5303.CommandLineParser.ParserException;
+
 public class Server extends UnicastRemoteObject implements IServer, ServerFinder {
 	private static final long serialVersionUID = -8181276888826913071L;
+	private static ServerOptions options;
 	private static ILoadBalancer loadBalancer;
 	private LinkedHashMap<Integer, Match> matches;
 	private int minPlayers;
@@ -34,24 +37,17 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 
 	public static void main(String[] args) {
 		try {
-			int players = 2; // Numero de jugadores por default
-
-						
-			if (args.length > 0){
-				players = Integer.parseInt(args[0]);
-				if(players < 2){
-					System.out.println("Debe introducir un número válido de jugadores para las partidas (mínimo 2)");
-					return;
-				}
-			}
-			if (args.length > 1){
-				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://" + args[1] + ":1099/serverfinder");
-				new Server(players);
+			options = parseOptions(args);
+			
+			if (options.loadBalancer){
+				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://" + options.balancerUrl + ":1099/serverfinder");
+				new Server(options.minPlayers);
 			}
 			else {
-				
-				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://localhost:1099/serverfinder");
-				new Server(players);
+				ServerFinder server = new Server(options.minPlayers);
+				RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
+				LocateRegistry.createRegistry(1099);
+				Naming.rebind("rmi://localhost:1099/serverfinder", server);
 			}			
 			System.out.println("Escuchando...");
 		} catch (RemoteException e) {
@@ -66,7 +62,29 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ParserException e) {
+			System.out.println(e.getMessage());
 		}
+	}
+	
+	private static ServerOptions parseOptions(String[] args) throws ParserException {
+		ServerOptions options = new ServerOptions();
+		CommandLineParser parser = new CommandLineParser(args);
+		parser.addOption("b", "string", "localhost"); 	// Balanceador: localhost por defecto
+		parser.addOption("n", "int");
+		parser.greaterThanRule("n", 1, "Debe introducir un número válido de jugadores para las partidas (mínimo 2)");
+		parser.lessThanRule("n", 5, "Debe introducir un número válido de jugadores para las partidas (máximo 4)");
+		parser.parse();
+		options.minPlayers = parser.getInt("n", 2); // Minimo de jugadores: 2 por defecto
+		options.loadBalancer = parser.containsString("b");
+		options.balancerUrl = parser.getString("b", null);
+		return options;
+	}
+	
+	private static class ServerOptions {
+		public boolean loadBalancer;
+		public String balancerUrl;
+		public int minPlayers;
 	}
 
 	@Override
