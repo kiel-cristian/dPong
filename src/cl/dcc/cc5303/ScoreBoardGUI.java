@@ -134,5 +134,6 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	
 	public void showPause(String m){
 		message.setText(m);
+		message.setForeground(Color.WHITE);
 	}
 }

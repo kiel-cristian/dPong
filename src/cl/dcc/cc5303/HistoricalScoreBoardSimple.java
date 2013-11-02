@@ -1,5 +1,6 @@
 package cl.dcc.cc5303;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,12 +28,30 @@ public class HistoricalScoreBoardSimple implements HistoricalScoreBoard{
 		playersHistorical.remove(player);
 	}
 
-	public String getScores(){
-		String score = "Resumen : ";
-		for(Map.Entry<Integer, Integer> w : playersHistorical.entrySet()){
-			score += "P" + w.getKey() + ": " + w.getValue() + " ";
+	public int[] getScores(){
+		Object playerScore;
+		int[] scores = new int[Pong.MAX_PLAYERS];
+		
+		for(int i = 1; i <= Pong.MAX_PLAYERS; i++){
+			playerScore = playersHistorical.get(i-1);
+			if(playerScore != null){
+				scores[i-1] = (int)playerScore;
+			}
+			else{
+				scores[i-1] = 0;
+			}
 		}
-		return score;
+		return scores;
+	}
+	
+	public int getPlayerScore(int player){
+		Object score = playersHistorical.get(player - 1);
+		if(score == null){
+			return 0;
+		}
+		else{
+			return (int) score;
+		}
 	}
 
 }

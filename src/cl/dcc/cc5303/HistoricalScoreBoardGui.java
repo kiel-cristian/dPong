@@ -2,23 +2,42 @@ package cl.dcc.cc5303;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.Collection;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 public class HistoricalScoreBoardGui extends JPanel implements HistoricalScoreBoard{
 	private static final long serialVersionUID = 8916186821186929334L;
-	private JLabel label;
+	private JLabel[] labels;
+	private JLabel myLabel;
 	private HistoricalScoreBoardSimple board;
+	private int myPlayerNum;
 	
-	public HistoricalScoreBoardGui(){
+	public HistoricalScoreBoardGui(int playerNum){
+		myPlayerNum = playerNum + 1;
 		board = new HistoricalScoreBoardSimple();
-		label = new JLabel();
+		labels = new JLabel[4];
+		myLabel = new JLabel();
+
 		this.setBackground(Color.DARK_GRAY);
-		label.setFont(new Font("Monospaced", Font.BOLD, 15));
-		label.setBorder(new EmptyBorder(0, 50, 0, 200));
-		label.setForeground(Color.WHITE);
-		label.setText("");
+		this.setOpaque(true);
+		this.add(myLabel);
+		
+		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+			labels[i] = new JLabel();
+			labels[i].setFont(new Font("Monospaced", Font.BOLD, 15));
+			labels[i].setBorder(new EmptyBorder(0, 20, 0, 20));
+			labels[i].setForeground(Color.WHITE);
+			this.add(labels[i]);
+		}
+		
+		myLabel.setFont(new Font("Monospaced", Font.BOLD, 15));
+		myLabel.setBorder(new EmptyBorder(0, 20, 0, 20));
+		myLabel.setForeground(Color.RED);
+		
+		showScores();
 	}
 
 	@Override
@@ -32,11 +51,19 @@ public class HistoricalScoreBoardGui extends JPanel implements HistoricalScoreBo
 	}
 
 	public void showScores() {
-		label.setText(board.getScores());
-	}
-
-	public void hideScores() {
-		label.setText("");
+		int[] scores = board.getScores();
+				
+		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+			if(myPlayerNum != (i+1)){
+				labels[i].setText("P" + (i +1) + ": " + scores[i]);
+			}
+			else{
+				labels[i].setText("");
+			}
+		}
+		
+		int myScore = board.getPlayerScore(myPlayerNum);
+		myLabel.setText("N° victorias: " +  + myScore + "      ->" );
 	}
 	
 }
