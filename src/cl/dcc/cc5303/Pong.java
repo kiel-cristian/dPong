@@ -23,7 +23,8 @@ public class Pong implements KeyListener {
 	public final static int UPDATE_RATE = 60;
 	public final static int DX = 5;
 	public final static double DV = 0.3;
-	public final static int MAX_PLAYERS = 2;
+	public final static int MAX_PLAYERS = 4;
+	public final static int WINNING_SCORE = 2;
 
 	private JFrame frame;
 	private MyCanvas canvas;
@@ -32,7 +33,9 @@ public class Pong implements KeyListener {
 	private GameBar[] bars = new GameBar[4];
 	private int lastPlayer;
 	private PongBall ball;
+
 	public ScoreBoardGUI scores;
+	public HistoricalScoreBoardGui historical;
 
 	private boolean[] keys;
 	private boolean[] playing = new boolean[4];
@@ -63,16 +66,12 @@ public class Pong implements KeyListener {
 		keys = new boolean[KeyEvent.KEY_LAST];
 		init();
 	}
-	
-	public void startGame() {
-		serverUpdate.start();
-		game.start();
-	}
 
 	/* Initializes window frame and set it visible */
 	private void init() {
 		canvas = new MyCanvas(this.playerNum, client.getBall());
-		scores = new ScoreBoardGUI();
+		scores = new ScoreBoardGUI(this.client.getPlaying(), this.playerNum);
+		historical = new HistoricalScoreBoardGui(this.playerNum);
 		
 		frame = new JFrame(TITLE);
 		frame.setLayout(new BorderLayout());
@@ -80,6 +79,7 @@ public class Pong implements KeyListener {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.add(canvas, BorderLayout.CENTER);
 		frame.add(scores, BorderLayout.NORTH);
+		frame.add(historical, BorderLayout.SOUTH);
 		
 		canvas.setSize(WIDTH, HEIGHT);
 		for(int i = 0; i < bars.length; i++){
@@ -92,42 +92,66 @@ public class Pong implements KeyListener {
 		frame.setVisible(true);
 		canvas.init();
 		frame.addKeyListener(this);
+		
+		historical.showScores();
+		game = new PongGame(this);
+	}
+	
+	public void startGame() {
+		serverUpdate.start();
+		game.start();
+	}
+	
+	private class PongGame extends Thread{
+		Pong pong;
+		public PongGame(Pong game){
+			this.pong = game;
+		}
 
-		game = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				boolean running = true;
-				
-				while (running) {
-					try {
-						if(client.playersReady() && !client.getWinner()){
-							int playerNum     = client.getPlayerNum();
-							playing 		  		= client.getPlaying();
-							lastPlayer        = client.getLastPLayer();
-
-							handleStatus(playerNum);
-							handleKeyEvents(playerNum);
-							doGameIteration(playing, bars, ball, scores, lastPlayer);
-							handlePlayerBars();
-							canvas.playerNum = playerNum;
-							canvas.ball = ball;
-						}
-
-						canvas.repaint();
-						handleQuitEvent();
-						Thread.sleep(1000 / UPDATE_RATE); // milliseconds
-						 
+		public void run() {
+			boolean running = true;
+			boolean winner = false;
+			boolean ready = false;
+			boolean onGame = false;
+			
+			while (running) {
+				try {
+					winner = pong.client.getWinner();
+					ready  = pong.client.playersReady();
+					
+					if(!onGame && ready){
+						onGame = true;
+						pong.showPauseMessage("");
 					}
-					catch (InterruptedException ex) {
-						System.out.println("Pong: " + playerNum + " muriendo");
-						running = false;
-						
-						return;
+					if(ready && !winner){
+						int playerNum     = pong.client.getPlayerNum();
+						pong.playing 	  = pong.client.getPlaying();
+						pong.lastPlayer   = pong.client.getLastPLayer();
+
+						pong.handleStatus(playerNum);
+						pong.handleKeyEvents(playerNum);
+						Pong.doGameIteration(pong.playing, pong.bars, pong.ball, pong.scores, pong.lastPlayer);
+						pong.handlePlayerBars();
+						pong.canvas.playerNum = playerNum;
+						pong.canvas.ball = pong.ball;
 					}
+					else if(!ready && !winner){
+						onGame = false;
+						pong.showPauseMessage("Esperando jugadores ...");
+					}
+
+					pong.canvas.repaint();
+					handleQuitEvent();
+					Thread.sleep(1000 / UPDATE_RATE); // milliseconds
+					 
+				}
+				catch (InterruptedException ex) {
+					System.out.println("Pong: " + pong.playerNum + " muriendo");
+					running = false;
+					return;
 				}
 			}
-		});
+		}
 	}
 	
 	public void stopClient() {
@@ -186,26 +210,26 @@ public class Pong implements KeyListener {
 			switch(lastPlayer){
 				case(0):{
 					// Punto para jugador 1 si no sale por la izquierda
-					if(!(ball.x < 0) && playing[0]){
-						score.sumPoint(0);
+					if(!(ball.x < 0)){
+						score.sumPoint(0, playing);
 					}
 				} break;
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
-					if( !(ball.x > Pong.WIDTH) && playing[1]){
-						score.sumPoint(1);
+					if( !(ball.x > Pong.WIDTH)){
+						score.sumPoint(1, playing);
 					}
 				} break;
 				case(2):{
 					// Punto para jugador 3 si no sale abjo
-					if( !(ball.y > Pong.HEIGHT) && playing[2]){
-						score.sumPoint(2);
+					if( !(ball.y > Pong.HEIGHT)){
+						score.sumPoint(2, playing);
 					}
 				}break;
 				case(3):{
 					// Punto para jugador 4 si no sale arriba
-					if( !(ball.y < 0) && playing[3]){
-						score.sumPoint(3);
+					if( !(ball.y < 0)){
+						score.sumPoint(3, playing);
 					}
 				}
 			}
@@ -346,14 +370,19 @@ public class Pong implements KeyListener {
 	}
 
 	public void reMatch() {
-		ball    = new PongBall();
+		ball = new PongBall();
 		ball.reset();
 		lastPlayer = -1;
-		scores.reset();
+		scores.reset(client.getPlaying());
 	}
 
 	public void showWinner() {
 		scores.showWinner();
-		
+		historical.addWinner(scores.getWinner());
+		historical.showScores();
+	}
+	
+	private void showPauseMessage(String message){
+		scores.showPause(message);
 	}
 }

@@ -16,6 +16,7 @@ public class Match {
 	private int minPlayers;
 	private Thread simulationThread;
 	private ScoreBoardSimple score;
+	private HistoricalScoreBoardSimple historical;
 	private boolean winner;
 	private int winnerPlayer;
 	private boolean running;
@@ -34,6 +35,7 @@ public class Match {
 		players = new Player[4];
 		lastActivity = new long[4];
 		score      = new ScoreBoardSimple();
+		historical = new HistoricalScoreBoardSimple();
 		winner     = false;
 		winnerPlayer = -1;
 		migration = new MigrationInfo();
@@ -66,7 +68,7 @@ public class Match {
 				}
 			}
 		}
-		score.setScores(migratedGameState.scores);
+		score.setScores(migratedGameState.scores, playing);
 		winner = migratedGameState.winner;
 		winnerPlayer = migratedGameState.winnerPlayer;
 	}
@@ -87,7 +89,7 @@ public class Match {
 		ball    = new PongBall();
 		lastPlayer = -1;
 		winner     = false;
-		score.reset();
+		score.reset(playing);
 	}
 	
 	private void resetGameDueMigration() {
@@ -125,6 +127,7 @@ public class Match {
 		winnerPlayer = score.getWinner();
 		if(score.getWinner() >= 0){
 			winner = true;
+			historical.addWinner(winnerPlayer);
 		}
 	}
 
@@ -169,10 +172,13 @@ public class Match {
 		playing[playerNum] = false;
 		players[playerNum] = null;
 		
+		// Remuevo del score historico el jugador
+		historical.removePlayer(playerNum);
+		
 		// Se pone en 0 el puntaje del jugador que se fue
 		int[] scores = score.getScores();
 		scores[playerNum]  = 0;
-		score.setScores(scores);
+		score.setScores(scores, playing);
 		
 		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID);
 		if(!(this.playersReady())){
