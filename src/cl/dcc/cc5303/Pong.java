@@ -82,24 +82,22 @@ public class Pong implements KeyListener {
 		stopPongThreads();
 	}
 	
-	public static synchronized int doGameIteration(GameState state) {
+	public static synchronized void doGameIteration(GameState state) {
 		for (int i = 0; i < 4;  i++){
-			if(state.playing[i] == true){
-				state.lastPlayer = handleHumanBounce(i, state);
+			if(state.isPlaying(i)){
+				handleHumanBounce(i, state);
 			}
 			else{
 				handleBounce(i, state);
 			}
 		}
 
-		state.lastPlayer = handleBall(state);
-		return state.lastPlayer;
+		handleBall(state);
 	}
 	
-	private static int handleBall(GameState state) {
+	private static void handleBall(GameState state) {
 		// actualiza posicion
-		state.ball.x += state.ball.vx * DX;
-		state.ball.y += state.ball.vy * DX;
+		state.ball.move(state.ball.vx * DX, state.ball.vy * DX);
 
 		if(state.ball.x > Pong.WIDTH || state.ball.x < 0 || state.ball.y < 0 || state.ball.y > Pong.HEIGHT){
 			switch(state.lastPlayer){
@@ -129,45 +127,45 @@ public class Pong implements KeyListener {
 				}
 			}
 			
-			state.lastPlayer = -1;
+			state.setLastPlayer(-1);
 			state.ball.reset();
 		}
-		return state.lastPlayer;
 	}
 	
-	private static int handleHumanBounce(int i, GameState state){
+	private static void handleHumanBounce(int i, GameState state){
 		double step = 1+DV;
+		int nextPlayer = -1;
 	    switch(i){
 	    	// jugador a la izquierda
 	    	case(0):{
 	    		if(state.ball.willCrashWithBarByRight(state.bars[i], step)){
 	    			state.ball.changeXDir(step);
-	    			return 0;
+	    			nextPlayer = 0;
 	    		}
 	    	}
 	    	// jugador a la derecha
 	    	case(1):{ 
 	    		if(state.ball.willCrashWithBarByLeft(state.bars[i], step)){
 	    			state.ball.changeXDir(step);
-	    			return 1;
+	    			nextPlayer = 1;
 	    		}
 	    	}
 	    	//jugador inferior
 	    	case(2):{
 	    		if(state.ball.willCrashWithBarByTop(state.bars[i], step)){
 	    			state.ball.changeYDir(step);
-	    			return 2;
+	    			nextPlayer = 2;
 	    		}
 	    	}
 	    	// jugador superior
 	    	case(3):{
 	    		if(state.ball.willCrashWithBarByBottom(state.bars[i], step)){
 	    			state.ball.changeYDir(step);
-	    			return 3;
+	    			nextPlayer = 3;
 	    		}
 	    	}
 	    }
-	    return state.lastPlayer;
+	    state.setLastPlayer(nextPlayer);
 	}
 	
 	private static void handleBounce(int i, GameState state){

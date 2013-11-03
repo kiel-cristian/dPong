@@ -18,8 +18,9 @@ public class PongServerUpdate extends PongThread{
 	public void work() throws InterruptedException {
 		try {
 			GameState state = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
+			checkWinners(state);
 			self.getState().fullUpdate(state);
-			checkWinners(self.getState());
+			
 		} catch (RemoteException e) {
 			System.out.println("Server no responde");
 			System.exit(1); // FIXME
@@ -37,17 +38,15 @@ public class PongServerUpdate extends PongThread{
 	}
 	
 	protected synchronized void checkWinners(GameState state) {
-		self.getState().updateScores(state.scores);
-		Pong.scores.setScores(self.getState().scores, self.getState().playing);
-		
-		if(self.getState().winner == false && state.winner){
-			Pong.scores.setWinner(self.getState().scores, state.winnerPlayer, state.playing);
+		if(state.winner && !self.pong.scores.isAWinner()){
+			self.pong.scores.setWinner(state.scores, state.winnerPlayer, state.playing);
 			self.pong.showWinner();
-			self.getState().winner = true;
 		}
-		if(self.getState().winner == true && !state.winner){
-			self.getState().winner = false;
+		else if(!state.winner && self.pong.scores.isAWinner()){
 			self.pong.game.reMatch();
+		}
+		else{
+			Pong.scores.setScores(self.getState().scores, state.playing);
 		}
 	}
 

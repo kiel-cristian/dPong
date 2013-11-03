@@ -51,6 +51,11 @@ public class ScoreBoardSimple implements ScoreBoard {
 	public int getWinner() {
 		return winner;
 	}
+	
+	@Override
+	public boolean isAWinner() {
+		return winner >= 0;
+	}
 
 	@Override
 	public void reset(boolean[] playing) {

@@ -8,9 +8,6 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 public class ScoreBoardGUI extends JPanel implements ScoreBoard {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -9079400188590075139L;
 	
 	private ScoreBoardSimple score;
@@ -109,6 +106,11 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	@Override
 	public int getWinner() {
 		return score.getWinner();
+	}
+	
+	@Override
+	public boolean isAWinner(){
+		return getWinner()>= 0;
 	}
 	
 	@Override

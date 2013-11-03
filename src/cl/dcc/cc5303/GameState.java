@@ -1,7 +1,6 @@
 package cl.dcc.cc5303;
 
 import java.io.Serializable;
-
 import cl.dcc.cc5303.PongBall;
 import cl.dcc.cc5303.Rectangle;
 
@@ -37,6 +36,19 @@ public class GameState implements Serializable {
 		this.playing[playerNum] = false;
 	}
 	
+	public void serverUpdate(int[] scores2, int playerNum, int pos){
+		updatePlayerPosition(playerNum, pos);
+		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
+			this.scores[i] = scores2[i];
+		}
+	}
+	
+	public void updateServerScores(int[] scores2){
+		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
+			this.scores[i] = scores2[i];
+		}
+	}
+	
 	public void fullUpdate(GameState state){
 		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
 			this.scores[i] = state.scores[i];
@@ -47,16 +59,6 @@ public class GameState implements Serializable {
 		this.ball.copy(state.ball);
 		this.winner = state.winner;
 		this.winnerPlayer = state.winnerPlayer;
-		this.numPlayers = state.numPlayers;
-	}
-
-	public void clientUpdate(GameState state) {
-		if(state.winner){
-			for(int i = 0; i < Pong.MAX_PLAYERS ; i++){
-				this.bars[i].copy(state.bars[i]);
-				this.playing[i] 	= state.playing[i];
-			}
-		}
 		this.numPlayers = state.numPlayers;
 	}
 	
@@ -81,7 +83,7 @@ public class GameState implements Serializable {
 		bars[3] = new GameBar(Pong.WIDTH/2, 10, 100, 10, 3);
 	}
 
-	public void updatePlayerPosition(int playerNum, int position) {
+	private void updatePlayerPosition(int playerNum, int position) {
 		if(playerNum == 0 || playerNum == 1){
 			bars[playerNum].y = position;
 		}
@@ -89,12 +91,6 @@ public class GameState implements Serializable {
 			bars[playerNum].x = position;
 		}
 		
-	}
-
-	public void updateScores(int[] scores2) {
-		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
-			scores[i] = scores2[i];
-		}
 	}
 	
 	public boolean playersReady() {
@@ -112,5 +108,10 @@ public class GameState implements Serializable {
 		else{
 			return (int) bars[playerNum].x;
 		}
+	}
+
+	public void setLastPlayer(int nextPlayer) {
+		this.lastPlayer = nextPlayer;
+		
 	}
 }

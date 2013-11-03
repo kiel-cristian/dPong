@@ -28,7 +28,7 @@ public class PongSimulation extends PongThread {
 
 	@Override
 	public void work() throws InterruptedException {
-		state.lastPlayer = Pong.doGameIteration(state);	
+		Pong.doGameIteration(state);	
 	}
 
 	@Override

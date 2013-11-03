@@ -2,8 +2,6 @@ package cl.dcc.cc5303;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.util.Collection;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;

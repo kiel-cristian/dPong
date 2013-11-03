@@ -6,4 +6,5 @@ public interface ScoreBoard {
 	public void setScores(int scores[], boolean[] playing);
 	public int getWinner();
 	public void reset(boolean[] playing);
+	public boolean isAWinner();
 }

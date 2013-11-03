@@ -100,14 +100,13 @@ public class Match {
 	}
 	
 	protected GameState updatePositions(int playerNum, int position) {
-		game.state.updatePlayerPosition(playerNum, position);
-		game.state.updateScores(score.getScores());
+		game.state.serverUpdate(score.getScores(), playerNum, position);
 		lastActivity[playerNum] = System.currentTimeMillis();
 		return game.state;
 	}
 	
 	protected GameState lastPositions() {
-		game.state.updateScores(score.getScores());
+		game.state.updateServerScores(score.getScores());
 		return game.state;
 	}
 	
@@ -127,9 +126,9 @@ public class Match {
 		return migration.migratingPlayers <= Utils.countTrue(game.state.playing);
 	}
 
-	public GameState startMigration() {
+	public GameState startMigration(){
 		migration.emigrating = true;
-		game.state.updateScores(score.getScores());
+		game.state.updateServerScores(score.getScores());
 		return game.state;
 	}
 	

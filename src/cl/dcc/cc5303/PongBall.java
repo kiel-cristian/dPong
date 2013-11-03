@@ -104,4 +104,10 @@ public void copy(PongBall ball) {
 	this.vy = ball.vy;
 }
 
+public void move(double dx, double dy) {
+	this.x += dx;
+	this.y += dy;
+	
+}
+
 }
