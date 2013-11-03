@@ -28,13 +28,8 @@ public class PongServerUpdate extends PongThread{
 	}
 
 	@Override
-	public void freeWork() throws InterruptedException {
+	public void postWork() throws InterruptedException {
 		return;
-	}
-	
-	@Override
-	public int workRate(){
-		return 50;
 	}
 	
 	protected synchronized void checkWinners(GameState state) {
@@ -48,6 +43,11 @@ public class PongServerUpdate extends PongThread{
 		else{
 			Pong.scores.setScores(self.getState().scores, state.playing);
 		}
+	}
+
+	@Override
+	public void pauseWork() throws InterruptedException {
+		Thread.sleep(PongThread.UPDATE_RATE/ 60);
 	}
 
 }

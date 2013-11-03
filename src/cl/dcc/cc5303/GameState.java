@@ -36,6 +36,14 @@ public class GameState implements Serializable {
 		this.playing[playerNum] = false;
 	}
 	
+	public void setMatchWinner(int winnerPlayer, int[] historicalScores2) {
+		this.winnerPlayer = winnerPlayer;
+		this.winner = true;
+		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+			this.historicalScores[i] = historicalScores2[i];
+		}
+	}
+	
 	public void serverUpdate(int[] scores2, int playerNum, int pos){
 		updatePlayerPosition(playerNum, pos);
 		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
@@ -114,4 +122,5 @@ public class GameState implements Serializable {
 		this.lastPlayer = nextPlayer;
 		
 	}
+
 }

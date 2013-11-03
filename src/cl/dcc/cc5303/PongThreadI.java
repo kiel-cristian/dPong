@@ -7,6 +7,6 @@ public interface PongThreadI {
 	public  void end();
 	public void preWork() throws InterruptedException;
 	public void work() throws InterruptedException;
-	public void freeWork() throws InterruptedException;
-	public int workRate();
+	public void postWork() throws InterruptedException;
+	public void pauseWork() throws InterruptedException;
 }

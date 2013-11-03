@@ -36,13 +36,19 @@ public class PongGame extends PongThread{
 	}
 
 	@Override
-	public void freeWork() {
+	public void postWork() {
 		if(!ready && !winner){
 			onGame = false;
 			pong.showPauseMessage("Esperando jugadores ...");
 		}
 		pong.rePaint();
 		pong.handleQuitEvent();
+	}
+
+	@Override
+	public void pauseWork() throws InterruptedException {
+		Thread.sleep(PongThread.UPDATE_RATE/ 60);
+		
 	}
 	
 	public void reMatch() {

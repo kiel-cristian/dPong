@@ -13,10 +13,6 @@ public class PongSimulation extends PongThread {
 	public void setPlayers(int numPlayers){
 		this.state.numPlayers = numPlayers;
 	}
-	
-	public int workRate(){
-		return 50;
-	}
 
 	@Override
 	public void preWork() throws InterruptedException {
@@ -28,28 +24,30 @@ public class PongSimulation extends PongThread {
 
 	@Override
 	public void work() throws InterruptedException {
-		Pong.doGameIteration(state);	
+		Pong.doGameIteration(state);
 	}
 
 	@Override
-	public void freeWork() throws InterruptedException {
+	public void postWork() throws InterruptedException {
 		checkForWinnerServer();
 		checkPlayersActivity();
-		
+	}
+	
+	@Override
+	public void pauseWork() throws InterruptedException{
 		if(state.winner){
-			Thread.sleep(600000 / workRate());
+			Thread.sleep(600000 /50);
 			match.resetGame();
 		}
 		else{
-			Thread.sleep(1000 / workRate()); // milliseconds
+			Thread.sleep(PongThread.UPDATE_RATE/ 60);
 		}
 	}
 	
 	private void checkForWinnerServer(){
-		state.winnerPlayer = match.score.getWinner();
-		if(match.score.getWinner() >= 0){
-			state.winner = true;
+		if(match.score.isAWinner()){
 			match.historical.addWinner(state.winnerPlayer);
+			state.setMatchWinner(match.score.getWinner(), match.historical.getScores());
 		}
 	}
 	

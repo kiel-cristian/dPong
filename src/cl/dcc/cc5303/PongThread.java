@@ -3,6 +3,7 @@ package cl.dcc.cc5303;
 public abstract class PongThread extends Thread implements PongThreadI{
 	protected boolean working = true;
 	protected boolean running = true;
+	protected static final int UPDATE_RATE = 1000;
 	
 	@Override
 	public void run(){
@@ -12,19 +13,14 @@ public abstract class PongThread extends Thread implements PongThreadI{
 				if(working){
 					work();
 				}
-				freeWork();
-				Thread.sleep(workRate()); // milliseconds
+				postWork();
+				pauseWork();
 			}
 			catch(InterruptedException ex){
 				System.out.println("Servicio Pong interrumpido");
 				this.end();
 			}
 		}
-	}
-	
-	@Override
-	public int workRate(){
-		return 1000/60;
 	}
 	
 	@Override
@@ -55,5 +51,9 @@ public abstract class PongThread extends Thread implements PongThreadI{
 	public abstract void work() throws InterruptedException;
 	
 	@Override
-	public abstract void freeWork() throws InterruptedException;
+	public abstract void postWork() throws InterruptedException;
+	
+	@Override
+	public abstract void pauseWork() throws InterruptedException;
+
 }
