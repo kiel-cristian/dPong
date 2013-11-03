@@ -42,8 +42,7 @@ public class Client extends UnicastRemoteObject implements Player {
 		super();
 	}
 
-	public void play(String serverFinderAddress, int serverID)
-			throws MalformedURLException, RemoteException, NotBoundException {
+	public void play(String serverFinderAddress, int serverID) throws MalformedURLException, RemoteException, NotBoundException {
 		serverFinder = (ServerFinder) Naming.lookup("rmi://" + serverFinderAddress + ":1099/serverfinder");
 		if (serverID == -1) {
 			server = serverFinder.getServer();
@@ -61,8 +60,8 @@ public class Client extends UnicastRemoteObject implements Player {
 		return info.playerNum;
 	}
 
-	public int getBarPosition(int bar) {
-		return pong.game.state.getPlayerPosition(bar);
+	public int getBarPosition() {
+		return pong.game.state.getPlayerPosition(info.playerNum);
 	}
 
 	public void stop() {

@@ -1,8 +1,10 @@
 package cl.dcc.cc5303;
 
+import java.io.Serializable;
 import java.util.Random;
 
-public class PongBall extends Rectangle {
+public class PongBall extends Rectangle implements Serializable{
+	private static final long serialVersionUID = -8169819468494935096L;
 	public double vx, vy;
 
   public PongBall(){

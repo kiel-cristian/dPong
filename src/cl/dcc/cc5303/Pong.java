@@ -24,7 +24,7 @@ public class Pong implements KeyListener {
 
 	private boolean[] keys;
 	
-	public PongThread serverUpdate;
+	public PongServerUpdate serverUpdate;
 	public PongGame game;
 
 	public Pong(Client client) {

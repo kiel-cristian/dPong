@@ -25,7 +25,6 @@ public class PongGame extends PongThread{
 			onGame = true;
 			pong.showPauseMessage("");
 		}
-		
 	}
 
 	@Override

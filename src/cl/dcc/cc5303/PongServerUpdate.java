@@ -17,8 +17,8 @@ public class PongServerUpdate extends PongThread{
 	@Override
 	public void work() throws InterruptedException {
 		try {
-			GameState state = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition(self.info.playerNum));
-			self.getState().clientUpdate(state);	
+			GameState state = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
+			self.getState().fullUpdate(state);
 			checkWinners(self.getState());
 		} catch (RemoteException e) {
 			System.out.println("Server no responde");

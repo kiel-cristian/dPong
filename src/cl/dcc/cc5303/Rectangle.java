@@ -9,10 +9,11 @@
 package cl.dcc.cc5303;
 
 import java.awt.Graphics;
+import java.io.Serializable;
 
 
-public class Rectangle {
-
+public class Rectangle implements Serializable{
+	private static final long serialVersionUID = -3140789364474834671L;
 	public double x, y;
 	public double w, h;
 

@@ -57,6 +57,7 @@ public class GameState implements Serializable {
 				this.playing[i] 	= state.playing[i];
 			}
 		}
+		this.numPlayers = state.numPlayers;
 	}
 	
 	public void resetGame(){
@@ -70,6 +71,7 @@ public class GameState implements Serializable {
 		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
 			playing[i] = false;
 		}
+		numPlayers = Pong.MAX_PLAYERS;
 	}
 	
 	public void resetPlayerBars(){
@@ -98,7 +100,11 @@ public class GameState implements Serializable {
 	public boolean playersReady() {
 		return Utils.countTrue(playing) >= numPlayers;
 	}
-
+	
+	public int playersCount(){
+		return Utils.countTrue(playing);
+	}
+	
 	public int getPlayerPosition(int playerNum) {
 		if(playerNum == 0 || playerNum == 1){
 			return (int) bars[playerNum].y;

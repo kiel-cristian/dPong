@@ -40,7 +40,6 @@ public class Match {
 	}
 	
 	private void startGame() {
-		game.state.lastPlayer = -1;
 		game.start();
 		System.out.println("Empieza el juego! (" + matchID + ")");
 	}
@@ -72,8 +71,9 @@ public class Match {
 		game.state.enablePlayer(num);
 		lastActivity[num] = System.currentTimeMillis();
 		System.out.println("Se ha conectado el jugador " + num + " a la partida " + matchID);
-		if (playersReady() && !game.running)
+		if (playersReady()){
 			startGame();
+		}
 		return num;
 	}
 	
@@ -112,11 +112,11 @@ public class Match {
 	}
 	
 	private boolean playersReady() {
-		return playersCount() >= game.state.numPlayers;
+		return game.state.playersReady();
 	}
 	
 	public int playersCount() {
-		return Utils.countTrue(game.state.playing);
+		return game.state.playersCount();
 	}
 	
 	public int getID() {
