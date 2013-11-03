@@ -7,5 +7,10 @@ public class GameBar extends Rectangle{
 		super(x, y, w, h);
 		this.player = player;
 	}
+	
+	public void copy(Rectangle r){
+		this.player = ((GameBar)r).player;
+		super.copy(r);
+	}
 
 }

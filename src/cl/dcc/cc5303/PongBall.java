@@ -95,4 +95,11 @@ public void changeXDir(double pond){
 
   }
 
+public void copy(PongBall ball) {
+	this.x = ball.x;
+	this.y = ball.y;
+	this.vx = ball.vx;
+	this.vy = ball.vy;
+}
+
 }

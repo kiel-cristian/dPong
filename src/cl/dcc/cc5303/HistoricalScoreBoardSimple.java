@@ -1,8 +1,6 @@
 package cl.dcc.cc5303;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class HistoricalScoreBoardSimple implements HistoricalScoreBoard{
 	LinkedHashMap<Integer, Integer> playersHistorical;

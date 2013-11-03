@@ -43,4 +43,11 @@ public class Rectangle {
 		return (int) (x + w * 0.5);
 	}
 
+	public void copy(Rectangle r) {
+		this.x = r.x;
+		this.y = r.y;
+		this.w = r.w;
+		this.h = r.h;
+	}
+
 }

@@ -5,8 +5,6 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -173,17 +171,15 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public synchronized int getMatchForMigration(GameState stateToMigrate)
-			throws RemoteException {
-		Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
+	public synchronized int getMatchForMigration(GameState stateToMigrate) throws RemoteException {
+		Match match = new Match(this, ++matchCount, stateToMigrate.numPlayers);
 		match.receiveMigration(stateToMigrate);
 		matches.put(match.getID(), match);
 		return match.getID();
 	}
 	
 	@Override
-	public synchronized void connectPlayer(Player player, int matchID, int playerNum)
-			throws RemoteException {
+	public synchronized void connectPlayer(Player player, int matchID, int playerNum) throws RemoteException {
 		Match m = matches.get(matchID);
 		m.addPlayer(player, playerNum);
 		increasePlayerNum();
