@@ -51,7 +51,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			server = serverFinder.getServer(serverID);
 		}
 		info = server.connectPlayer(this);
-		pong = new PongClient(this);
+		pong = new PongClient(this, info.playerNum);
 		pong.game.enablePlayer(info.playerNum);
 		pong.startGame();
 	}

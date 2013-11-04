@@ -23,7 +23,7 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		this.setBackground(Color.DARK_GRAY);
 		initScores(playing);
 		add(message);
-		for (int i=0; i<4; i++){
+		for (int i=0; i<Pong.MAX_PLAYERS; i++){
 			add(scores[i]);
 		}
 		this.setOpaque(true);
@@ -120,7 +120,7 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	}
 
 	public void showWinner() {
-		for (int i=0; i<4; i++) {
+		for (int i=0; i< Pong.MAX_PLAYERS; i++) {
 			scores[i].setText("");
 		}
 		int winner = score.getWinner();

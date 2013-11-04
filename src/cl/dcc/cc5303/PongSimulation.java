@@ -48,14 +48,15 @@ public class PongSimulation extends PongThread {
 	
 	public void serverUpdate(int playerNum, int position) {
 		synchronized(state){
-			state.serverUpdate(pong.scores.getScores(), playerNum, position);
+			state.serverUpdate(pong.scores.getScores(), pong.historical.getScores(), playerNum, position);
 		}
 		touchPlayer(playerNum);
 	}
 	
 	public void updateServerScores() {
 		synchronized(state){
-			state.updateServerScores(pong.scores.getScores());
+			state.updateServerScores(pong.scores.getScores(), pong.historical.getScores());
+			((HistoricalScoreBoardSimple)pong.historical).setScores(state.historicalScores);
 		}
 	}
 
@@ -86,7 +87,7 @@ public class PongSimulation extends PongThread {
 	public void pauseWork() throws InterruptedException{
 		if(state.winner){
 			Thread.sleep(600000 /50);
-			System.out.println("nuevo match");
+			System.out.println("nuevo match: " + match.getID());
 			resetGame();
 		}
 		else{

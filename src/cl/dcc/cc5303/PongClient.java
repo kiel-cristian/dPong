@@ -15,23 +15,20 @@ public class PongClient extends Pong implements KeyListener, PongI {
 	public PongServerUpdate serverUpdate;
 	public PongGame game;
 
-	public PongClient(Client client) {
+	public PongClient(Client client, int playerNum) {
 		super();
 		this.client    = client;
 		this.serverUpdate = new PongServerUpdate(this.client);
 		this.game         = new PongGame(this);
 		this.keys = new boolean[KeyEvent.KEY_LAST];
-		this.scores = new ScoreBoardGUI(this.game.state().playing, this.client.getPlayerNum());
-		this.historical = new HistoricalScoreBoardGUI(this.client.getPlayerNum());
-		init();
+		this.scores = new ScoreBoardGUI(this.game.state().playing, playerNum);
+		this.historical = new HistoricalScoreBoardGUI(playerNum, game.state().playing);
+		init(playerNum);
 	}
 
 	/* Initializes window frame and set it visible */
-	private void init() {
-		canvas = new MyCanvas(client.info.playerNum, game.state().ball);
-		scores = new ScoreBoardGUI(game.state().playing, client.info.playerNum);
-		historical = new HistoricalScoreBoardGUI(client.info.playerNum);
-		
+	private void init(int playerNum) {
+		canvas = new MyCanvas(playerNum, game.state().ball);
 		frame = new JFrame(TITLE);
 		frame.setLayout(new BorderLayout());
 		frame.setSize(WIDTH, HEIGHT);
@@ -52,7 +49,7 @@ public class PongClient extends Pong implements KeyListener, PongI {
 		canvas.init();
 		frame.addKeyListener(this);
 		
-		((HistoricalScoreBoardGUI)historical).showScores();
+		((HistoricalScoreBoardGUI)historical).showScores(game.state().playing);
 	}
 	
 	public void startGame() {
@@ -71,6 +68,44 @@ public class PongClient extends Pong implements KeyListener, PongI {
 		frame.dispose();
 		client.stop(); // Notificacion al server
 		stopPongThreads();
+	}
+	
+	public void handleBall(){
+		// Actualiza posicion
+		temporalState.ball.move(temporalState.ball.vx * DX, temporalState.ball.vy * DX);
+		if(temporalState.ball.x > PongClient.WIDTH || temporalState.ball.x < 0 || temporalState.ball.y < 0 || temporalState.ball.y > PongClient.HEIGHT){
+			switch(temporalState.lastPlayer){
+				case(0):{
+					// Punto para jugador 1 si no sale por la izquierda
+					if(!(temporalState.ball.x < 0) && temporalState.isPlaying(0)){
+						scores.sumPoint(0, temporalState.playing);
+					}
+				} break;
+				case(1):{
+					// Punto para jugador 2 si no sale por la derecha
+					if( !(temporalState.ball.x > PongClient.WIDTH) && temporalState.isPlaying(1)){
+						scores.sumPoint(1, temporalState.playing);
+					}
+				} break;
+				case(2):{
+					// Punto para jugador 3 si no sale abajo
+					if( !(temporalState.ball.y > PongClient.HEIGHT) && temporalState.isPlaying(2)){
+						scores.sumPoint(2, temporalState.playing);
+					}
+				}break;
+				case(3):{
+					// Punto para jugador 4 si no sale arriba
+					if( !(temporalState.ball.y < 0) && temporalState.isPlaying(3)){
+						scores.sumPoint(3, temporalState.playing);
+					}
+				}
+			}
+			if(scores.isAWinner() && temporalState.lastPlayer != -1){
+				temporalState.winner = true;
+			}
+			temporalState.setLastPlayer(-1);
+			temporalState.ball.reset();
+		}
 	}
 	
 	public void handlePlayerBars(){
@@ -141,7 +176,7 @@ public class PongClient extends Pong implements KeyListener, PongI {
 	public void showWinner() {
 		((ScoreBoardGUI) scores).showWinner();
 		historical.addWinner(scores.getWinner());
-		((HistoricalScoreBoardGUI) historical).showScores();
+		((HistoricalScoreBoardGUI) historical).showScores(game.state().playing);
 	}
 	
 	public void showPauseMessage(String message){

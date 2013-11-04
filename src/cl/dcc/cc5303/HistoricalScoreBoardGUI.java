@@ -13,7 +13,7 @@ public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBo
 	private HistoricalScoreBoardSimple board;
 	private int myPlayerNum;
 	
-	public HistoricalScoreBoardGUI(int playerNum){
+	public HistoricalScoreBoardGUI(int playerNum, boolean[] playing){
 		myPlayerNum = playerNum + 1;
 		board = new HistoricalScoreBoardSimple();
 		labels = new JLabel[4];
@@ -35,7 +35,7 @@ public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBo
 		myLabel.setBorder(new EmptyBorder(0, 20, 0, 20));
 		myLabel.setForeground(Color.RED);
 		
-		showScores();
+		showScores(playing);
 	}
 
 	@Override
@@ -48,11 +48,11 @@ public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBo
 		board.removePlayer(player);
 	}
 
-	public void showScores() {
+	public void showScores(boolean[] playing) {
 		int[] scores = board.getScores();
 				
 		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
-			if(myPlayerNum != (i+1)){
+			if(myPlayerNum != (i+1) && playing[i]){
 				labels[i].setText("P" + (i +1) + ": " + scores[i]);
 			}
 			else{
@@ -67,6 +67,10 @@ public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBo
 	@Override
 	public int[] getScores() {
 		return board.getScores();
+	}
+	
+	public void setScores(int[] historicalScores){
+		board.setScores(historicalScores);
 	}
 	
 }

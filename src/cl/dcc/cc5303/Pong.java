@@ -8,7 +8,7 @@ public class Pong implements PongI{
 	public final static int WINNING_SCORE = 2;
 	public ScoreBoard scores;
 	public HistoricalScoreBoard historical;
-	private GameState temporalState;
+	protected GameState temporalState;
 	
 	public Pong(){
 		scores = new ScoreBoardSimple();
@@ -99,28 +99,24 @@ public class Pong implements PongI{
 				case(0):{
 					// Punto para jugador 1 si no sale por la izquierda
 					if(!(temporalState.ball.x < 0) && temporalState.isPlaying(0)){
-						System.out.println("gol: 0");
 						scores.sumPoint(0, temporalState.playing);
 					}
 				} break;
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
 					if( !(temporalState.ball.x > PongClient.WIDTH) && temporalState.isPlaying(1)){
-						System.out.println("gol: 1");
 						scores.sumPoint(1, temporalState.playing);
 					}
 				} break;
 				case(2):{
 					// Punto para jugador 3 si no sale abajo
 					if( !(temporalState.ball.y > PongClient.HEIGHT) && temporalState.isPlaying(2)){
-						System.out.println("gol: 2");
 						scores.sumPoint(2, temporalState.playing);
 					}
 				}break;
 				case(3):{
 					// Punto para jugador 4 si no sale arriba
 					if( !(temporalState.ball.y < 0) && temporalState.isPlaying(3)){
-						System.out.println("gol: 3");
 						scores.sumPoint(3, temporalState.playing);
 					}
 				}

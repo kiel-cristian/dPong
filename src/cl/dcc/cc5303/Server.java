@@ -81,7 +81,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 
 	@Override
 	public synchronized void disconnectPlayer(int matchID, int playerNum) throws RemoteException {
-		matches.get(matchID).removePlayer(playerNum);
+		Match match = matches.get(matchID);
+		if(match != null){
+			match.removePlayer(playerNum);
+		}
 		decreasePlayerNum();
 	}
 
@@ -89,11 +92,14 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
 		Match m = matches.get(matchID);
 			
-		if(!m.migrating()){
+		if(m!= null && !m.migrating()){
 			return m.updatePositions(playerNum, position);
 		}
-		else {
+		else if(m!= null){
 			return m.lastPositions();
+		}
+		else{
+			return null;
 		}
 	}
 

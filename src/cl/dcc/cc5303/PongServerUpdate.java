@@ -16,6 +16,12 @@ public class PongServerUpdate extends PongThread{
 	public void preWork() throws InterruptedException {
 		try {
 			temporalState = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
+			if(temporalState == null){
+				System.out.println("Deteniendo servicio update");
+				working = false;
+				running = false;
+				return;
+			}
 			working = !temporalState.winner && temporalState.running;
 			if(!working && onGame){
 				if(!temporalState.winner){
@@ -23,12 +29,14 @@ public class PongServerUpdate extends PongThread{
 				}
 				else{
 					((ScoreBoardGUI) self.pong.scores).setWinner(temporalState.scores, temporalState.winnerPlayer, temporalState.playing);
+					((HistoricalScoreBoardGUI)self.pong.historical).setScores(temporalState.historicalScores);
 					self.pong.showWinner();
 				}
 				onGame = false;
 				work();
 			}
 			else if(working && !onGame){
+				System.out.println("nuevo match");
 				self.pong.game.reMatch();
 				onGame = true;
 			}

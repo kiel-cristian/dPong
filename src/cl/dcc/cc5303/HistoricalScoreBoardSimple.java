@@ -52,4 +52,10 @@ public class HistoricalScoreBoardSimple implements HistoricalScoreBoard{
 		}
 	}
 
+	public void setScores(int[] historicalScores) {
+		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
+			playersHistorical.put(i, historicalScores[i]);
+		}
+	}
+
 }

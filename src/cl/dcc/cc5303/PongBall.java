@@ -92,8 +92,8 @@ public class PongBall extends Rectangle implements Serializable{
 			diry = 1;
 		}
 		
-		vx = rand.nextFloat()/3*dirx + 0.1*dirx;
-		vy = rand.nextFloat()/3*diry + 0.1*diry;
+		vx = rand.nextFloat()/3*dirx + 0.25*dirx;
+		vy = rand.nextFloat()/3*diry + 0.25*diry;
 		
 		if(vx == 0){
 		  vx = 0.2;

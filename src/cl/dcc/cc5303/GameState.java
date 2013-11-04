@@ -58,16 +58,18 @@ public class GameState implements Serializable {
 		}
 	}
 	
-	public void serverUpdate(int[] scores2, int playerNum, int pos){
+	public void serverUpdate(int[] scores, int[] historical, int playerNum, int pos){
 		updatePlayerPosition(playerNum, pos);
 		for( int i = 0; i < PongClient.MAX_PLAYERS; i++){
-			this.scores[i] = scores2[i];
+			this.scores[i] = scores[i];
+			this.historicalScores[i] = historical[i];
 		}
 	}
 	
-	public void updateServerScores(int[] scores2){
+	public void updateServerScores(int[] scores2, int[] historical){
 		for( int i = 0; i < PongClient.MAX_PLAYERS; i++){
 			this.scores[i] = scores2[i];
+			this.historicalScores[i] = historical[i];
 		}
 	}
 	
@@ -102,14 +104,10 @@ public class GameState implements Serializable {
 	
 	public void resetGame(){
 		resetPlayerBars();
-		ball = new PongBall();
+		ball.reset();
 		lastPlayer = -1;
 		winner     = false;
-		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
-			playing[i] = false;
-		}
-		numPlayers = PongClient.MAX_PLAYERS;
-		running = true;
+		running    = true;
 	}
 	
 	public void resetPlayerBars(){
@@ -126,7 +124,6 @@ public class GameState implements Serializable {
 		else{
 			bars[playerNum].x = position;
 		}
-		
 	}
 	
 	public boolean playersReady() {
