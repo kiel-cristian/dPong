@@ -70,44 +70,6 @@ public class PongClient extends Pong implements KeyListener, PongI {
 		stopPongThreads();
 	}
 	
-	public void handleBall(){
-		// Actualiza posicion
-		temporalState.ball.move(temporalState.ball.vx * DX, temporalState.ball.vy * DX);
-		if(temporalState.ball.x > PongClient.WIDTH || temporalState.ball.x < 0 || temporalState.ball.y < 0 || temporalState.ball.y > PongClient.HEIGHT){
-			switch(temporalState.lastPlayer){
-				case(0):{
-					// Punto para jugador 1 si no sale por la izquierda
-					if(!(temporalState.ball.x < 0) && temporalState.isPlaying(0)){
-						scores.sumPoint(0, temporalState.playing);
-					}
-				} break;
-				case(1):{
-					// Punto para jugador 2 si no sale por la derecha
-					if( !(temporalState.ball.x > PongClient.WIDTH) && temporalState.isPlaying(1)){
-						scores.sumPoint(1, temporalState.playing);
-					}
-				} break;
-				case(2):{
-					// Punto para jugador 3 si no sale abajo
-					if( !(temporalState.ball.y > PongClient.HEIGHT) && temporalState.isPlaying(2)){
-						scores.sumPoint(2, temporalState.playing);
-					}
-				}break;
-				case(3):{
-					// Punto para jugador 4 si no sale arriba
-					if( !(temporalState.ball.y < 0) && temporalState.isPlaying(3)){
-						scores.sumPoint(3, temporalState.playing);
-					}
-				}
-			}
-			if(scores.isAWinner() && temporalState.lastPlayer != -1){
-				temporalState.winner = true;
-			}
-			temporalState.setLastPlayer(-1);
-			temporalState.ball.reset();
-		}
-	}
-	
 	public void handlePlayerBars(){
 		for(int i = 0; i < MAX_PLAYERS; i++){
 			canvas.rectangles.remove(game.state().bars[i]);
@@ -175,7 +137,6 @@ public class PongClient extends Pong implements KeyListener, PongI {
 
 	public void showWinner() {
 		((ScoreBoardGUI) scores).showWinner();
-		historical.addWinner(scores.getWinner());
 		((HistoricalScoreBoardGUI) historical).showScores(game.state().playing);
 	}
 	
