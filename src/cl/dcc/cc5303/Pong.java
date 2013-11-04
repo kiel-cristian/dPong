@@ -124,6 +124,7 @@ public class Pong implements PongI{
 			if(scores.isAWinner() && temporalState.lastPlayer != -1){
 				historical.addWinner(scores.getWinner());
 				temporalState.winner = true;
+				temporalState.winnerPlayer = scores.getWinner();
 			}
 			temporalState.setLastPlayer(-1);
 			temporalState.ball.reset();

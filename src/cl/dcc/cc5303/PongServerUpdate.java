@@ -35,11 +35,6 @@ public class PongServerUpdate extends PongThread{
 				onGame = false;
 				work();
 			}
-			else if(working && !onGame){
-				System.out.println("nuevo match");
-				self.pong.game.reMatch();
-				onGame = true;
-			}
 		} catch (RemoteException e) {
 			System.out.println("Server no responde");
 			System.exit(1); // FIXME
@@ -57,7 +52,11 @@ public class PongServerUpdate extends PongThread{
 
 	@Override
 	public void postWork() throws InterruptedException {
-		return;
+		if(working && !onGame){
+			System.out.println("nuevo match");
+			self.pong.game.reMatch();
+			onGame = true;
+		}
 	}
 
 	@Override

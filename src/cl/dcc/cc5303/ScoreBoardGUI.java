@@ -99,6 +99,7 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	}
 	
 	public void setWinner(int[] scores, int winner, boolean[] playing){
+		System.out.println("winner: " + winner);
 		score.setScores(scores, playing);
 		score.setWinner(winner);
 	}
