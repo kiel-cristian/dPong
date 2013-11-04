@@ -80,6 +80,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	@Override
 	public void migrate(final IServer targetServer, final int targetMatchID) throws RemoteException {
 		pong.serverUpdate.pause();
+		pong.game.pause();
 		final Client self = this;
 
 		Thread migrator = new Thread(new Runnable() {
@@ -89,11 +90,14 @@ public class Client extends UnicastRemoteObject implements Player {
 				try {
 					IServer oldServer = self.server;
 					int oldMatch = self.info.matchID;
-					self.server = targetServer;
+					synchronized(self.server){
+						self.server = targetServer;
+					}
 					self.info.matchID = targetMatchID;
 					oldServer.disconnectPlayer(oldMatch, self.info.playerNum);
 					targetServer.connectPlayer(self, targetMatchID, self.info.playerNum);
 					pong.serverUpdate.unPause();
+					pong.game.unPause();
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}

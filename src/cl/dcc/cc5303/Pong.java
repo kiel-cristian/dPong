@@ -4,7 +4,7 @@ public class Pong implements PongI{
 	public final static int WIDTH = 640, HEIGHT = 480;
 	public final static int DX = 5;
 	public final static double DV = 0.3;
-	public final static int MAX_PLAYERS = 4;
+	public final static int MAX_PLAYERS = 2;
 	public final static int WINNING_SCORE = 2;
 	public ScoreBoard scores;
 	public HistoricalScoreBoard historical;

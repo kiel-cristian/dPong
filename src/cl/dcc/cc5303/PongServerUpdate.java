@@ -15,7 +15,9 @@ public class PongServerUpdate extends PongThread{
 	@Override
 	public void preWork() throws InterruptedException {
 		try {
-			temporalState = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
+			synchronized(self.server){
+				temporalState = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
+			}
 			if(temporalState == null){
 				System.out.println("Deteniendo servicio update");
 				working = false;
