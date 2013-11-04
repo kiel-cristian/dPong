@@ -6,13 +6,14 @@ public class PongSimulation extends PongThread {
 	public long[] lastActivity;
 	private boolean started;
 	private GameState state;
-	
+	private Pong pong;
 	
 	public PongSimulation(Match match){
-		this.match = match;
-		this.state = new GameState();
+		this.match        = match;
+		this.state        = new GameState();
 		this.lastActivity = new long[4];
-		this.started = false;
+		this.started      = false;
+		this.pong         = new Pong();
 		resetActivity();
 	}
 	
@@ -45,16 +46,16 @@ public class PongSimulation extends PongThread {
 		}
 	}
 	
-	public void serverUpdate(int[] scores, int playerNum, int position) {
+	public void serverUpdate(int playerNum, int position) {
 		synchronized(state){
-			state.serverUpdate(scores, playerNum, position);
+			state.serverUpdate(pong.scores.getScores(), playerNum, position);
 		}
 		touchPlayer(playerNum);
 	}
 	
-	public void updateServerScores(int[] scores) {
+	public void updateServerScores() {
 		synchronized(state){
-			state.updateServerScores(scores);
+			state.updateServerScores(pong.scores.getScores());
 		}
 	}
 
@@ -68,8 +69,9 @@ public class PongSimulation extends PongThread {
 
 	@Override
 	public void work() throws InterruptedException {
-		Pong.doGameIteration(state);
-		checkForWinnerServer();
+		synchronized(state){
+			state = pong.doGameIteration(state);
+		}
 		checkPlayersActivity();
 	}
 
@@ -84,7 +86,8 @@ public class PongSimulation extends PongThread {
 	public void pauseWork() throws InterruptedException{
 		if(state.winner){
 			Thread.sleep(600000 /50);
-			match.resetGame();
+			System.out.println("nuevo match");
+			resetGame();
 		}
 		else{
 			Thread.sleep(PongThread.UPDATE_RATE/ 60);
@@ -103,7 +106,7 @@ public class PongSimulation extends PongThread {
 	public void unPause(){
 		super.unPause();
 		long currentMilis = System.currentTimeMillis();
-		for (int i=0; i < Pong.MAX_PLAYERS; i++) {
+		for (int i=0; i < PongClient.MAX_PLAYERS; i++) {
 			lastActivity[i] = currentMilis;
 		}
 		synchronized(state){
@@ -111,16 +114,9 @@ public class PongSimulation extends PongThread {
 		}
 	}
 	
-	private void checkForWinnerServer(){
-		if(match.score.isAWinner()){
-			match.historical.addWinner(state.winnerPlayer);
-			state.setMatchWinner(match.score.getWinner(), match.historical.getScores());
-		}
-	}
-	
 	private void checkPlayersActivity() {
 		long checkTime = System.currentTimeMillis();
-		for (int i=0; i < Pong.MAX_PLAYERS; i++) {
+		for (int i=0; i < PongClient.MAX_PLAYERS; i++) {
 			synchronized(state){
 				if (state.isPlaying(i) && (checkTime - lastActivity[i] > INACTIVITY_TIMEOUT)) {
 					System.out.println("Removiendo jugador por inactividad");
@@ -141,11 +137,18 @@ public class PongSimulation extends PongThread {
 		synchronized(state){
 			state.disablePlayer(playerNum);
 		}
+		// Remuevo del score historico el jugador
+		pong.historical.removePlayer(playerNum);
+		
+		// Se pone en 0 el puntaje del jugador que se fue
+		int[] scores = pong.scores.getScores();
+		scores[playerNum]  = 0;
+		pong.scores.setScores(scores, getPlaying());
 	}
 	
 	private synchronized void resetActivity(){
 		long currentMilis = System.currentTimeMillis();
-		for (int i=0; i < Pong.MAX_PLAYERS; i++) {
+		for (int i=0; i < PongClient.MAX_PLAYERS; i++) {
 			lastActivity[i] = currentMilis;
 		}
 	}
@@ -170,6 +173,7 @@ public class PongSimulation extends PongThread {
 	public void resetGame() {
 		synchronized(state){
 			state.resetGame();
+			pong.scores.reset(getPlaying());
 		}
 	}
 	
@@ -195,6 +199,10 @@ public class PongSimulation extends PongThread {
 		synchronized(state){
 			return state;
 		}
+	}
+
+	public void setScores(int[] scores, boolean[] playing) {
+		pong.scores.setScores(scores, playing);
 	}
 
 }

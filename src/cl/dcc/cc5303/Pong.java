@@ -1,278 +1,137 @@
 package cl.dcc.cc5303;
 
-import java.awt.BorderLayout;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import javax.swing.JFrame;
-
-
-public class Pong implements KeyListener {
-
-	public final static String TITLE = "Pong - CC5303";
+public class Pong implements PongI{
 	public final static int WIDTH = 640, HEIGHT = 480;
 	public final static int DX = 5;
 	public final static double DV = 0.3;
 	public final static int MAX_PLAYERS = 4;
 	public final static int WINNING_SCORE = 2;
-
-	private JFrame frame;
-	private MyCanvas canvas;
-	public Client client;
-
-	public static ScoreBoardGUI scores;
-	public HistoricalScoreBoardGui historical;
-
-	private boolean[] keys;
+	public ScoreBoard scores;
+	public HistoricalScoreBoard historical;
+	private GameState temporalState;
 	
-	public PongServerUpdate serverUpdate;
-	public PongGame game;
-
-	public Pong(Client client) {
-		this.client    = client;
-		this.serverUpdate = new PongServerUpdate(this.client);
-		this.game         = new PongGame(this);
-		this.keys = new boolean[KeyEvent.KEY_LAST];
-		init();
+	public Pong(){
+		scores = new ScoreBoardSimple();
+		historical = new HistoricalScoreBoardSimple();
 	}
 
-	/* Initializes window frame and set it visible */
-	private void init() {
-		canvas = new MyCanvas(client.info.playerNum, game.state().ball);
-		scores = new ScoreBoardGUI(game.state().playing, client.info.playerNum);
-		historical = new HistoricalScoreBoardGui(client.info.playerNum);
-		
-		frame = new JFrame(TITLE);
-		frame.setLayout(new BorderLayout());
-		frame.setSize(WIDTH, HEIGHT);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.add(canvas, BorderLayout.CENTER);
-		frame.add(scores, BorderLayout.NORTH);
-		frame.add(historical, BorderLayout.SOUTH);
-		
-		canvas.setSize(WIDTH, HEIGHT);
-		for(int i = 0; i < game.state().bars.length; i++){
-			if(game.state().isPlaying(i))
-				canvas.rectangles.add((GameBar)game.state().bars[i]);
-		}
-		canvas.addKeyListener(this);
-		
-		frame.pack();
-		frame.setVisible(true);
-		canvas.init();
-		frame.addKeyListener(this);
-		
-		historical.showScores();
-	}
-	
-	public void startGame() {
-		serverUpdate.start();
-		game.start();
-	}
-	
-	public void stopPongThreads() {
-		serverUpdate.end();
-		game.end();
-		
-		System.exit(0);// FIXME
-	}
-	
-	private void stop(){
-		frame.dispose();
-		client.stop(); // Notificacion al server
-		stopPongThreads();
-	}
-	
-	public static synchronized void doGameIteration(GameState state) {
+	public GameState doGameIteration(GameState state) {
+		temporalState = state;
 		for (int i = 0; i < 4;  i++){
-			if(state.isPlaying(i)){
-				handleHumanBounce(i, state);
+			if(temporalState.isPlaying(i)){
+				handleHumanBounce(i);
 			}
 			else{
-				handleBounce(i, state);
+				handleBounce(i);
 			}
 		}
-
-		handleBall(state);
+		handleBall();
+		return temporalState;
 	}
 	
-	private static void handleBall(GameState state) {
-		// actualiza posicion
-		state.ball.move(state.ball.vx * DX, state.ball.vy * DX);
-
-		if(state.ball.x > Pong.WIDTH || state.ball.x < 0 || state.ball.y < 0 || state.ball.y > Pong.HEIGHT){
-			switch(state.lastPlayer){
-				case(0):{
-					// Punto para jugador 1 si no sale por la izquierda
-					if(!(state.ball.x < 0)){
-						scores.sumPoint(0, state.playing);
-					}
-				} break;
-				case(1):{
-					// Punto para jugador 2 si no sale por la derecha
-					if( !(state.ball.x > Pong.WIDTH)){
-						scores.sumPoint(1, state.playing);
-					}
-				} break;
-				case(2):{
-					// Punto para jugador 3 si no sale abajo
-					if( !(state.ball.y > Pong.HEIGHT)){
-						scores.sumPoint(2, state.playing);
-					}
-				}break;
-				case(3):{
-					// Punto para jugador 4 si no sale arriba
-					if( !(state.ball.y < 0)){
-						scores.sumPoint(3, state.playing);
-					}
-				}
-			}
-			
-			state.setLastPlayer(-1);
-			state.ball.reset();
-		}
-	}
-	
-	private static void handleHumanBounce(int i, GameState state){
+	public void handleHumanBounce(int i){
 		double step = 1+DV;
-		int nextPlayer = -1;
 	    switch(i){
 	    	// jugador a la izquierda
 	    	case(0):{
-	    		if(state.ball.willCrashWithBarByRight(state.bars[i], step)){
-	    			state.ball.changeXDir(step);
-	    			nextPlayer = 0;
+	    		if(temporalState.ball.willCrashWithBarByRight(temporalState.bars[i], step)){
+	    			temporalState.ball.changeXDir(step);
+	    			temporalState.setLastPlayer(0);
 	    		}
 	    	}
 	    	// jugador a la derecha
 	    	case(1):{ 
-	    		if(state.ball.willCrashWithBarByLeft(state.bars[i], step)){
-	    			state.ball.changeXDir(step);
-	    			nextPlayer = 1;
+	    		if(temporalState.ball.willCrashWithBarByLeft(temporalState.bars[i], step)){
+	    			temporalState.ball.changeXDir(step);
+	    			temporalState.setLastPlayer(1);
 	    		}
 	    	}
 	    	//jugador inferior
 	    	case(2):{
-	    		if(state.ball.willCrashWithBarByTop(state.bars[i], step)){
-	    			state.ball.changeYDir(step);
-	    			nextPlayer = 2;
+	    		if(temporalState.ball.willCrashWithBarByTop(temporalState.bars[i], step)){
+	    			temporalState.ball.changeYDir(step);
+	    			temporalState.setLastPlayer(2);
 	    		}
 	    	}
 	    	// jugador superior
 	    	case(3):{
-	    		if(state.ball.willCrashWithBarByBottom(state.bars[i], step)){
-	    			state.ball.changeYDir(step);
-	    			nextPlayer = 3;
+	    		if(temporalState.ball.willCrashWithBarByBottom(temporalState.bars[i], step)){
+	    			temporalState.ball.changeYDir(step);
+	    			temporalState.setLastPlayer(3);
 	    		}
 	    	}
 	    }
-	    state.setLastPlayer(nextPlayer);
 	}
 	
-	private static void handleBounce(int i, GameState state){
+	public void handleBounce(int i){
 		switch(i){
 			// izquierda
 			case(0):{
-				if(state.ball.checkIfGoesLeft(0, DX))
-					state.ball.changeXDir(1);
+				if(temporalState.ball.checkIfGoesLeft(0, DX))
+					temporalState.ball.changeXDir(1);
 			} break;
 			// derecha
 			case(1):{
-				if(state.ball.checkIfGoesRight(WIDTH, DX)){
-					state.ball.changeXDir(1);
+				if(temporalState.ball.checkIfGoesRight(WIDTH, DX)){
+					temporalState.ball.changeXDir(1);
 				}
 			} break;
 			// abajo
 			case(2):{
-				if(state.ball.checkIfGoesDown(HEIGHT, DX)){
-					state.ball.changeYDir(1);
+				if(temporalState.ball.checkIfGoesDown(HEIGHT, DX)){
+					temporalState.ball.changeYDir(1);
 				}
 
 			} break;
 			// arriba
 			case(3):{
-				if(state.ball.checkIfGoesUp(0, DX))
-					state.ball.changeYDir(1);
+				if(temporalState.ball.checkIfGoesUp(0, DX))
+					temporalState.ball.changeYDir(1);
 			}
 		}
 	}
 	
-	public void handlePlayerBars(){
-		for(int i = 0; i < MAX_PLAYERS; i++){
-			canvas.rectangles.remove(game.state().bars[i]);
-
-			if(this.game.state().isPlaying(i)){
-				canvas.rectangles.add((GameBar) game.state().bars[i]);
+	public void handleBall(){
+		// Actualiza posicion
+		temporalState.ball.move(temporalState.ball.vx * DX, temporalState.ball.vy * DX);
+		if(temporalState.ball.x > PongClient.WIDTH || temporalState.ball.x < 0 || temporalState.ball.y < 0 || temporalState.ball.y > PongClient.HEIGHT){
+			switch(temporalState.lastPlayer){
+				case(0):{
+					// Punto para jugador 1 si no sale por la izquierda
+					if(!(temporalState.ball.x < 0) && temporalState.isPlaying(0)){
+						System.out.println("gol: 0");
+						scores.sumPoint(0, temporalState.playing);
+					}
+				} break;
+				case(1):{
+					// Punto para jugador 2 si no sale por la derecha
+					if( !(temporalState.ball.x > PongClient.WIDTH) && temporalState.isPlaying(1)){
+						System.out.println("gol: 1");
+						scores.sumPoint(1, temporalState.playing);
+					}
+				} break;
+				case(2):{
+					// Punto para jugador 3 si no sale abajo
+					if( !(temporalState.ball.y > PongClient.HEIGHT) && temporalState.isPlaying(2)){
+						System.out.println("gol: 2");
+						scores.sumPoint(2, temporalState.playing);
+					}
+				}break;
+				case(3):{
+					// Punto para jugador 4 si no sale arriba
+					if( !(temporalState.ball.y < 0) && temporalState.isPlaying(3)){
+						System.out.println("gol: 3");
+						scores.sumPoint(3, temporalState.playing);
+					}
+				}
 			}
+			if(scores.isAWinner() && temporalState.lastPlayer != -1){
+				historical.addWinner(scores.getWinner());
+				temporalState.winner = true;
+			}
+			temporalState.setLastPlayer(-1);
+			temporalState.ball.reset();
 		}
-	}
-
-	public void handleQuitEvent(){
-		// Manejo de Q, ESC
-		if(keys[KeyEvent.VK_Q] || keys[KeyEvent.VK_ESCAPE]){
-			stop();
-			return;
-		}
-	}
-	
-	public void handleKeyEvents(int playerPos) {
-		Rectangle bar = game.state().bars[playerPos];
-		// Jugador posee una barra vertical
-		if(playerPos == 0 || playerPos == 1){
-			if (keys[KeyEvent.VK_UP] || keys[KeyEvent.VK_W]) {
-				if (bar.y - bar.h * 0.5 - DX >= 0)
-					bar.y -= DX;
-			}
-			if (keys[KeyEvent.VK_DOWN] || keys[KeyEvent.VK_S]) {
-				if (bar.y + bar.h * 0.5 + DX < HEIGHT)
-					bar.y += DX;
-			}
-
-			game.state().bars[playerPos].y = (int) bar.y;
-		}
-		// Jugador posee una barra horizontal
-		else{
-			if (keys[KeyEvent.VK_LEFT] || keys[KeyEvent.VK_A]) {
-				if (bar.x - bar.w * 0.5 - DX >= 0)
-					bar.x -= DX;
-			}
-			if (keys[KeyEvent.VK_RIGHT] || keys[KeyEvent.VK_D]) {
-				if (bar.x + bar.w * 0.5 + DX < WIDTH)
-					bar.x += DX;
-			}
-
-			game.state().bars[playerPos].x = (int) bar.x;
-		}
-	}
-
-	@Override
-	public void keyPressed(KeyEvent event) {
-		keys[event.getKeyCode()] = true;
-
-	}
-
-	@Override
-	public void keyReleased(KeyEvent event) {
-		keys[event.getKeyCode()] = false;
-
-	}
-
-	@Override
-	public void keyTyped(KeyEvent e) {
-		return;
-	}
-
-	public void showWinner() {
-		scores.showWinner();
-		historical.addWinner(scores.getWinner());
-		historical.showScores();
-	}
-	
-	public void showPauseMessage(String message){
-		scores.showPause(message);
-	}
-
-	public void rePaint() {
-		canvas.repaint();
 	}
 
 }

@@ -2,7 +2,6 @@ package cl.dcc.cc5303;
 
 import java.io.Serializable;
 import cl.dcc.cc5303.PongBall;
-import cl.dcc.cc5303.Rectangle;
 
 public class GameState implements Serializable {
 	private static final long serialVersionUID = -6238741276850716574L;
@@ -15,10 +14,10 @@ public class GameState implements Serializable {
 	public int lastPlayer;
 	public boolean running;
 	public PongBall ball = new PongBall();
-	public Rectangle[] bars = new Rectangle[4];
+	public GameBar[] bars = new GameBar[4];
 
 	public GameState(){
-		resetGame();
+		initGame();
 		if(!playersReady()){
 			pause();
 		}
@@ -36,6 +35,7 @@ public class GameState implements Serializable {
 	}
 	public void unPause(){
 		this.running = true;
+		ball = new PongBall();
 	}
 	
 	public boolean isPlaying(int playerNum){
@@ -53,26 +53,26 @@ public class GameState implements Serializable {
 	public void setMatchWinner(int winnerPlayer, int[] historicalScores2) {
 		this.winnerPlayer = winnerPlayer;
 		this.winner = true;
-		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
 			this.historicalScores[i] = historicalScores2[i];
 		}
 	}
 	
 	public void serverUpdate(int[] scores2, int playerNum, int pos){
 		updatePlayerPosition(playerNum, pos);
-		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
+		for( int i = 0; i < PongClient.MAX_PLAYERS; i++){
 			this.scores[i] = scores2[i];
 		}
 	}
 	
 	public void updateServerScores(int[] scores2){
-		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
+		for( int i = 0; i < PongClient.MAX_PLAYERS; i++){
 			this.scores[i] = scores2[i];
 		}
 	}
 	
 	public void fullUpdate(GameState state){
-		for( int i = 0; i < Pong.MAX_PLAYERS; i++){
+		for( int i = 0; i < PongClient.MAX_PLAYERS; i++){
 			this.scores[i] = state.scores[i];
 			this.playing[i] = state.playing[i];
 			this.historicalScores[i] = state.historicalScores[i];
@@ -85,26 +85,38 @@ public class GameState implements Serializable {
 		this.running = state.running;
 	}
 	
-	public void resetGame(){
-		bars[0] = new GameBar(10, Pong.HEIGHT / 2, 10, 100, 0); // jugadores
-		bars[1] = new GameBar(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100, 1);
-		bars[2] = new GameBar(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10, 2);
-		bars[3] = new GameBar(Pong.WIDTH/2, 10, 100, 10, 3);
+	private void initGame(){
+		bars[0] = new GameBar(10, PongClient.HEIGHT / 2, 10, 100, 0); // jugadores
+		bars[1] = new GameBar(PongClient.WIDTH - 10, PongClient.HEIGHT / 2, 10, 100, 1);
+		bars[2] = new GameBar(PongClient.WIDTH/2, PongClient.HEIGHT - 10, 100, 10, 2);
+		bars[3] = new GameBar(PongClient.WIDTH/2, 10, 100, 10, 3);
 		ball = new PongBall();
 		lastPlayer = -1;
 		winner     = false;
-		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
 			playing[i] = false;
 		}
-		numPlayers = Pong.MAX_PLAYERS;
+		numPlayers = PongClient.MAX_PLAYERS;
+		running = true;
+	}
+	
+	public void resetGame(){
+		resetPlayerBars();
+		ball = new PongBall();
+		lastPlayer = -1;
+		winner     = false;
+		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
+			playing[i] = false;
+		}
+		numPlayers = PongClient.MAX_PLAYERS;
 		running = true;
 	}
 	
 	public void resetPlayerBars(){
-		bars[0] = new GameBar(10, Pong.HEIGHT / 2, 10, 100, 0); // jugadores
-		bars[1] = new GameBar(Pong.WIDTH - 10, Pong.HEIGHT / 2, 10, 100, 1);
-		bars[2] = new GameBar(Pong.WIDTH/2, Pong.HEIGHT - 10, 100, 10, 2);
-		bars[3] = new GameBar(Pong.WIDTH/2, 10, 100, 10, 3);
+		bars[0].reset(10, PongClient.HEIGHT / 2, 10, 100, 0); // jugadores
+		bars[1].reset(PongClient.WIDTH - 10, PongClient.HEIGHT / 2, 10, 100, 1);
+		bars[2].reset(PongClient.WIDTH/2, PongClient.HEIGHT - 10, 100, 10, 2);
+		bars[3].reset(PongClient.WIDTH/2, 10, 100, 10, 3);
 	}
 
 	private void updatePlayerPosition(int playerNum, int position) {

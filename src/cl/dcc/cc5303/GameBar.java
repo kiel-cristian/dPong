@@ -15,5 +15,10 @@ public class GameBar extends Rectangle implements Serializable{
 		this.player = ((GameBar)r).player;
 		super.copy(r);
 	}
+	
+	public void reset(int x, int y, int w, int h, int player){
+		super.reset(x, y, w, h);
+		this.player = player;
+	}
 
 }

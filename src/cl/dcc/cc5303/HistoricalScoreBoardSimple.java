@@ -28,9 +28,9 @@ public class HistoricalScoreBoardSimple implements HistoricalScoreBoard{
 
 	public int[] getScores(){
 		Object playerScore;
-		int[] scores = new int[Pong.MAX_PLAYERS];
+		int[] scores = new int[PongClient.MAX_PLAYERS];
 		
-		for(int i = 1; i <= Pong.MAX_PLAYERS; i++){
+		for(int i = 1; i <= PongClient.MAX_PLAYERS; i++){
 			playerScore = playersHistorical.get(i-1);
 			if(playerScore != null){
 				scores[i-1] = (int)playerScore;

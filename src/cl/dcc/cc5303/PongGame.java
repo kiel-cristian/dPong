@@ -1,11 +1,11 @@
 package cl.dcc.cc5303;
 
 public class PongGame extends PongThread{
-	public Pong pong;
+	public PongClient pong;
 	private GameState state;
 	public boolean onGame;
 	
-	public PongGame(Pong game){
+	public PongGame(PongClient game){
 		this.pong = game;
 		this.onGame = true;
 		this.state  = new GameState();
@@ -16,9 +16,11 @@ public class PongGame extends PongThread{
 		synchronized(state){
 			working = !state.winner && state.running;
 			if(onGame && !working){
-				System.out.println("Client game pausado por falta de jugadores");
+				if(!state.winner){
+					System.out.println("Client game pausado por falta de jugadores");
+					pong.showPauseMessage("Esperando jugadores ...");
+				}
 				onGame = false;
-				pong.showPauseMessage("Esperando jugadores ...");
 			}
 		}
 	}
@@ -27,7 +29,7 @@ public class PongGame extends PongThread{
 	public void work() {
 		int playerNum = pong.client.getPlayerNum();
 		pong.handleKeyEvents(playerNum);
-		Pong.doGameIteration(state);
+		pong.doGameIteration(state);
 		pong.handlePlayerBars();
 	}
 

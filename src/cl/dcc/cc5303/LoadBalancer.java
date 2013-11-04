@@ -23,7 +23,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
-	static final int MAX_LOAD = Pong.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
+	static final int MAX_LOAD = PongClient.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
 	private ServerHeartBeat heartBeat;
 
 	protected LoadBalancer() throws RemoteException {
@@ -127,7 +127,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 		ServerLoad bestServer = null;
 		for(ServerLoad sl : serverPriority){
 			// Busco un server que tenga una carga inferior al 70% y con al menos una partida no llena
-			if(sl.left() < MAX_LOAD*0.7 && sl.left() % Pong.MAX_PLAYERS >= 0){
+			if(sl.left() < MAX_LOAD*0.7 && sl.left() % PongClient.MAX_PLAYERS >= 0){
 				bestServer = sl;
 				break;
 			}
@@ -140,7 +140,7 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	
 	@Override
 	public synchronized IServer getServer() {
-		if(!(lastTargetServer != null && lastTargetServer.left() % Pong.MAX_PLAYERS > 0)){
+		if(!(lastTargetServer != null && lastTargetServer.left() % PongClient.MAX_PLAYERS > 0)){
 			// Es necesario obtener un nuevo candidato para conectar
 			lastTargetServer = getBestCandidateServer();
 		}

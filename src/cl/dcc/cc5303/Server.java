@@ -1,6 +1,5 @@
 package cl.dcc.cc5303;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -52,17 +51,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				new Server(players);
 			}			
 			System.out.println("Escuchando...");
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (RemoteException | MalformedURLException | NotBoundException e) {
 			e.printStackTrace();
 		}
 	}
@@ -78,7 +67,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private Match getAvailableMatch() {
 		Match match = null;
 		for (Match m : matches.values()) {
-			if (m.playersCount() < Pong.MAX_PLAYERS && !m.migrating()) {
+			if (m.playersCount() < PongClient.MAX_PLAYERS && !m.migrating()) {
 				match = m;
 				break;
 			}
@@ -165,7 +154,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				}
 			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error en comunicacion al migrar\n");
 			e.printStackTrace();
 		}
 	}

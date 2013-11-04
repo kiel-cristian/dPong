@@ -16,13 +16,20 @@ public class PongServerUpdate extends PongThread{
 	public void preWork() throws InterruptedException {
 		try {
 			temporalState = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
-			working = temporalState.running;
+			working = !temporalState.winner && temporalState.running;
 			if(!working && onGame){
-				System.out.println("Client update pausado por falta de jugadores");
+				if(!temporalState.winner){
+					System.out.println("Client update pausado por falta de jugadores");
+				}
+				else{
+					((ScoreBoardGUI) self.pong.scores).setWinner(temporalState.scores, temporalState.winnerPlayer, temporalState.playing);
+					self.pong.showWinner();
+				}
 				onGame = false;
 				work();
 			}
 			else if(working && !onGame){
+				self.pong.game.reMatch();
 				onGame = true;
 			}
 		} catch (RemoteException e) {
@@ -33,30 +40,16 @@ public class PongServerUpdate extends PongThread{
 
 	@Override
 	public void work() throws InterruptedException {
-		checkWinners(temporalState);
 		synchronized(self.state()){
 			self.state().fullUpdate(temporalState);
+			self.pong.scores.setScores(temporalState.scores, temporalState.playing);
 		}
+		
 	}
 
 	@Override
 	public void postWork() throws InterruptedException {
 		return;
-	}
-	
-	protected void checkWinners(GameState state) {
-		synchronized(self.state()){
-			if(state.winner && !self.pong.scores.isAWinner()){
-				self.pong.scores.setWinner(state.scores, state.winnerPlayer, state.playing);
-				self.pong.showWinner();
-			}
-			else if(!state.winner && self.pong.scores.isAWinner()){
-				self.pong.game.reMatch();
-			}
-			else{
-				Pong.scores.setScores(self.state().scores, state.playing);
-			}
-		}
 	}
 
 	@Override

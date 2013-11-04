@@ -7,17 +7,12 @@ public class Match {
 	private Server server;
 	private int matchID;
 	private Player[] players;
-	
 	private PongSimulation game;
-	public ScoreBoardSimple score;
-	public HistoricalScoreBoardSimple historical;
 	public MigrationInfo migration;
 	
 	public Match(Server server, int matchID, int minPlayers) {
 		this.server = server;
 		this.players = new Player[4];
-		this.score      = new ScoreBoardSimple();
-		this.historical = new HistoricalScoreBoardSimple();
 		this.migration = new MigrationInfo();
 		this.matchID = matchID;
 		
@@ -34,7 +29,7 @@ public class Match {
 	
 	private void setGameState(GameState migratedGameState){
 		game.fullUpdate(migratedGameState);
-		score.setScores(migratedGameState.scores, game.getPlaying());
+		game.setScores(migratedGameState.scores, game.getPlaying());
 	}
 	
 	private void startGame() {
@@ -55,11 +50,6 @@ public class Match {
 			game.end();
 			server.removeMatch(matchID);
 		}
-	}
-	
-	public void resetGame() {
-		game.resetGame();
-		score.reset(game.getPlaying());
 	}
 	
 	private void resetGameDueMigration() {
@@ -97,14 +87,6 @@ public class Match {
 		players[playerNum] = null;
 		game.removePlayer(playerNum);
 		
-		// Remuevo del score historico el jugador
-		historical.removePlayer(playerNum);
-		
-		// Se pone en 0 el puntaje del jugador que se fue
-		int[] scores = score.getScores();
-		scores[playerNum]  = 0;
-		score.setScores(scores, game.getPlaying());
-		
 		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID);
 		if(!(this.game.playersReady())){
 			stopGame();
@@ -113,13 +95,13 @@ public class Match {
 	
 	protected GameState updatePositions(int playerNum, int position) {
 		if(game.working){
-			game.serverUpdate(score.getScores(), playerNum, position);
+			game.serverUpdate(playerNum, position);
 		}
 		return game.state();
 	}
 	
 	protected GameState lastPositions() {
-		game.updateServerScores(score.getScores());
+		game.updateServerScores();
 		return game.state();
 	}
 
@@ -133,7 +115,7 @@ public class Match {
 
 	public GameState startMigration(){
 		migration.emigrating = true;
-		game.updateServerScores(score.getScores());
+		game.updateServerScores();
 		return game.state();
 	}
 	

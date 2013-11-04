@@ -11,7 +11,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	private volatile ServerFinder serverFinder;
 	public volatile IServer server;
 	public volatile GameInfo info;
-	public volatile Pong pong;
+	public volatile PongClient pong;
 
 	public static void main(String[] args) {
 		try {
@@ -51,7 +51,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			server = serverFinder.getServer(serverID);
 		}
 		info = server.connectPlayer(this);
-		pong = new Pong(this);
+		pong = new PongClient(this);
 		pong.game.enablePlayer(info.playerNum);
 		pong.startGame();
 	}

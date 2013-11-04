@@ -8,7 +8,7 @@ public class PongBall extends Rectangle implements Serializable{
 	public double vx, vy;
 
 	public PongBall(){
-		super(Pong.WIDTH * 0.5, Pong.HEIGHT * 0.5, 10, 10);
+		super(PongClient.WIDTH * 0.5, PongClient.HEIGHT * 0.5, 10, 10);
 
 		setRandomVelocity();
 	}
@@ -65,8 +65,8 @@ public class PongBall extends Rectangle implements Serializable{
 	}
 
 	public void reset(){
-		x = Pong.WIDTH * 0.5;
-		y = Pong.HEIGHT * 0.5;
+		x = PongClient.WIDTH * 0.5;
+		y = PongClient.HEIGHT * 0.5;
 		w = 10;
 		h = 10;
 

@@ -51,4 +51,12 @@ public class Rectangle implements Serializable{
 		this.h = r.h;
 	}
 
+	public void reset(int x, int y, int w, int h) {
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+		
+	}
+
 }
