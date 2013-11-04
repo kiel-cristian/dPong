@@ -52,7 +52,7 @@ public class Client extends UnicastRemoteObject implements Player {
 		}
 		info = server.connectPlayer(this);
 		pong = new Pong(this);
-		pong.game.state.enablePlayer(info.playerNum);
+		pong.game.enablePlayer(info.playerNum);
 		pong.startGame();
 	}
 
@@ -61,7 +61,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	}
 
 	public int getBarPosition() {
-		return pong.game.state.getPlayerPosition(info.playerNum);
+		return pong.game.state().getPlayerPosition(info.playerNum);
 	}
 
 	public void stop() {
@@ -73,8 +73,8 @@ public class Client extends UnicastRemoteObject implements Player {
 		}
 	}
 	
-	public synchronized GameState getState(){
-		return this.pong.game.state;
+	public GameState state(){
+		return this.pong.game.state();
 	}
 
 	@Override

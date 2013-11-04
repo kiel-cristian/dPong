@@ -13,15 +13,29 @@ public class GameState implements Serializable {
 	public int winnerPlayer;
 	public int numPlayers;
 	public int lastPlayer;
+	public boolean running;
 	public PongBall ball = new PongBall();
 	public Rectangle[] bars = new Rectangle[4];
 
 	public GameState(){
 		resetGame();
+		if(!playersReady()){
+			pause();
+		}
 	}
 	
 	public GameState(GameState state){
 		fullUpdate(state);
+		if(!playersReady()){
+			pause();
+		}
+	}
+	
+	public void pause(){
+		this.running = false;
+	}
+	public void unPause(){
+		this.running = true;
 	}
 	
 	public boolean isPlaying(int playerNum){
@@ -68,6 +82,7 @@ public class GameState implements Serializable {
 		this.winner = state.winner;
 		this.winnerPlayer = state.winnerPlayer;
 		this.numPlayers = state.numPlayers;
+		this.running = state.running;
 	}
 	
 	public void resetGame(){
@@ -82,6 +97,7 @@ public class GameState implements Serializable {
 			playing[i] = false;
 		}
 		numPlayers = Pong.MAX_PLAYERS;
+		running = true;
 	}
 	
 	public void resetPlayerBars(){

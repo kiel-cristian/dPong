@@ -24,24 +24,18 @@ public abstract class PongThread extends Thread implements PongThreadI{
 	}
 	
 	@Override
-	public void pause(){
-		synchronized(this){
-			working = false;
-		}
+	public synchronized void pause(){
+		working = false;
 	}
 	
 	@Override
-	public void unPause(){
-		synchronized(this){
-			working = true;
-		}
+	public synchronized void unPause(){
+		working = true;
 	}
 
 	@Override
-	public void end(){
-		synchronized(this){
-			running = false;
-		}
+	public synchronized void end(){
+		running = false;
 	}
 	
 	@Override

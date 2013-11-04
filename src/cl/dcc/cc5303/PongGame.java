@@ -2,28 +2,24 @@ package cl.dcc.cc5303;
 
 public class PongGame extends PongThread{
 	public Pong pong;
-	public GameState state;
-	public boolean winner;
+	private GameState state;
 	public boolean onGame;
-	public boolean ready;
 	
 	public PongGame(Pong game){
 		this.pong = game;
-		this.winner = false;
-		this.ready = false;
-		this.onGame = false;
+		this.onGame = true;
 		this.state  = new GameState();
 	}
 	
 	@Override
 	public void preWork() {
-		winner = state.winner;
-		ready  = state.playersReady();
-		working = ready && !winner;
-		
-		if(!onGame && ready){
-			onGame = true;
-			pong.showPauseMessage("");
+		synchronized(state){
+			working = !state.winner && state.running;
+			if(onGame && !working){
+				System.out.println("Client game pausado por falta de jugadores");
+				onGame = false;
+				pong.showPauseMessage("Esperando jugadores ...");
+			}
 		}
 	}
 
@@ -37,9 +33,11 @@ public class PongGame extends PongThread{
 
 	@Override
 	public void postWork() {
-		if(!ready && !winner){
-			onGame = false;
-			pong.showPauseMessage("Esperando jugadores ...");
+		synchronized(state){
+			if(working && !onGame){
+				onGame = true;
+				pong.showPauseMessage("");
+			}
 		}
 		pong.rePaint();
 		pong.handleQuitEvent();
@@ -48,13 +46,22 @@ public class PongGame extends PongThread{
 	@Override
 	public void pauseWork() throws InterruptedException {
 		Thread.sleep(PongThread.UPDATE_RATE/ 60);
-		
 	}
-	
+
 	public void reMatch() {
-		state.ball = new PongBall();
-		state.ball.reset();
-		state.lastPlayer = -1;
+		synchronized(state){
+			state.resetGame();
+		}
 		pong.scores.reset(state.playing);
+	}
+
+	public void enablePlayer(int playerNum) {
+		synchronized(state){
+			state.enablePlayer(playerNum);
+		}
+	}
+
+	public GameState state() {
+		return state;
 	}
 }

@@ -37,8 +37,8 @@ public class Pong implements KeyListener {
 
 	/* Initializes window frame and set it visible */
 	private void init() {
-		canvas = new MyCanvas(client.info.playerNum, game.state.ball);
-		scores = new ScoreBoardGUI(game.state.playing, client.info.playerNum);
+		canvas = new MyCanvas(client.info.playerNum, game.state().ball);
+		scores = new ScoreBoardGUI(game.state().playing, client.info.playerNum);
 		historical = new HistoricalScoreBoardGui(client.info.playerNum);
 		
 		frame = new JFrame(TITLE);
@@ -50,9 +50,9 @@ public class Pong implements KeyListener {
 		frame.add(historical, BorderLayout.SOUTH);
 		
 		canvas.setSize(WIDTH, HEIGHT);
-		for(int i = 0; i < game.state.bars.length; i++){
-			if(game.state.isPlaying(i))
-				canvas.rectangles.add((GameBar)game.state.bars[i]);
+		for(int i = 0; i < game.state().bars.length; i++){
+			if(game.state().isPlaying(i))
+				canvas.rectangles.add((GameBar)game.state().bars[i]);
 		}
 		canvas.addKeyListener(this);
 		
@@ -198,10 +198,10 @@ public class Pong implements KeyListener {
 	
 	public void handlePlayerBars(){
 		for(int i = 0; i < MAX_PLAYERS; i++){
-			canvas.rectangles.remove(game.state.bars[i]);
+			canvas.rectangles.remove(game.state().bars[i]);
 
-			if(this.game.state.isPlaying(i)){
-				canvas.rectangles.add((GameBar) game.state.bars[i]);
+			if(this.game.state().isPlaying(i)){
+				canvas.rectangles.add((GameBar) game.state().bars[i]);
 			}
 		}
 	}
@@ -215,7 +215,7 @@ public class Pong implements KeyListener {
 	}
 	
 	public void handleKeyEvents(int playerPos) {
-		Rectangle bar = game.state.bars[playerPos];
+		Rectangle bar = game.state().bars[playerPos];
 		// Jugador posee una barra vertical
 		if(playerPos == 0 || playerPos == 1){
 			if (keys[KeyEvent.VK_UP] || keys[KeyEvent.VK_W]) {
@@ -227,7 +227,7 @@ public class Pong implements KeyListener {
 					bar.y += DX;
 			}
 
-			game.state.bars[playerPos].y = (int) bar.y;
+			game.state().bars[playerPos].y = (int) bar.y;
 		}
 		// Jugador posee una barra horizontal
 		else{
@@ -240,7 +240,7 @@ public class Pong implements KeyListener {
 					bar.x += DX;
 			}
 
-			game.state.bars[playerPos].x = (int) bar.x;
+			game.state().bars[playerPos].x = (int) bar.x;
 		}
 	}
 
@@ -258,7 +258,7 @@ public class Pong implements KeyListener {
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
+		return;
 	}
 
 	public void showWinner() {
