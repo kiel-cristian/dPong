@@ -1,9 +1,12 @@
 package cl.dcc.cc5303;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -51,6 +54,8 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			e.printStackTrace();
 		} catch (ParserException e) {
 			System.out.println(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
