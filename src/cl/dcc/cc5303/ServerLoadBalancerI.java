@@ -3,7 +3,7 @@ package cl.dcc.cc5303;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-public interface ILoadBalancer extends Remote {
+public interface ServerLoadBalancerI extends Remote {
     /**
      * Connects a server to the load balancer
      * 

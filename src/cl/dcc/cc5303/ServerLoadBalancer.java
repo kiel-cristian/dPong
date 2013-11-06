@@ -14,70 +14,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cl.dcc.cc5303.Utils.Pair;
-
-public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, ServerFinder {
+public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoadBalancerI, ServerFinder {
 	private static final long serialVersionUID = 8410514211761367368L;
 	private HashMap<Integer, IServer> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
+	private HashMap<Integer, Boolean> inmServers;   // (ID, Boolean)
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
 	static final int MAX_LOAD = PongClient.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
 	private ServerHeartBeat heartBeat;
 
-	protected LoadBalancer() throws RemoteException {
+	protected ServerLoadBalancer() throws RemoteException {
 		super();
-		servers = new HashMap<Integer, IServer>();
-		serversLoad = new HashMap<Integer, Integer>();
-		serverPriority = new ArrayList<ServerLoad>();
+		servers          = new HashMap<Integer, IServer>();
+		serversLoad      = new HashMap<Integer, Integer>();
+		inmServers       = new HashMap<Integer, Boolean>();
+		serverPriority   = new ArrayList<ServerLoad>();
 		lastTargetServer = null;
-		heartBeat = new ServerHeartBeat();
-	}
-	
-	private class ServerHeartBeat extends Thread {
-		public boolean running = true;
-		public LoadBalancer balancer;
-
-		public void run() {
-			System.out.println("Running Heart Beat");
-			List<Integer> disconnectedServers;
-			
-			while (this.running) {
-				disconnectedServers = new ArrayList<Integer>();
-
-				for(Map.Entry<Integer, IServer> e : balancer.servers.entrySet()) {
-					IServer server = e.getValue();
-					try {
-						server.heartBeat();
-					} catch (RemoteException e1) {
-						disconnectedServers.add(e.getKey());
-					}
-				}
-				
-				synchronized(this.balancer){
-					for(int serverId : disconnectedServers){
-						System.out.println("Disconnecting server: " + serverId);
-						balancer.servers.remove(serverId);
-						balancer.serversLoad.remove(serverId);
-					}
-					balancer.serverPriority = getPriorityList();
-				}
-				
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
-		}
+		heartBeat        = new ServerHeartBeat(this);
 	}
 	
 	public static void main(String[] args) {
 		try {
 			RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
-			ILoadBalancer balancer = new LoadBalancer();
+			ServerLoadBalancerI balancer = new ServerLoadBalancer();
 			LocateRegistry.createRegistry(1099);
 			Naming.rebind("rmi://localhost:1099/serverfinder", balancer);
 			balancer.initHeartBeat();
@@ -95,17 +56,45 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 		}
 	}
 	
+	public HashMap<Integer, IServer> getServers() {
+		return servers;
+	}
+
+	public HashMap<Integer, Integer> getServersLoad() {
+		return serversLoad;
+	}
+
+	public List<ServerLoad> getServerPriority() {
+		return serverPriority;
+	}
+	
+	public synchronized void updatePriorityList(){
+		serverPriority = getPriorityList();
+	}
+	
+	public void addServer(IServer server) throws RemoteException{
+		servers.put(++lastServerID, server);
+		serversLoad.put(lastServerID, 0);
+		if(server.inMigratable()){
+			inmServers.put(lastServerID, true);
+		}
+	}
+	public void removeServer(int serverID){
+		servers.remove(serverID);
+		serversLoad.remove(serverID);
+		inmServers.remove(serverID);
+	}
+
 	@Override
 	public void initHeartBeat(){
-		heartBeat.balancer = this;
 		heartBeat.run();
 	}
 
 	@Override
 	public synchronized int connectServer(IServer server) throws RemoteException {
-		servers.put(++lastServerID, server);
-		serversLoad.put(lastServerID, 0);
-		serverPriority = getPriorityList();
+		addServer(server);
+		updatePriorityList();
+
 		try {
 			System.out.println("Servidor conectado: " + getClientHost());
 		} catch (ServerNotActiveException e) {
@@ -116,26 +105,41 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	
 	private List<ServerLoad> getPriorityList() {
 		List<ServerLoad> p = new ArrayList<ServerLoad>();
-		for (Map.Entry<Integer, Integer> e : serversLoad.entrySet()) {
-			p.add(new ServerLoad(e.getValue(), servers.get(e.getKey())));
+		for (Map.Entry<Integer, Integer> e : getServersLoad().entrySet()) {
+			p.add(new ServerLoad(e.getValue(), getServers().get(e.getKey())));
 		}
 		Collections.sort(p);
 		return p;
 	}
 	
 	private ServerLoad getBestCandidateServer(){
-		ServerLoad bestServer = null;
 		for(ServerLoad sl : serverPriority){
 			// Busco un server que tenga una carga inferior al 70% y con al menos una partida no llena
-			if(sl.left() < MAX_LOAD*0.7 && sl.left() % PongClient.MAX_PLAYERS >= 0){
-				bestServer = sl;
-				break;
+			try {
+				if(inmServers.get(sl.right().getServerID()) == null && 
+						sl.left() < MAX_LOAD*0.7 && 
+						sl.left() % PongClient.MAX_PLAYERS > 0){
+					return sl;
+				}
+			} catch (RemoteException e) {
+				System.out.println("No se puede conectar con el servidor, heartBeat lo desconectara en breve");
 			}
 		}
-		if(bestServer == null){
-			bestServer = serverPriority.get(0);
+		return getBestPriorityServer();
+	}
+	
+	private ServerLoad getBestPriorityServer(){
+		updatePriorityList();
+		for(ServerLoad sl : serverPriority){
+			try {
+				if(inmServers.get(sl.right().getServerID()) == null){
+					return sl;
+				}
+			} catch (RemoteException e) {
+				System.out.println("No se puede conectar con el servidor, heartBeat lo desconectara en breve");
+			}
 		}
-		return bestServer;
+		return null;
 	}
 	
 	@Override
@@ -154,13 +158,13 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 	
 	@Override
 	public synchronized IServer getServer(int serverID) throws RemoteException {
-		return servers.get(serverID);
+		return getServers().get(serverID);
 	}
 	
 	@Override
 	public boolean reportLoad(int serverID, int load) throws RemoteException {
 		synchronized (this) {
-			int lastLoad = serversLoad.get(serverID);
+			int lastLoad = getServersLoad().get(serverID);
 			serversLoad.put(serverID, load);
 			
 			// Si la carga del servidor es mayor o igual al 70%
@@ -173,41 +177,21 @@ public class LoadBalancer extends UnicastRemoteObject implements ILoadBalancer, 
 			}
 		}
 	}
-	
-	private class ServerLoad extends Pair<Integer, IServer> implements Comparable<ServerLoad> {
-
-		public ServerLoad(Integer load, IServer server) {
-			super(load, server);
-		}
-
-		@Override
-		public int compareTo(ServerLoad s) {
-			return this.left().compareTo(s.left());
-		}
-	}
 
 	@Override
 	public IServer getServerForMigration(int sourceServerID) throws RemoteException {
 		synchronized (this) {
-			IServer sourceServer = servers.get(sourceServerID);
-			ServerLoad bestLoad  = null;
+			IServer bestLoad  = null;
 			
-			for(ServerLoad s: serverPriority){
-				if(s.right().equals(sourceServer)){
-					continue;
-				}
-				else{
-					bestLoad = s;
+			for(ServerLoad s: getServerPriority()){
+				if(s.right().getServerID() != sourceServerID && 
+						inmServers.get(s.right().getServerID()) != null && 
+						s.left() < MAX_LOAD){
+					bestLoad = s.right();
 					break;
 				}
 			}
-			
-			if(bestLoad.left() < MAX_LOAD){
-				return bestLoad.right();
-			}
-			else{
-				return null;
-			}
+			return bestLoad;
 		}
 	}
 }

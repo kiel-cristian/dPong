@@ -16,7 +16,7 @@ import cl.dcc.cc5303.CommandLineParser.ParserException;
 public class Server extends UnicastRemoteObject implements IServer, ServerFinder {
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ServerOptions options;
-	private static ILoadBalancer loadBalancer;
+	private static ServerLoadBalancerI loadBalancer;
 	private LinkedHashMap<Integer, Match> matches;
 	private int minPlayers;
 	private volatile int matchCount;
@@ -40,7 +40,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			options = parseOptions(args);
 			
 			if (options.loadBalancer){
-				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://" + options.balancerUrl + ":1099/serverfinder");
+				loadBalancer = (ServerLoadBalancerI) Naming.lookup("rmi://" + options.balancerUrl + ":1099/serverfinder");
 				new Server(options.minPlayers);
 			}
 			else {
@@ -64,12 +64,14 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		CommandLineParser parser = new CommandLineParser(args);
 		parser.addOption("b", "string", "localhost"); 	// Balanceador: localhost por defecto
 		parser.addOption("n", "int");
+		parser.addOption("m", "int", "1"); //Marcar si un servidor puede recibir migraciones o no
 		parser.greaterThanRule("n", 1, "Debe introducir un número válido de jugadores para las partidas (mínimo 2)");
 		parser.lessThanRule("n", 5, "Debe introducir un número válido de jugadores para las partidas (máximo 4)");
 		parser.parse();
 		options.minPlayers = parser.getInt("n", 2); // Minimo de jugadores: 2 por defecto
 		options.loadBalancer = parser.containsString("b");
 		options.balancerUrl = parser.getString("b", null);
+		options.inmigration = parser.containsString("m");
 		return options;
 	}
 	
@@ -77,6 +79,11 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		public boolean loadBalancer;
 		public String balancerUrl;
 		public int minPlayers;
+		public boolean inmigration;
+	}
+	
+	public int getServerID(){
+		return serverID;
 	}
 
 	@Override
@@ -236,5 +243,10 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 				migrating = false;
 			}
 		}
+	}
+
+	@Override
+	public boolean inMigratable() {
+		return options.inmigration;
 	}
 }

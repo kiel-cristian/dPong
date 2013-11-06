@@ -22,4 +22,18 @@ public interface IServer extends Remote {
    * Simple returns. Used for load balancer to check if a server is still alive.
    */
   public void heartBeat() throws RemoteException;
+  
+  /**
+   * Returns true when a Server allows incoming migrations
+   * 
+   * @return true when can migrate to this server
+   */
+  public boolean inMigratable() throws RemoteException;
+  
+  /**
+   * Returns current server ID (for migration purposes)
+   * 
+   * @return an integer with ID value
+   */
+  public int getServerID() throws RemoteException;
 }
