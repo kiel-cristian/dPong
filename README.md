@@ -1,5 +1,9 @@
 <h2>Tarea Sistemas Distribuidos 2013-2</h2>
 
+<h3>Compilación</h3>
+<p>Para compilar el proyecto (si no se usa un entorno de desarrollo) emplear el script de compilacion incluido en la raiz como sigue: </p>
+<code>sh compile.sh</code>
+
 <h3>Configuración</h3>
 
 <h4>Servidor(es)</h4>
