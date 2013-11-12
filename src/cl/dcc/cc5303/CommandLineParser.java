@@ -22,11 +22,25 @@ public class CommandLineParser {
 		this.args = args;
 	}
 	
-	public void addOption(String mark, String type) {
-		addOption(mark, type, null);
+	public void addIntegerOption(String mark) {
+		addIntegerOption(mark, null);
 	}
 	
-	public void addOption(String mark, String type, String defaultVal) {
+	public void addIntegerOption(String mark, Integer defaultVal) {
+		String def = null;
+		if (defaultVal != null) defaultVal.toString();
+		addOption(mark, "int", def);
+	}
+	
+	public void addStringOption(String mark) {
+		addStringOption(mark, null);
+	}
+	
+	public void addStringOption(String mark, String defaultVal) {
+		addOption(mark, "string", defaultVal);
+	}
+	
+	private void addOption(String mark, String type, String defaultVal) {
 		assert(validType(type));
 		optionTypes.put(mark, type);
 		if (defaultVal != null) {
