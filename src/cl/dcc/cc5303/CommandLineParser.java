@@ -27,7 +27,9 @@ public class CommandLineParser {
 	}
 	
 	public void addIntegerOption(String mark, Integer defaultVal) {
-		addOption(mark, "int", defaultVal.toString());
+		String def = null;
+		if (defaultVal != null) defaultVal.toString();
+		addOption(mark, "int", def);
 	}
 	
 	public void addStringOption(String mark) {
@@ -35,7 +37,7 @@ public class CommandLineParser {
 	}
 	
 	public void addStringOption(String mark, String defaultVal) {
-		addOption(mark, "string", defaultVal.toString());
+		addOption(mark, "string", defaultVal);
 	}
 	
 	private void addOption(String mark, String type, String defaultVal) {
