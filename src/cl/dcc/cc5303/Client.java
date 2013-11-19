@@ -11,7 +11,7 @@ import cl.dcc.cc5303.CommandLineParser.ParserException;
 public class Client extends UnicastRemoteObject implements Player {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private volatile ServerFinder serverFinder;
-	public volatile IServer server;
+	public volatile ServerI server;
 	public volatile GameInfo info;
 	public volatile PongClient pong;
 
@@ -75,7 +75,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	}
 
 	@Override
-	public void migrate(final IServer targetServer, final int targetMatchID) throws RemoteException {
+	public void migrate(final ServerI targetServer, final int targetMatchID) throws RemoteException {
 		pong.serverUpdate.pause();
 		pong.game.pause();
 		final Client self = this;
@@ -85,7 +85,7 @@ public class Client extends UnicastRemoteObject implements Player {
 			@Override
 			public void run() {
 				try {
-					IServer oldServer = self.server;
+					ServerI oldServer = self.server;
 					int oldMatch = self.info.matchID;
 					synchronized(self.server){
 						self.server = targetServer;

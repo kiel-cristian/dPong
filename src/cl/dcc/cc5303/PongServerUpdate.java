@@ -4,7 +4,7 @@ import java.rmi.RemoteException;
 
 public class PongServerUpdate extends PongThread{
 	private Client self;
-	private GameState temporalState;
+	private GameStateInfo temporalState;
 	public boolean onGame;
 	
 	public PongServerUpdate(Client client){
@@ -46,7 +46,7 @@ public class PongServerUpdate extends PongThread{
 	@Override
 	public void work() throws InterruptedException {
 		synchronized(self.state()){
-			self.state().fullUpdate(temporalState);
+			self.state().updateFromInfo(temporalState);
 			self.pong.scores.setScores(temporalState.scores, temporalState.playing);
 		}
 		

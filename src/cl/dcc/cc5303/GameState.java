@@ -23,11 +23,43 @@ public class GameState implements Serializable {
 		}
 	}
 	
-	public GameState(GameState state){
-		fullUpdate(state);
+	public void updateFromInfo(GameStateInfo state){
+		for( int i = 0; i < PongClient.MAX_PLAYERS; i++){
+			this.scores[i] = state.scores[i];
+			this.playing[i] = state.playing[i];
+			this.historicalScores[i] = state.historicalScores[i];
+			if(i == 0 || i == 1){
+				this.bars[i].y = state.iBars[i];
+			} else {
+				this.bars[i].x = state.iBars[i];
+			}
+		}
+		this.ball.x = state.ballX;
+		this.ball.y = state.ballY;
+		this.winner = state.winner;
+		this.winnerPlayer = state.winnerPlayer;
+		this.numPlayers = state.numPlayers;
+		this.running = state.running;
+
 		if(!playersReady()){
 			pause();
 		}
+	}
+	
+	public GameStateInfo packInfo(){
+		int[] iBars = new int[4];
+		if(playing[0])
+			iBars[0] = (int)bars[0].y;
+		if(playing[1])
+			iBars[1] = (int)bars[1].y;
+		if(playing[2])
+			iBars[2] = (int)bars[2].x;
+		if(playing[3])
+			iBars[3] = (int)bars[3].x;
+		
+		int ballX = (int)ball.x;
+		int ballY = (int)ball.y;
+		return new GameStateInfo(playing,iBars,winnerPlayer,lastPlayer,winner,running,ballX,ballY,scores,historicalScores, numPlayers);
 	}
 	
 	public void pause(){

@@ -16,9 +16,13 @@ import java.util.Map;
 
 public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoadBalancerI, ServerFinder {
 	private static final long serialVersionUID = 8410514211761367368L;
-	private HashMap<Integer, IServer> servers;		// (ID, Server)
+	private HashMap<Integer, ServerI> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
 	private HashMap<Integer, Boolean> inmServers;   // (ID, Boolean)
+
+	private HashMap<Integer, Integer> serverMatches;
+	private HashMap<Integer, Integer> serverInmigrations;
+
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
@@ -27,7 +31,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 
 	protected ServerLoadBalancer() throws RemoteException {
 		super();
-		servers          = new HashMap<Integer, IServer>();
+		servers          = new HashMap<Integer, ServerI>();
 		serversLoad      = new HashMap<Integer, Integer>();
 		inmServers       = new HashMap<Integer, Boolean>();
 		serverPriority   = new ArrayList<ServerLoad>();
@@ -56,7 +60,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		}
 	}
 	
-	public HashMap<Integer, IServer> getServers() {
+	public HashMap<Integer, ServerI> getServers() {
 		return servers;
 	}
 
@@ -68,11 +72,20 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		return serverPriority;
 	}
 	
+	public void updateServerInfo(ServerInfo info) {
+		synchronized(serverMatches){
+			serverMatches.put(info.serverID, info.matches);
+		}
+		synchronized(serverInmigrations){
+			serverInmigrations.put(info.serverID, info.inmigrations);
+		}
+	}
+	
 	public synchronized void updatePriorityList(){
 		serverPriority = getPriorityList();
 	}
 	
-	public void addServer(IServer server) throws RemoteException{
+	public void addServer(ServerI server) throws RemoteException{
 		servers.put(++lastServerID, server);
 		serversLoad.put(lastServerID, 0);
 		if(server.inMigratable()){
@@ -83,6 +96,8 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		servers.remove(serverID);
 		serversLoad.remove(serverID);
 		inmServers.remove(serverID);
+		serverMatches.remove(serverID);
+		serverInmigrations.remove(serverID);
 	}
 
 	@Override
@@ -91,7 +106,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	}
 
 	@Override
-	public synchronized int connectServer(IServer server) throws RemoteException {
+	public synchronized int connectServer(ServerI server) throws RemoteException {
 		addServer(server);
 		updatePriorityList();
 
@@ -106,7 +121,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private List<ServerLoad> getPriorityList() {
 		List<ServerLoad> p = new ArrayList<ServerLoad>();
 		for (Map.Entry<Integer, Integer> e : getServersLoad().entrySet()) {
-			p.add(new ServerLoad(e.getValue(), getServers().get(e.getKey())));
+			p.add(new ServerLoad(e.getValue(), e.getKey()));
 		}
 		Collections.sort(p);
 		return p;
@@ -115,14 +130,10 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private ServerLoad getBestCandidateServer(){
 		for(ServerLoad sl : serverPriority){
 			// Busco un server que tenga una carga inferior al 70% y con al menos una partida no llena
-			try {
-				if(inmServers.get(sl.right().getServerID()) == null && 
-						sl.left() < MAX_LOAD*0.7 && 
-						sl.left() % PongClient.MAX_PLAYERS > 0){
-					return sl;
-				}
-			} catch (RemoteException e) {
-				System.out.println("No se puede conectar con el servidor, heartBeat lo desconectara en breve");
+			if(inmServers.get(sl.right()) == null && 
+					sl.left() < MAX_LOAD*0.7 && 
+					(sl.left() % PongClient.MAX_PLAYERS > 0 || serverMatches.get(sl.right()) > 0)){
+				return sl;
 			}
 		}
 		return getBestPriorityServer();
@@ -131,19 +142,15 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private ServerLoad getBestPriorityServer(){
 		updatePriorityList();
 		for(ServerLoad sl : serverPriority){
-			try {
-				if(inmServers.get(sl.right().getServerID()) == null){
-					return sl;
-				}
-			} catch (RemoteException e) {
-				System.out.println("No se puede conectar con el servidor, heartBeat lo desconectara en breve");
+			if(inmServers.get(sl.right()) == null){
+				return sl;
 			}
 		}
 		return null;
 	}
 	
 	@Override
-	public synchronized IServer getServer() {
+	public synchronized ServerI getServer() {
 		if(!(lastTargetServer != null && lastTargetServer.left() % PongClient.MAX_PLAYERS > 0)){
 			// Es necesario obtener un nuevo candidato para conectar
 			lastTargetServer = getBestCandidateServer();
@@ -153,11 +160,11 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		int load = lastTargetServer.left();
 		lastTargetServer = new ServerLoad(++load, lastTargetServer.right());
 		
-		return lastTargetServer.right();
+		return servers.get(lastTargetServer.right());
 	}
 	
 	@Override
-	public synchronized IServer getServer(int serverID) throws RemoteException {
+	public synchronized ServerI getServer(int serverID) throws RemoteException {
 		return getServers().get(serverID);
 	}
 	
@@ -179,16 +186,17 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	}
 
 	@Override
-	public IServer getServerForMigration(int sourceServerID) throws RemoteException {
+	public ServerI getServerForMigration(int sourceServerID) throws RemoteException {
 		synchronized (this) {
-			IServer bestLoad  = null;
+			ServerI bestLoad  = null;
 			
 			for(ServerLoad s: getServerPriority()){
-				if(s.right().getServerID() != sourceServerID && 
-						inmServers.get(s.right().getServerID()) != null && 
-						s.left() < MAX_LOAD){
-					bestLoad = s.right();
-					break;
+				if(s.right() != sourceServerID && 
+				   inmServers.get(s.right()) != null && 
+				   s.left() < MAX_LOAD &&
+				   serverInmigrations.get(s.right()) == 0){
+						bestLoad = servers.get(s.right());
+						break;
 				}
 			}
 			return bestLoad;

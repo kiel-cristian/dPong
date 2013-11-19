@@ -20,14 +20,14 @@ public class Match {
 		this.game.setPlayers(minPlayers);
 	}
 
-	public void receiveMigration(GameState migratingState) {
+	public void receiveMigration(GameStateInfo migratingState) {
 		setGameState(migratingState);
 		migration.immigrating = true;
 		migration.migratingPlayers = Utils.countTrue(migratingState.playing);
 		game.disableAllPlayers();
 	}
 	
-	private void setGameState(GameState migratedGameState){
+	private void setGameState(GameStateInfo migratedGameState){
 		game.fullUpdate(migratedGameState);
 		game.setScores(migratedGameState.scores, game.getPlaying());
 	}
@@ -93,14 +93,14 @@ public class Match {
 		}
 	}
 	
-	protected GameState updatePositions(int playerNum, int position) {
+	protected GameStateInfo updatePositions(int playerNum, int position) {
 		if(game.working){
 			game.serverUpdate(playerNum, position);
 		}
 		return game.state();
 	}
 	
-	protected GameState lastPositions() {
+	protected GameStateInfo lastPositions() {
 		game.updateServerScores();
 		return game.state();
 	}
@@ -113,7 +113,7 @@ public class Match {
 		return migration.migratingPlayers <= playersCount();
 	}
 
-	public GameState startMigration(){
+	public GameStateInfo startMigration(){
 		migration.emigrating = true;
 		game.updateServerScores();
 		return game.state();
@@ -129,7 +129,7 @@ public class Match {
 		return migration.emigrating || migration.immigrating;
 	}
 
-	public void migratePlayers(IServer targetServer, int targetMatch) throws RemoteException {
+	public void migratePlayers(ServerI targetServer, int targetMatch) throws RemoteException {
 		for (int i=0; i<players.length; i++) {
 			if (players[i] != null) {
 				try {

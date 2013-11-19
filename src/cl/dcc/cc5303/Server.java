@@ -13,7 +13,7 @@ import java.util.Map;
 
 import cl.dcc.cc5303.CommandLineParser.ParserException;
 
-public class Server extends UnicastRemoteObject implements IServer, ServerFinder {
+public class Server extends UnicastRemoteObject implements ServerI, ServerFinder {
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ServerOptions options;
 	private static ServerLoadBalancerI loadBalancer;
@@ -24,6 +24,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	private int serverID;
 	private MigrationHandler migrationHandler;
 	private boolean migrating;
+	private int inmigrations;
 	
 	protected Server(int minPlayers) throws RemoteException {
 		super();
@@ -119,7 +120,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
+	public synchronized GameStateInfo updatePositions(int matchID, int playerNum, int position) throws RemoteException {
 		Match m = matches.get(matchID);
 			
 		if(m!= null && !m.migrating()){
@@ -134,7 +135,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public IServer getServer() throws RemoteException {
+	public ServerI getServer() throws RemoteException {
 		return this;
 	}
 	
@@ -174,7 +175,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		return migratedMatchesCount < currentMatches/2;
 	}
 	
-	private void migrateMatches(IServer targetServer) {
+	private void migrateMatches(ServerI targetServer) {
 		try {
 			Match selectedMatch;
 			int migratedMatches = 0;
@@ -196,10 +197,11 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public synchronized int getMatchForMigration(GameState stateToMigrate) throws RemoteException {
+	public synchronized int getMatchForMigration(GameStateInfo stateToMigrate) throws RemoteException {
 		Match match = new Match(this, ++matchCount, stateToMigrate.numPlayers);
 		match.receiveMigration(stateToMigrate);
 		matches.put(match.getID(), match);
+		inmigrations++;
 		return match.getID();
 	}
 	
@@ -219,13 +221,13 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 	}
 
 	@Override
-	public IServer getServer(int serverID) throws RemoteException {
+	public ServerI getServer(int serverID) throws RemoteException {
 		return getServer();
 	}
 	
 	@Override
-	public void heartBeat() throws RemoteException{
-		return;
+	public ServerInfo heartBeat() throws RemoteException{
+		return new ServerInfo(matches.size(), inmigrations, serverID);
 	}
 	
 	private class MigrationHandler extends Thread {
@@ -233,7 +235,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		@Override
 		public void run() {
 			try {
-				IServer migrationServer = loadBalancer.getServerForMigration(serverID);
+				ServerI migrationServer = loadBalancer.getServerForMigration(serverID);
 				if (migrationServer != null) {
 					migrateMatches(migrationServer);
 				}

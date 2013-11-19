@@ -33,16 +33,15 @@ public class PongSimulation extends PongThread {
 		}
 	}
 	
-	public void setState(GameState state){
+	public void setState(GameStateInfo state){
 		synchronized(this.state){
-			this.state = new GameState();
-			this.state.fullUpdate(state);
+			this.state.updateFromInfo(state);
 		}
 	}
 	
-	public void fullUpdate(GameState migratedGameState) {
+	public void fullUpdate(GameStateInfo migratedGameState) {
 		synchronized(state){
-			state.fullUpdate(migratedGameState);
+			state.updateFromInfo(migratedGameState);
 		}
 	}
 	
@@ -196,9 +195,9 @@ public class PongSimulation extends PongThread {
 		}
 	}
 
-	public GameState state() {
+	public GameStateInfo state() {
 		synchronized(state){
-			return state;
+			return state.packInfo();
 		}
 	}
 

@@ -11,7 +11,7 @@ public interface ServerLoadBalancerI extends Remote {
      * @return the ID of the server in the load balancer
      * @throws RemoteException
      */
-    public int connectServer(IServer server) throws RemoteException;
+    public int connectServer(ServerI server) throws RemoteException;
     
     /**
      * Reports server's current load to the load balancer
@@ -30,7 +30,7 @@ public interface ServerLoadBalancerI extends Remote {
      * @return the target server of the migration
      * @throws RemoteException
      */
-    public IServer getServerForMigration(int sourceServerID) throws RemoteException;
+    public ServerI getServerForMigration(int sourceServerID) throws RemoteException;
     
     /**
      * Runs heartBeat service for load balancer server
