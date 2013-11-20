@@ -1,15 +1,17 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.server;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ServerHeartBeat extends PongThread {
+import cl.dcc.cc5303.PongThread;
+
+public class ServerHeartBeatThread extends PongThread {
 	private ServerLoadBalancer balancer;
 	private List<Integer> disconnectedServers; 
 	
-	public ServerHeartBeat(ServerLoadBalancer balancer){
+	public ServerHeartBeatThread(ServerLoadBalancer balancer){
 		this.balancer = balancer;
 	}
 

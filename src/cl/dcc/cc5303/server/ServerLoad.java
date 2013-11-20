@@ -1,5 +1,6 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.server;
 
+import cl.dcc.cc5303.Utils;
 import cl.dcc.cc5303.Utils.Pair;
 
 public class ServerLoad extends Pair<Integer, Integer> implements Comparable<ServerLoad> {

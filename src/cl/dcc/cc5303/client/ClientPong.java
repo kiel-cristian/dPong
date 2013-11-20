@@ -1,25 +1,33 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.client;
 
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import javax.swing.JFrame;
 
-public class PongClient extends Pong implements KeyListener, PongI {
+import cl.dcc.cc5303.GameBar;
+import cl.dcc.cc5303.HistoricalScoreBoardGUI;
+import cl.dcc.cc5303.MyCanvas;
+import cl.dcc.cc5303.Pong;
+import cl.dcc.cc5303.PongI;
+import cl.dcc.cc5303.Rectangle;
+import cl.dcc.cc5303.ScoreBoardGUI;
+
+public class ClientPong extends Pong implements KeyListener, PongI {
 	public final static String TITLE = "Pong - CC5303";
 	private JFrame frame;
 	private MyCanvas canvas;
 	public Client client;
 	private boolean[] keys;
 	
-	public PongServerUpdate serverUpdate;
-	public PongGame game;
+	public ClientUpdateThread serverUpdate;
+	public ClientGameThread game;
 
-	public PongClient(Client client, int playerNum) {
+	public ClientPong(Client client, int playerNum) {
 		super();
 		this.client    = client;
-		this.serverUpdate = new PongServerUpdate(this.client);
-		this.game         = new PongGame(this);
+		this.serverUpdate = new ClientUpdateThread(this.client);
+		this.game         = new ClientGameThread(this);
 		this.keys = new boolean[KeyEvent.KEY_LAST];
 		this.scores = new ScoreBoardGUI(this.game.state().playing, playerNum);
 		this.historical = new HistoricalScoreBoardGUI(playerNum, game.state().playing);

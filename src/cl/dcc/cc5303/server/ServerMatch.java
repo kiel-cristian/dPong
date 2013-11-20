@@ -1,22 +1,26 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.server;
 
 import java.rmi.RemoteException;
 
+import cl.dcc.cc5303.GameStateInfo;
+import cl.dcc.cc5303.Utils;
+import cl.dcc.cc5303.client.PlayerI;
 
-public class Match {
+
+public class ServerMatch {
 	private Server server;
 	private int matchID;
-	private Player[] players;
-	private PongSimulation game;
+	private PlayerI[] playerIs;
+	private ServerGameThread game;
 	public MigrationInfo migration;
 	
-	public Match(Server server, int matchID, int minPlayers) {
+	public ServerMatch(Server server, int matchID, int minPlayers) {
 		this.server = server;
-		this.players = new Player[4];
+		this.playerIs = new PlayerI[4];
 		this.migration = new MigrationInfo();
 		this.matchID = matchID;
 		
-		this.game = new PongSimulation(this);
+		this.game = new ServerGameThread(this);
 		this.game.setPlayers(minPlayers);
 	}
 
@@ -60,21 +64,21 @@ public class Match {
 		return game.playersCount();
 	}
 	
-	protected int addPlayer(Player player) {
+	protected int addPlayer(PlayerI playerI) {
 		int playerNum = 666;
 		if (!game.isPlaying(0))
-			playerNum = addPlayer(player, 0);
+			playerNum = addPlayer(playerI, 0);
 		else if (!game.isPlaying(1))		
-			playerNum = addPlayer(player, 1);
+			playerNum = addPlayer(playerI, 1);
 		else if (!game.isPlaying(2))
-			playerNum = addPlayer(player, 2);
+			playerNum = addPlayer(playerI, 2);
 		else if (!game.isPlaying(3))
-			playerNum = addPlayer(player, 3);
+			playerNum = addPlayer(playerI, 3);
 		return playerNum;
 	}
 	
-	protected int addPlayer(Player player, int num) {
-		players[num] = player;
+	protected int addPlayer(PlayerI playerI, int num) {
+		playerIs[num] = playerI;
 		game.addPlayer(num);
 		System.out.println("Se ha conectado el jugador " + num + " a la partida " + matchID);
 		if (this.game.playersReady()){
@@ -84,7 +88,7 @@ public class Match {
 	}
 	
 	protected synchronized void removePlayer(int playerNum) {
-		players[playerNum] = null;
+		playerIs[playerNum] = null;
 		game.removePlayer(playerNum);
 		
 		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID);
@@ -130,10 +134,10 @@ public class Match {
 	}
 
 	public void migratePlayers(ServerI targetServer, int targetMatch) throws RemoteException {
-		for (int i=0; i<players.length; i++) {
-			if (players[i] != null) {
+		for (int i=0; i<playerIs.length; i++) {
+			if (playerIs[i] != null) {
 				try {
-					players[i].migrate(targetServer, targetMatch);
+					playerIs[i].migrate(targetServer, targetMatch);
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}

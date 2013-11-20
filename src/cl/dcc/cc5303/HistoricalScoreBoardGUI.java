@@ -6,6 +6,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import cl.dcc.cc5303.client.ClientPong;
+
 public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBoard{
 	private static final long serialVersionUID = 8916186821186929334L;
 	private JLabel[] labels;
@@ -23,7 +25,7 @@ public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBo
 		this.setOpaque(true);
 		this.add(myLabel);
 		
-		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
+		for(int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			labels[i] = new JLabel();
 			labels[i].setFont(new Font("Monospaced", Font.BOLD, 15));
 			labels[i].setBorder(new EmptyBorder(0, 20, 0, 20));
@@ -51,7 +53,7 @@ public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBo
 	public void showScores(boolean[] playing) {
 		int[] scores = board.getScores();
 				
-		for(int i = 0; i < PongClient.MAX_PLAYERS; i++){
+		for(int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			if(myPlayerNum != (i+1) && playing[i]){
 				labels[i].setText("P" + (i +1) + ": " + scores[i]);
 			}

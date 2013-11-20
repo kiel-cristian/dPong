@@ -1,5 +1,7 @@
 package cl.dcc.cc5303;
 
+import cl.dcc.cc5303.client.ClientPong;
+
 public class Pong implements PongI{
 	public final static int WIDTH = 640, HEIGHT = 480;
 	public final static int DX = 5;
@@ -94,7 +96,7 @@ public class Pong implements PongI{
 	public void handleBall(){
 		// Actualiza posicion
 		temporalState.ball.move(temporalState.ball.vx * DX, temporalState.ball.vy * DX);
-		if(temporalState.ball.x > PongClient.WIDTH || temporalState.ball.x < 0 || temporalState.ball.y < 0 || temporalState.ball.y > PongClient.HEIGHT){
+		if(temporalState.ball.x > ClientPong.WIDTH || temporalState.ball.x < 0 || temporalState.ball.y < 0 || temporalState.ball.y > ClientPong.HEIGHT){
 			switch(temporalState.lastPlayer){
 				case(0):{
 					// Punto para jugador 1 si no sale por la izquierda
@@ -104,13 +106,13 @@ public class Pong implements PongI{
 				} break;
 				case(1):{
 					// Punto para jugador 2 si no sale por la derecha
-					if( !(temporalState.ball.x > PongClient.WIDTH) && temporalState.isPlaying(1)){
+					if( !(temporalState.ball.x > ClientPong.WIDTH) && temporalState.isPlaying(1)){
 						scores.sumPoint(1, temporalState.playing);
 					}
 				} break;
 				case(2):{
 					// Punto para jugador 3 si no sale abajo
-					if( !(temporalState.ball.y > PongClient.HEIGHT) && temporalState.isPlaying(2)){
+					if( !(temporalState.ball.y > ClientPong.HEIGHT) && temporalState.isPlaying(2)){
 						scores.sumPoint(2, temporalState.playing);
 					}
 				}break;

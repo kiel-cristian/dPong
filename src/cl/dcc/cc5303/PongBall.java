@@ -3,12 +3,14 @@ package cl.dcc.cc5303;
 import java.io.Serializable;
 import java.util.Random;
 
+import cl.dcc.cc5303.client.ClientPong;
+
 public class PongBall extends Rectangle implements Serializable{
 	private static final long serialVersionUID = -8169819468494935096L;
 	public double vx, vy;
 
 	public PongBall(){
-		super(PongClient.WIDTH * 0.5, PongClient.HEIGHT * 0.5, 10, 10);
+		super(ClientPong.WIDTH * 0.5, ClientPong.HEIGHT * 0.5, 10, 10);
 
 		setRandomVelocity();
 	}
@@ -65,8 +67,8 @@ public class PongBall extends Rectangle implements Serializable{
 	}
 
 	public void reset(){
-		x = PongClient.WIDTH * 0.5;
-		y = PongClient.HEIGHT * 0.5;
+		x = ClientPong.WIDTH * 0.5;
+		y = ClientPong.HEIGHT * 0.5;
 		w = 10;
 		h = 10;
 

@@ -1,11 +1,15 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.server;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+import cl.dcc.cc5303.GameStateInfo;
+import cl.dcc.cc5303.client.ClientGameInfo;
+import cl.dcc.cc5303.client.PlayerI;
+
 public interface ServerI extends Remote {
-  public GameInfo connectPlayer(Player player) throws RemoteException;
-  public void connectPlayer(Player player, int matchID, int playerNum) throws RemoteException;
+  public ClientGameInfo connectPlayer(PlayerI playerI) throws RemoteException;
+  public void connectPlayer(PlayerI playerI, int matchID, int playerNum) throws RemoteException;
   public GameStateInfo updatePositions(int matchID, int playerNum, int position) throws RemoteException;
   public void disconnectPlayer(int matchID, int playerNum) throws RemoteException;
   

@@ -1,13 +1,18 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.client;
 
 import java.rmi.RemoteException;
 
-public class PongServerUpdate extends PongThread{
+import cl.dcc.cc5303.GameStateInfo;
+import cl.dcc.cc5303.HistoricalScoreBoardGUI;
+import cl.dcc.cc5303.PongThread;
+import cl.dcc.cc5303.ScoreBoardGUI;
+
+public class ClientUpdateThread extends PongThread{
 	private Client self;
 	private GameStateInfo temporalState;
 	public boolean onGame;
 	
-	public PongServerUpdate(Client client){
+	public ClientUpdateThread(Client client){
 		self = client;
 		onGame = true;
 	}

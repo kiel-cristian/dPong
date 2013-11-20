@@ -1,15 +1,23 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.server;
 
-public class PongSimulation extends PongThread {
+import cl.dcc.cc5303.GameState;
+import cl.dcc.cc5303.GameStateInfo;
+import cl.dcc.cc5303.HistoricalScoreBoardSimple;
+import cl.dcc.cc5303.Pong;
+import cl.dcc.cc5303.PongThread;
+import cl.dcc.cc5303.Utils;
+import cl.dcc.cc5303.client.ClientPong;
+
+public class ServerGameThread extends PongThread {
 	private static final long INACTIVITY_TIMEOUT = 3000;
-	private Match match;
+	private ServerMatch serverMatch;
 	public long[] lastActivity;
 	private boolean started;
 	private GameState state;
 	private Pong pong;
 	
-	public PongSimulation(Match match){
-		this.match        = match;
+	public ServerGameThread(ServerMatch serverMatch){
+		this.serverMatch        = serverMatch;
 		this.state        = new GameState();
 		this.lastActivity = new long[4];
 		this.started      = false;
@@ -61,7 +69,7 @@ public class PongSimulation extends PongThread {
 
 	@Override
 	public void preWork() throws InterruptedException {
-		if (match.migration.emigrating) {
+		if (serverMatch.migration.emigrating) {
 			running = false;
 			return;
 		}
@@ -86,7 +94,7 @@ public class PongSimulation extends PongThread {
 	public void pauseWork() throws InterruptedException{
 		if(state.winner){
 			Thread.sleep(600000 /50);
-			System.out.println("nuevo match: " + match.getID());
+			System.out.println("nuevo match: " + serverMatch.getID());
 			resetGame();
 		}
 		else{
@@ -106,7 +114,7 @@ public class PongSimulation extends PongThread {
 	public void unPause(){
 		super.unPause();
 		long currentMilis = System.currentTimeMillis();
-		for (int i=0; i < PongClient.MAX_PLAYERS; i++) {
+		for (int i=0; i < ClientPong.MAX_PLAYERS; i++) {
 			lastActivity[i] = currentMilis;
 		}
 		synchronized(state){
@@ -116,11 +124,11 @@ public class PongSimulation extends PongThread {
 	
 	private void checkPlayersActivity() {
 		long checkTime = System.currentTimeMillis();
-		for (int i=0; i < PongClient.MAX_PLAYERS; i++) {
+		for (int i=0; i < ClientPong.MAX_PLAYERS; i++) {
 			synchronized(state){
 				if (state.isPlaying(i) && (checkTime - lastActivity[i] > INACTIVITY_TIMEOUT)) {
 					System.out.println("Removiendo jugador por inactividad");
-					match.removePlayer(i);
+					serverMatch.removePlayer(i);
 				}
 			}
 		}
@@ -148,7 +156,7 @@ public class PongSimulation extends PongThread {
 	
 	private synchronized void resetActivity(){
 		long currentMilis = System.currentTimeMillis();
-		for (int i=0; i < PongClient.MAX_PLAYERS; i++) {
+		for (int i=0; i < ClientPong.MAX_PLAYERS; i++) {
 			lastActivity[i] = currentMilis;
 		}
 	}

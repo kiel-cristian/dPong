@@ -1,4 +1,4 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.server;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -14,7 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoadBalancerI, ServerFinder {
+import cl.dcc.cc5303.FixedPortRMISocketFactory;
+import cl.dcc.cc5303.client.ClientPong;
+
+public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoadBalancerI, ServerFinderI {
 	private static final long serialVersionUID = 8410514211761367368L;
 	private HashMap<Integer, ServerI> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
@@ -26,8 +29,8 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
-	static final int MAX_LOAD = PongClient.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
-	private ServerHeartBeat heartBeat;
+	static final int MAX_LOAD = ClientPong.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
+	private ServerHeartBeatThread heartBeat;
 
 	protected ServerLoadBalancer() throws RemoteException {
 		super();
@@ -36,7 +39,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		inmServers       = new HashMap<Integer, Boolean>();
 		serverPriority   = new ArrayList<ServerLoad>();
 		lastTargetServer = null;
-		heartBeat        = new ServerHeartBeat(this);
+		heartBeat        = new ServerHeartBeatThread(this);
 	}
 	
 	public static void main(String[] args) {
@@ -132,7 +135,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 			// Busco un server que tenga una carga inferior al 70% y con al menos una partida no llena
 			if(inmServers.get(sl.right()) == null && 
 					sl.left() < MAX_LOAD*0.7 && 
-					(sl.left() % PongClient.MAX_PLAYERS > 0 || serverMatches.get(sl.right()) > 0)){
+					(sl.left() % ClientPong.MAX_PLAYERS > 0 || serverMatches.get(sl.right()) > 0)){
 				return sl;
 			}
 		}
@@ -151,7 +154,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	
 	@Override
 	public synchronized ServerI getServer() {
-		if(!(lastTargetServer != null && lastTargetServer.left() % PongClient.MAX_PLAYERS > 0)){
+		if(!(lastTargetServer != null && lastTargetServer.left() % ClientPong.MAX_PLAYERS > 0)){
 			// Es necesario obtener un nuevo candidato para conectar
 			lastTargetServer = getBestCandidateServer();
 		}

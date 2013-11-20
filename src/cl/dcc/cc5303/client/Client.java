@@ -1,4 +1,4 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.client;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -6,14 +6,18 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+import cl.dcc.cc5303.CommandLineParser;
+import cl.dcc.cc5303.GameState;
 import cl.dcc.cc5303.CommandLineParser.ParserException;
+import cl.dcc.cc5303.server.ServerFinderI;
+import cl.dcc.cc5303.server.ServerI;
 
-public class Client extends UnicastRemoteObject implements Player {
+public class Client extends UnicastRemoteObject implements PlayerI {
 	private static final long serialVersionUID = -1910265532826050466L;
-	private volatile ServerFinder serverFinder;
+	private volatile ServerFinderI serverFinderI;
 	public volatile ServerI server;
-	public volatile GameInfo info;
-	public volatile PongClient pong;
+	public volatile ClientGameInfo info;
+	public volatile ClientPong pong;
 
 	public static void main(String[] args) {
 		try {
@@ -40,15 +44,15 @@ public class Client extends UnicastRemoteObject implements Player {
 	}
 
 	public void play(String serverFinderAddress, int serverID) throws MalformedURLException, RemoteException, NotBoundException {
-		serverFinder = (ServerFinder) Naming.lookup("rmi://" + serverFinderAddress + ":1099/serverfinder");
+		serverFinderI = (ServerFinderI) Naming.lookup("rmi://" + serverFinderAddress + ":1099/serverfinder");
 		if (serverID == -1) {
-			server = serverFinder.getServer();
+			server = serverFinderI.getServer();
 		}
 		else {
-			server = serverFinder.getServer(serverID);
+			server = serverFinderI.getServer(serverID);
 		}
 		info = server.connectPlayer(this);
-		pong = new PongClient(this, info.playerNum);
+		pong = new ClientPong(this, info.playerNum);
 		pong.game.enablePlayer(info.playerNum);
 		pong.startGame();
 	}

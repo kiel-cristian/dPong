@@ -1,8 +1,8 @@
 package cl.dcc.cc5303;
 
 public abstract class PongThread extends Thread implements PongThreadI{
-	protected boolean working = true;
-	protected boolean running = true;
+	public boolean working = true;
+	public boolean running = true;
 	protected static final int UPDATE_RATE = 1000;
 	
 	@Override

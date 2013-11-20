@@ -1,11 +1,14 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.client;
 
-public class PongGame extends PongThread{
-	public PongClient pong;
+import cl.dcc.cc5303.GameState;
+import cl.dcc.cc5303.PongThread;
+
+public class ClientGameThread extends PongThread{
+	public ClientPong pong;
 	private GameState state;
 	public boolean onGame;
 	
-	public PongGame(PongClient game){
+	public ClientGameThread(ClientPong game){
 		this.pong = game;
 		this.onGame = true;
 		this.state  = new GameState();
