@@ -6,7 +6,7 @@
  *  DCC. Universidad de Chile
  */
 
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.client;
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -16,11 +16,10 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyCanvas extends Canvas {
+import cl.dcc.cc5303.GameBar;
+import cl.dcc.cc5303.PongBall;
 
-	/**
-	 * 
-	 */
+public class ClientCanvas extends Canvas {
 	private static final long serialVersionUID = 2915397754067560840L;
 	private BufferedImage image;
 	private Graphics2D g2d;
@@ -29,7 +28,7 @@ public class MyCanvas extends Canvas {
 	public PongBall ball;
 	public int playerNum;
 
-	public MyCanvas(int playerNum, PongBall ball){
+	public ClientCanvas(int playerNum, PongBall ball){
 		super();
 		this.playerNum = playerNum;
 		this.ball      = ball;

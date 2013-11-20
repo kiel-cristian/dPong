@@ -7,7 +7,6 @@ import javax.swing.JFrame;
 
 import cl.dcc.cc5303.GameBar;
 import cl.dcc.cc5303.HistoricalScoreBoardGUI;
-import cl.dcc.cc5303.MyCanvas;
 import cl.dcc.cc5303.Pong;
 import cl.dcc.cc5303.PongI;
 import cl.dcc.cc5303.Rectangle;
@@ -16,7 +15,7 @@ import cl.dcc.cc5303.ScoreBoardGUI;
 public class ClientPong extends Pong implements KeyListener, PongI {
 	public final static String TITLE = "Pong - CC5303";
 	private JFrame frame;
-	private MyCanvas canvas;
+	private ClientCanvas canvas;
 	public Client client;
 	private boolean[] keys;
 	
@@ -36,7 +35,7 @@ public class ClientPong extends Pong implements KeyListener, PongI {
 
 	/* Initializes window frame and set it visible */
 	private void init(int playerNum) {
-		canvas = new MyCanvas(playerNum, game.state().ball);
+		canvas = new ClientCanvas(playerNum, game.state().ball);
 		frame = new JFrame(TITLE);
 		frame.setLayout(new BorderLayout());
 		frame.setSize(WIDTH, HEIGHT);
