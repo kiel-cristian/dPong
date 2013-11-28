@@ -37,6 +37,8 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		servers          = new HashMap<Integer, ServerI>();
 		serversLoad      = new HashMap<Integer, Integer>();
 		inmServers       = new HashMap<Integer, Boolean>();
+		serverMatches	 = new HashMap<Integer, Integer>();
+		serverInmigrations = new HashMap<Integer, Integer>();
 		serverPriority   = new ArrayList<ServerLoad>();
 		lastTargetServer = null;
 		heartBeat        = new ServerHeartBeatThread(this);
