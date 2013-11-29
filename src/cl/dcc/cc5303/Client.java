@@ -128,6 +128,7 @@ public class Client extends UnicastRemoteObject implements Player {
 	public void stop(int playerNum) {
 		try {
 			server.disconnectPlayer(matchID, playerNum);
+			server.migrateMatches();
 		} catch (RemoteException e1) {
 			e1.printStackTrace();
 			System.out.println("Error al desconectarse del servidor");

@@ -156,7 +156,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		}
 	}
 	
-	private void migrateMatches() throws RemoteException {
+	public void migrateMatches() throws RemoteException {
 		if (!migrating) {
 			migrating = true;
 			migrationHandler = new MigrationHandler();
