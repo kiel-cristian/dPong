@@ -25,8 +25,7 @@ public class ClientUpdateThread extends PongThread{
 			}
 			if(temporalState == null){
 				System.out.println("Deteniendo servicio update");
-				working = false;
-				running = false;
+				end();
 				return;
 			}
 			working = !temporalState.winner && temporalState.running;
@@ -44,7 +43,7 @@ public class ClientUpdateThread extends PongThread{
 			}
 		} catch (RemoteException e) {
 			System.out.println("Server no responde");
-			System.exit(1); // FIXME
+			System.exit(1); // TODO
 		}
 	}
 
@@ -60,7 +59,7 @@ public class ClientUpdateThread extends PongThread{
 	@Override
 	public void postWork() throws InterruptedException {
 		if(working && !onGame){
-			System.out.println("nuevo match");
+			System.out.println("Nuevo match");
 			self.pong.game.reMatch();
 			onGame = true;
 		}

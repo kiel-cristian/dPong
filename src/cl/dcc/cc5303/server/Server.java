@@ -23,7 +23,8 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ServerOptions options;
 	private static ServerLoadBalancerI loadBalancer;
-	private LinkedHashMap<Integer, ServerMatch> matches;
+	private LinkedHashMap<String, ServerMatch> matches;
+	private LinkedHashMap<String, Boolean> inmigratedMatches;
 	private int minPlayers;
 	private volatile int matchCount;
 	private volatile int playerCount;
@@ -35,9 +36,11 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	protected Server(int minPlayers) throws RemoteException {
 		super();
 		this.minPlayers = minPlayers;
-		matches = new LinkedHashMap<Integer, ServerMatch>();
+		this.matches = new LinkedHashMap<String, ServerMatch>();
+		this.inmigratedMatches = new LinkedHashMap<String, Boolean>();
+
 		if (loadBalancer != null) {
-			serverID = loadBalancer.connectServer(this);
+			this.serverID = loadBalancer.connectServer(this);
 			System.out.println("Server ID: " + serverID);
 		}
 	}
@@ -78,7 +81,6 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		options.minPlayers = parser.getInt("n", 2); // Minimo de jugadores: 2 por defecto
 		options.loadBalancer = parser.containsString("b");
 		options.balancerUrl = parser.getString("b", null);
-		options.inmigration = parser.containsString("m");
 		return options;
 	}
 	
@@ -86,7 +88,6 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		public boolean loadBalancer;
 		public String balancerUrl;
 		public int minPlayers;
-		public boolean inmigration;
 	}
 	
 	public int getServerID(){
@@ -110,14 +111,19 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 			}
 		}
 		if (serverMatch == null) {
-			serverMatch = new ServerMatch(this, ++matchCount, minPlayers);
+			++matchCount; 
+			serverMatch = new ServerMatch(this, generateNewMatchKey(), minPlayers);
 			matches.put(serverMatch.getID(), serverMatch);
 		}
 		return serverMatch;
 	}
+	
+	private String generateNewMatchKey(){
+		return "sID:" + serverID + " mC:" + matchCount;
+	}
 
 	@Override
-	public synchronized void disconnectPlayer(int matchID, int playerNum) throws RemoteException {
+	public synchronized void disconnectPlayer(String matchID, int playerNum) throws RemoteException {
 		ServerMatch serverMatch = matches.get(matchID);
 		if(serverMatch != null){
 			serverMatch.removePlayer(playerNum);
@@ -126,7 +132,7 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	}
 
 	@Override
-	public synchronized GameStateInfo updatePositions(int matchID, int playerNum, int position) throws RemoteException {
+	public synchronized GameStateInfo updatePositions(String matchID, int playerNum, int position) throws RemoteException {
 		ServerMatch m = matches.get(matchID);
 			
 		if(m!= null && !m.migrating()){
@@ -187,11 +193,18 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 			int migratedMatches = 0;
 			int currentMatches  = matches.size();
 			
-			for (Map.Entry<Integer, ServerMatch> e : matches.entrySet()) {
+			for (Map.Entry<String, ServerMatch> e : matches.entrySet()) {
 				selectedMatch = matches.get(e.getKey());
-				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
+				
+				// Si el match ya fue migrado, no es escogible (debe partir alguna vez)
+				if (inmigratedMatches.get(selectedMatch.getID()) != null) {
+					continue;
+				}
+				
+				String targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
 				selectedMatch.migratePlayers(targetServer, targetMatch);
 				migratedMatches++;
+
 				if(!needToMigrate(migratedMatches, currentMatches)){
 					break;
 				}
@@ -203,16 +216,19 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	}
 
 	@Override
-	public synchronized int getMatchForMigration(GameStateInfo stateToMigrate) throws RemoteException {
-		ServerMatch serverMatch = new ServerMatch(this, ++matchCount, stateToMigrate.numPlayers);
+	public synchronized String getMatchForMigration(ServerMatchMigrationInfo originalMatch) throws RemoteException {
+		GameStateInfo stateToMigrate = originalMatch.state;
+		++matchCount;
+		++inmigrations;
+		ServerMatch serverMatch = new ServerMatch(this, originalMatch.matchID, stateToMigrate.numPlayers);
 		serverMatch.receiveMigration(stateToMigrate);
 		matches.put(serverMatch.getID(), serverMatch);
-		inmigrations++;
+		inmigratedMatches.put(serverMatch.getID(), true);
 		return serverMatch.getID();
 	}
 	
 	@Override
-	public synchronized void connectPlayer(PlayerI playerI, int matchID, int playerNum) throws RemoteException {
+	public synchronized void connectPlayer(PlayerI playerI, String matchID, int playerNum) throws RemoteException {
 		ServerMatch m = matches.get(matchID);
 		m.addPlayer(playerI, playerNum);
 		increasePlayerNum();
@@ -221,7 +237,7 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		}
 	}
 
-	public void removeMatch(int matchID) {
+	public void removeMatch(String matchID) {
 		matches.remove(matchID);
 		System.out.println("Partida " + matchID + " eliminada por falta de jugadores");
 	}
@@ -251,10 +267,5 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 				migrating = false;
 			}
 		}
-	}
-
-	@Override
-	public boolean inMigratable() {
-		return options.inmigration;
 	}
 }

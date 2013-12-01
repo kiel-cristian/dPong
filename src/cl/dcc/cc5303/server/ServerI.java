@@ -9,31 +9,24 @@ import cl.dcc.cc5303.client.PlayerI;
 
 public interface ServerI extends Remote {
   public ClientGameInfo connectPlayer(PlayerI playerI) throws RemoteException;
-  public void connectPlayer(PlayerI playerI, int matchID, int playerNum) throws RemoteException;
-  public GameStateInfo updatePositions(int matchID, int playerNum, int position) throws RemoteException;
-  public void disconnectPlayer(int matchID, int playerNum) throws RemoteException;
+  public void connectPlayer(PlayerI playerI, String targetMatchID, int playerNum) throws RemoteException;
+  public GameStateInfo updatePositions(String matchID, int playerNum, int position) throws RemoteException;
+  public void disconnectPlayer(String matchID, int playerNum) throws RemoteException;
   
   /**
-   * Creates a match in this server to hold a migrating match represented by its game state
-   * 
-   * @param stateToMigrate the game state of the migrating match
-   * @return the ID of the match
+   * Generates a copy of the original match on target server
+   *
+   * @param originalMatch Original ServerMatchInfo
+   * @return the id of the new match (same as original match) as string
    * @throws RemoteException
    */
-  public int getMatchForMigration(GameStateInfo stateToMigrate) throws RemoteException;
+  public String getMatchForMigration(ServerMatchMigrationInfo originalMatch) throws RemoteException;
   
   /**
    * Returns ServerInfo. Used for load balancer to check if a server is still alive.
  * @return 
    */
   public ServerInfo heartBeat() throws RemoteException;
-  
-  /**
-   * Returns true when a Server allows incoming migrations
-   * 
-   * @return true when can migrate to this server
-   */
-  public boolean inMigratable() throws RemoteException;
   
   /**
    * Returns current server ID (for migration purposes)

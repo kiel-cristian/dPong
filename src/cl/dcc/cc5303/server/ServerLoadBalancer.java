@@ -21,7 +21,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private static final long serialVersionUID = 8410514211761367368L;
 	private HashMap<Integer, ServerI> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
-	private HashMap<Integer, Boolean> inmServers;   // (ID, Boolean)
+
 
 	private HashMap<Integer, Integer> serverMatches;
 	private HashMap<Integer, Integer> serverInmigrations;
@@ -36,7 +36,6 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		super();
 		servers          = new HashMap<Integer, ServerI>();
 		serversLoad      = new HashMap<Integer, Integer>();
-		inmServers       = new HashMap<Integer, Boolean>();
 		serverMatches	 = new HashMap<Integer, Integer>();
 		serverInmigrations = new HashMap<Integer, Integer>();
 		serverPriority   = new ArrayList<ServerLoad>();
@@ -93,14 +92,10 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	public void addServer(ServerI server) throws RemoteException{
 		servers.put(++lastServerID, server);
 		serversLoad.put(lastServerID, 0);
-		if(server.inMigratable()){
-			inmServers.put(lastServerID, true);
-		}
 	}
 	public void removeServer(int serverID){
 		servers.remove(serverID);
 		serversLoad.remove(serverID);
-		inmServers.remove(serverID);
 		serverMatches.remove(serverID);
 		serverInmigrations.remove(serverID);
 	}
@@ -135,9 +130,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private ServerLoad getBestCandidateServer(){
 		for(ServerLoad sl : serverPriority){
 			// Busco un server que tenga una carga inferior al 70% y con al menos una partida no llena
-			if(inmServers.get(sl.right()) == null && 
-					sl.left() < MAX_LOAD*0.7 && 
-					(sl.left() % ClientPong.MAX_PLAYERS > 0 || serverMatches.get(sl.right()) > 0)){
+			if( sl.left() < MAX_LOAD*0.7 &&  (sl.left() % ClientPong.MAX_PLAYERS > 0 || serverMatches.get(sl.right()) > 0)){
 				return sl;
 			}
 		}
@@ -147,9 +140,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private ServerLoad getBestPriorityServer(){
 		updatePriorityList();
 		for(ServerLoad sl : serverPriority){
-			if(inmServers.get(sl.right()) == null){
-				return sl;
-			}
+			return sl;
 		}
 		return null;
 	}
@@ -192,19 +183,13 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 
 	@Override
 	public ServerI getServerForMigration(int sourceServerID) throws RemoteException {
-		synchronized (this) {
-			ServerI bestLoad  = null;
-			
-			for(ServerLoad s: getServerPriority()){
-				if(s.right() != sourceServerID && 
-				   inmServers.get(s.right()) != null && 
-				   s.left() < MAX_LOAD &&
-				   serverInmigrations.get(s.right()) == 0){
-						bestLoad = servers.get(s.right());
-						break;
+		synchronized(this) {
+			for(ServerLoad s: getServerPriority()) {
+				if (s.right() != sourceServerID &&  s.left() < MAX_LOAD && serverInmigrations.get(s.right()) == 0) {
+					return servers.get(s.right());
 				}
 			}
-			return bestLoad;
+			return null;
 		}
 	}
 }

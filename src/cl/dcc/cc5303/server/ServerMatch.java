@@ -9,12 +9,12 @@ import cl.dcc.cc5303.client.PlayerI;
 
 public class ServerMatch {
 	private Server server;
-	private int matchID;
+	private String matchID;
 	private PlayerI[] playerIs;
-	private ServerGameThread game;
+	public ServerGameThread game;
 	public MigrationInfo migration;
 	
-	public ServerMatch(Server server, int matchID, int minPlayers) {
+	public ServerMatch(Server server, String matchID, int minPlayers) {
 		this.server = server;
 		this.playerIs = new PlayerI[4];
 		this.migration = new MigrationInfo();
@@ -109,7 +109,7 @@ public class ServerMatch {
 		return game.state();
 	}
 
-	public int getID() {
+	public String getID() {
 		return matchID;
 	}
 
@@ -117,10 +117,10 @@ public class ServerMatch {
 		return migration.migratingPlayers <= playersCount();
 	}
 
-	public GameStateInfo startMigration(){
+	public ServerMatchMigrationInfo startMigration(){
 		migration.emigrating = true;
 		game.updateServerScores();
-		return game.state();
+		return new ServerMatchMigrationInfo(game.state(), matchID);
 	}
 	
 	public void stopMigration(){
@@ -133,7 +133,7 @@ public class ServerMatch {
 		return migration.emigrating || migration.immigrating;
 	}
 
-	public void migratePlayers(ServerI targetServer, int targetMatch) throws RemoteException {
+	public void migratePlayers(ServerI targetServer, String targetMatch) throws RemoteException {
 		for (int i=0; i<playerIs.length; i++) {
 			if (playerIs[i] != null) {
 				try {
