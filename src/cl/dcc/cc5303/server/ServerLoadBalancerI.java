@@ -8,10 +8,11 @@ public interface ServerLoadBalancerI extends Remote {
      * Connects a server to the load balancer
      * 
      * @param server the remote interface of the server to connect
+     * @param minPlayers the number of players to start a game on server
      * @return the ID of the server in the load balancer
      * @throws RemoteException
      */
-    public int connectServer(ServerI server) throws RemoteException;
+    public int connectServer(ServerI server, int minPlayers) throws RemoteException;
     
     /**
      * Reports server's current load to the load balancer

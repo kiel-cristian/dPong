@@ -47,7 +47,7 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		this.matchPriority     = new ArrayList<ServerMatchLoad>();
 
 		if (loadBalancer != null) {
-			this.serverID = loadBalancer.connectServer(this);
+			this.serverID = loadBalancer.connectServer(this, this.minPlayers);
 			System.out.println("Server ID: " + serverID);
 		}
 	}

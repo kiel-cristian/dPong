@@ -22,6 +22,8 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private HashMap<Integer, ServerI> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
 	private HashMap<Integer, Integer> serverMatches;
+	private HashMap<Integer, Integer> serverMinPlayers;
+	
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
@@ -33,6 +35,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		servers          = new HashMap<Integer, ServerI>();
 		serversLoad      = new HashMap<Integer, Integer>();
 		serverMatches	 = new HashMap<Integer, Integer>();
+		serverMinPlayers	 = new HashMap<Integer, Integer>();
 		serverPriority   = new ArrayList<ServerLoad>();
 		lastTargetServer = null;
 		heartBeat        = new ServerHeartBeatThread(this);
@@ -81,14 +84,16 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		serverPriority = getPriorityList();
 	}
 	
-	public void addServer(ServerI server) throws RemoteException{
+	public void addServer(ServerI server, int minPlayers) throws RemoteException{
 		servers.put(++lastServerID, server);
 		serversLoad.put(lastServerID, 0);
+		serverMinPlayers.put(lastServerID, minPlayers);
 	}
 	public void removeServer(int serverID){
 		servers.remove(serverID);
 		serversLoad.remove(serverID);
 		serverMatches.remove(serverID);
+		serverMinPlayers.remove(serverID);
 	}
 
 	@Override
@@ -97,8 +102,8 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	}
 
 	@Override
-	public synchronized int connectServer(ServerI server) throws RemoteException {
-		addServer(server);
+	public synchronized int connectServer(ServerI server, int minPlayers) throws RemoteException {
+		addServer(server, minPlayers);
 		updatePriorityList();
 
 		try {
@@ -121,7 +126,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private ServerLoad getBestCandidateServer(){
 		for(ServerLoad sl : serverPriority){
 			// Busco un server que tenga una carga inferior al 70% y con al menos una partida no llena
-			if( sl.left() < MAX_LOAD*0.7 &&  (sl.left() % ClientPong.MAX_PLAYERS > 0 || serverMatches.get(sl.right()) > 0)){
+			if( sl.left() < MAX_LOAD*0.7 && serverMatches.get(sl.right()) > 0 && sl.left() % serverMinPlayers.get(sl.right()) > 0){
 				return sl;
 			}
 		}
