@@ -17,8 +17,11 @@ import java.util.Map;
 import cl.dcc.cc5303.CommandLineParser;
 import cl.dcc.cc5303.FixedPortRMISocketFactory;
 import cl.dcc.cc5303.GameStateInfo;
+import cl.dcc.cc5303.Pong;
 import cl.dcc.cc5303.CommandLineParser.ParserException;
+import cl.dcc.cc5303.Utils;
 import cl.dcc.cc5303.client.ClientGameInfo;
+import cl.dcc.cc5303.client.ClientGameState;
 import cl.dcc.cc5303.client.PlayerI;
 import cl.dcc.cc5303.client.ClientPong;
 
@@ -105,7 +108,7 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		ServerMatch serverMatch = getAvailableMatch();
 		int playerNum = serverMatch.addPlayer(playerI);
 		increasePlayerNum();
-		return new ClientGameInfo(serverMatch.getID(), playerNum);
+		return new ClientGameInfo(serverID, serverMatch.getID(), playerNum);
 	}
 	
 	private ArrayList<ServerMatchLoad> getMatchPriorityList(){
@@ -314,5 +317,17 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	@Override
 	public void togglePause(String matchID) throws RemoteException {
 		matches.get(matchID).togglePause();
+	}
+
+	@Override
+	public ServerI connectToServerAndRestoreClient(PlayerI player, ClientGameInfo info) throws RemoteException {
+		ClientGameState clientState = (ClientGameState)Utils.getToken(info.matchID+info.clientID);
+		matches.get(info.matchID).restorePlayer(player, clientState);
+		return this;
+	}
+	
+	public boolean hasMatch(String matchID){
+		ServerMatch m = matches.get(matchID);
+		return m != null && m.playersCount() < Pong.MAX_PLAYERS; 
 	}
 }

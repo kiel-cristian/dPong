@@ -6,14 +6,17 @@ import cl.dcc.cc5303.HistoricalScoreBoardSimple;
 import cl.dcc.cc5303.Pong;
 import cl.dcc.cc5303.PongThread;
 import cl.dcc.cc5303.Utils;
+import cl.dcc.cc5303.client.ClientGameInfo;
+import cl.dcc.cc5303.client.ClientGameState;
 import cl.dcc.cc5303.client.ClientPong;
+import cl.dcc.cc5303.client.PlayerI;
 
 public class ServerGameThread extends PongThread {
 	private static final long INACTIVITY_TIMEOUT = 5000;
 	private ServerMatch serverMatch;
 	public long[] lastActivity;
 	private boolean started;
-	private GameState state;
+	protected GameState state;
 	private Pong pong;
 	
 	public ServerGameThread(ServerMatch serverMatch){
@@ -251,6 +254,12 @@ public class ServerGameThread extends PongThread {
 
 	public void setScores(int[] scores, boolean[] playing) {
 		pong.scores.setScores(scores, playing);
+	}
+
+	public void restorePlayer(ClientGameState clientState) {
+		synchronized(state){
+			state.restorePlayer(clientState);
+		}
 	}
 
 }

@@ -2,6 +2,7 @@ package cl.dcc.cc5303;
 
 import java.io.Serializable;
 import cl.dcc.cc5303.PongBall;
+import cl.dcc.cc5303.client.ClientGameState;
 import cl.dcc.cc5303.client.ClientPong;
 
 public class GameState implements Serializable {
@@ -17,6 +18,8 @@ public class GameState implements Serializable {
 	public boolean userPaused;
 	public PongBall ball = new PongBall();
 	public GameBar[] bars = new GameBar[4];
+	private Object[] clientIDs;
+	private String[] playerIDs;
 
 	public GameState(){
 		initGame();
@@ -41,6 +44,7 @@ public class GameState implements Serializable {
 		for( int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			this.scores[i] = state.scores[i];
 			this.playing[i] = state.playing[i];
+			this.playerIDs[i] = state.playerIDs[i];
 			this.historicalScores[i] = state.historicalScores[i];
 			if(i == 0 || i == 1){
 				this.bars[i].y = state.iBars[i];
@@ -75,7 +79,7 @@ public class GameState implements Serializable {
 		int ballY = (int)ball.y;
 
 		return new GameStateInfo(playing,iBars,winnerPlayer,lastPlayer,
-				winner,running,ballX,ballY,scores,historicalScores, numPlayers, userPaused);
+				winner,running,ballX,ballY,scores,historicalScores, numPlayers, userPaused, playerIDs);
 	}
 
 	public void pause(){
@@ -125,6 +129,7 @@ public class GameState implements Serializable {
 		for( int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			this.scores[i] = state.scores[i];
 			this.playing[i] = state.playing[i];
+			this.playerIDs[i] = state.playerIDs[i];
 			this.historicalScores[i] = state.historicalScores[i];
 			this.bars[i].copy(state.bars[i]);
 		}
@@ -145,6 +150,7 @@ public class GameState implements Serializable {
 		winner     = false;
 		for(int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			playing[i] = false;
+			playerIDs[i] = "";
 		}
 		numPlayers = ClientPong.MAX_PLAYERS;
 		running = true;
@@ -193,6 +199,30 @@ public class GameState implements Serializable {
 
 	public void setLastPlayer(int nextPlayer) {
 		this.lastPlayer = nextPlayer;
+	}
+
+	public void restorePlayer(ClientGameState clientState) {
+		int i = clientState.playerNum;
+		this.scores[i] = clientState.score;
+		this.historicalScores[i] = clientState.historicalScore;
+		if(i == 0 || i == 1){
+			this.bars[i].y = clientState.barPos;
+		} else {
+			this.bars[i].x = clientState.barPos;
+		}
+		this.clientIDs[i] = clientState.clientID;
+
+		if(!playersReady()){
+			pause();
+		}
+	}
+
+	public String getPlayerID(int i) {
+		return playerIDs[i];
+	}
+
+	public ClientGameState packClientInfo(int i) {
+		return new ClientGameState(); // TODO
 	}
 
 }

@@ -4,14 +4,17 @@ import java.rmi.RemoteException;
 
 import cl.dcc.cc5303.GameStateInfo;
 import cl.dcc.cc5303.Utils;
+import cl.dcc.cc5303.client.ClientGameState;
 import cl.dcc.cc5303.client.PlayerI;
 
 
 public class ServerMatch {
 	private Server server;
-	private String matchID;
+	protected String matchID;
 	private PlayerI[] playerIs;
 	public ServerGameThread game;
+	public ServerGameSaver saver;
+	
 	public MigrationInfo migration;
 	
 	public ServerMatch(Server server, String matchID, int minPlayers) {
@@ -22,6 +25,7 @@ public class ServerMatch {
 		
 		this.game = new ServerGameThread(this);
 		this.game.setPlayers(minPlayers);
+		this.saver = new ServerGameSaver(this);
 	}
 
 	public void receiveMigration(GameStateInfo migratingState) {
@@ -182,5 +186,13 @@ public class ServerMatch {
 		public boolean emigrating;
 		public boolean immigrating;
 		public int migratingPlayers;
+	}
+
+	public void restorePlayer(PlayerI player, ClientGameState clientState) {
+		synchronized(game){
+			clientState.playerNum = addPlayer(player);
+			game.restorePlayer(clientState);
+		}
+		
 	}
 }

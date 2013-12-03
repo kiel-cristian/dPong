@@ -8,11 +8,13 @@ import java.rmi.server.UnicastRemoteObject;
 
 import cl.dcc.cc5303.CommandLineParser;
 import cl.dcc.cc5303.GameState;
+import cl.dcc.cc5303.FifoTokenI;
 import cl.dcc.cc5303.CommandLineParser.ParserException;
+import cl.dcc.cc5303.Utils;
 import cl.dcc.cc5303.server.ServerFinderI;
 import cl.dcc.cc5303.server.ServerI;
 
-public class Client extends UnicastRemoteObject implements PlayerI {
+public class Client extends UnicastRemoteObject implements PlayerI, FifoTokenI {
 	private static final long serialVersionUID = -1910265532826050466L;
 	private ServerFinderI serverFinderI;
 	private ClientMigrator migrator;
@@ -54,13 +56,19 @@ public class Client extends UnicastRemoteObject implements PlayerI {
 
 	public void play(String serverFinderAddress, int serverID) throws MalformedURLException, RemoteException, NotBoundException {
 		serverFinderI = (ServerFinderI) Naming.lookup("rmi://" + serverFinderAddress + ":1099/serverfinder");
-		if (serverID == -1) {
-			server = serverFinderI.getServer();
+		
+		getTokenData();
+		if (info != null) {
+			server = serverFinderI.connectToServerAndRestoreClient(this, info);
+		} else {
+			if (serverID == -1) {
+				server = serverFinderI.getServer();
+			}
+			else {
+				server = serverFinderI.getServer(serverID);
+			}
+			info = server.connectPlayer(this);
 		}
-		else {
-			server = serverFinderI.getServer(serverID);
-		}
-		info = server.connectPlayer(this);
 		
 		pong = new ClientPong(this, info.playerNum);
 		synchronized(pong){
@@ -103,5 +111,16 @@ public class Client extends UnicastRemoteObject implements PlayerI {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	@Override
+	public void getTokenData() {
+		Object x = Utils.getFirstToken("client");
+		if (x != null){
+			info = (ClientGameInfo) x;
+		}
+	}
+	@Override
+	public void saveTokenData() {
+		Utils.generateNewToken("client", info.clientID, info);
 	}
 }

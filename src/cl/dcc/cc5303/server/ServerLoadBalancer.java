@@ -15,7 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 import cl.dcc.cc5303.FixedPortRMISocketFactory;
+import cl.dcc.cc5303.Utils;
+import cl.dcc.cc5303.client.ClientGameInfo;
 import cl.dcc.cc5303.client.ClientPong;
+import cl.dcc.cc5303.client.PlayerI;
 
 public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoadBalancerI, ServerFinderI {
 	private static final long serialVersionUID = 8410514211761367368L;
@@ -26,7 +29,6 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
-	private ServerLoad lastTargetServer;
 	static final int MAX_LOAD = ClientPong.MAX_PLAYERS*2; // MAXIMA CARGA DE JUGADORES
 	private ServerHeartBeatThread heartBeat;
 
@@ -37,7 +39,6 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		serverMatches	 = new HashMap<Integer, Integer>();
 		serverMinPlayers	 = new HashMap<Integer, Integer>();
 		serverPriority   = new ArrayList<ServerLoad>();
-		lastTargetServer = null;
 		heartBeat        = new ServerHeartBeatThread(this);
 	}
 	
@@ -142,26 +143,13 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	}
 	
 	@Override
-	public synchronized ServerI getServer() {
-		if(!(lastTargetServer != null && lastTargetServer.left() % ClientPong.MAX_PLAYERS > 0)){
-			// Es necesario obtener un nuevo candidato para conectar
-			lastTargetServer = getBestCandidateServer();
-		}
-		
-		// Se agrega un jugador al servidor en cuestion escogido
-		int load = lastTargetServer.left();
-		lastTargetServer = new ServerLoad(++load, lastTargetServer.right());
-		
-		ServerI s = null;
-		synchronized(servers){
-			s = servers.get(lastTargetServer.right());
-		}
-		return s;
+	public synchronized ServerI getServer() throws RemoteException{
+		return servers.get(getBestCandidateServer().right());
 	}
 	
 	@Override
 	public synchronized ServerI getServer(int serverID) throws RemoteException {
-		return getServers().get(serverID);
+		return servers.get(serverID);
 	}
 	
 	@Override
@@ -190,6 +178,24 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 				}
 			}
 			return null;
+		}
+	}
+
+	@Override
+	public ServerI connectToServerAndRestoreClient(PlayerI player, ClientGameInfo info) throws RemoteException {
+		ServerI server = null;
+		synchronized(this.servers) {
+			for(ServerI s : servers.values()){
+				if(s.hasMatch(info.matchID)) {
+					server = s.connectToServerAndRestoreClient(player, info);
+					break;
+				}
+			}
+		}
+		if (server != null){
+			return server;
+		} else {
+			return getServer();
 		}
 	}
 }

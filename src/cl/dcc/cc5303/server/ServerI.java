@@ -39,4 +39,8 @@ public interface ServerI extends Remote {
   public int getServerID() throws RemoteException;
   
   public void togglePause(String matchID) throws RemoteException;
+
+  public ServerI connectToServerAndRestoreClient(PlayerI player, ClientGameInfo info) throws RemoteException;
+
+  public boolean hasMatch(String matchID)  throws RemoteException;
 }
