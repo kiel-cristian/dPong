@@ -152,14 +152,12 @@ public class ServerMatch {
 	public ServerMatchMigrationInfo startMigration(){
 		migration.emigrating = true;
 		game.updateServerScores();
-		game.startMigration();
 		return new ServerMatchMigrationInfo(game.state(), matchID);
 	}
 	
 	public void stopMigration(){
 		migration.emigrating = false;
 		migration.immigrating = false;
-		game.stopMigration();
 		resetGameDueMigration();
 	}
 	

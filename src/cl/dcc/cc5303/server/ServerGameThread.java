@@ -253,12 +253,4 @@ public class ServerGameThread extends PongThread {
 		pong.scores.setScores(scores, playing);
 	}
 
-	public void startMigration() {
-		state.migrating = true;
-	}
-
-	public void stopMigration() {
-		state.migrating = false;
-	}
-
 }

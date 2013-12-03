@@ -54,7 +54,6 @@ public class GameState implements Serializable {
 		this.winnerPlayer = state.winnerPlayer;
 		this.numPlayers = state.numPlayers;
 		this.running = state.running;
-		this.migrating = state.migrating;
 
 		if(!playersReady()){
 			pause();
@@ -149,7 +148,6 @@ public class GameState implements Serializable {
 		}
 		numPlayers = ClientPong.MAX_PLAYERS;
 		running = true;
-		migrating = false;
 	}
 
 	public void resetGame(){
@@ -158,7 +156,6 @@ public class GameState implements Serializable {
 		lastPlayer = -1;
 		winner     = false;
 		running    = true;
-		migrating = false;
 	}
 
 	public void resetPlayerBars(){
