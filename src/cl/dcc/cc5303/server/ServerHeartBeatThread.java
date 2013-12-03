@@ -27,18 +27,18 @@ public class ServerHeartBeatThread extends PongThread {
 
 	@Override
 	public void work() throws InterruptedException {
-		for(Map.Entry<Integer, ServerI> e : balancer.getServers().entrySet()) {
-			ServerI server = e.getValue();
-			try {
-				ServerInfo info = server.heartBeat();
-				balancer.updateServerInfo(info);
-				
-			} catch (RemoteException e1) {
-				disconnectedServers.add(e.getKey());
+		synchronized(this.balancer.servers){
+			for(Map.Entry<Integer, ServerI> e : balancer.getServers().entrySet()) {
+				ServerI server = e.getValue();
+				try {
+					ServerInfo info = server.heartBeat();
+					balancer.updateServerInfo(info);
+					
+				} catch (RemoteException e1) {
+					disconnectedServers.add(e.getKey());
+				}
 			}
-		}
-		
-		synchronized(this.balancer){
+
 			for(int serverID : disconnectedServers){
 				System.out.println("Disconnecting server: " + serverID);
 				balancer.removeServer(serverID);

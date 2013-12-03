@@ -19,7 +19,7 @@ import cl.dcc.cc5303.client.ClientPong;
 
 public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoadBalancerI, ServerFinderI {
 	private static final long serialVersionUID = 8410514211761367368L;
-	private HashMap<Integer, ServerI> servers;		// (ID, Server)
+	protected HashMap<Integer, ServerI> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
 	private HashMap<Integer, Integer> serverMatches;
 	private HashMap<Integer, Integer> serverMinPlayers;
@@ -152,7 +152,11 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		int load = lastTargetServer.left();
 		lastTargetServer = new ServerLoad(++load, lastTargetServer.right());
 		
-		return servers.get(lastTargetServer.right());
+		ServerI s = null;
+		synchronized(servers){
+			s = servers.get(lastTargetServer.right());
+		}
+		return s;
 	}
 	
 	@Override
