@@ -12,14 +12,14 @@ public class ClientUpdateThread extends PongThread{
 	private GameStateInfo temporalState;
 	public boolean onGame;
 	public boolean onMigration;
-	
+
 	public ClientUpdateThread(Client client){
 		this.self = client;
 		this.onGame = true;
 		this.temporalState = null;
 		this.onMigration = false;
 	}
-	
+
 	public void startMigration(){
 		this.onMigration = true;
 	}
@@ -40,17 +40,15 @@ public class ClientUpdateThread extends PongThread{
 				System.exit(1); // TODO
 			}
 		}
-		
-		/*
-		if(temporalState.migrating && working){
-			System.out.println("Service client update detenido debido a migración");
-			pause();
-			return;
-		}*/
 
 		working = !temporalState.winner && temporalState.running;
+		if (working) self.userUnPaused();
 		if(!working && onGame){
-			if(!temporalState.winner){
+			if (temporalState.userPaused) {
+				self.userPaused();
+				System.out.println("Un jugador ha pausado el juego");
+			}
+			else if(!temporalState.winner){
 				System.out.println("Client update pausado por falta de jugadores");
 			}
 			else{
@@ -61,8 +59,6 @@ public class ClientUpdateThread extends PongThread{
 			onGame = false;
 			work();
 		}
-
-		
 	}
 
 	@Override
@@ -75,9 +71,9 @@ public class ClientUpdateThread extends PongThread{
 
 	@Override
 	public void postWork() throws InterruptedException {
-		if(working && !onGame){
-			System.out.println("Nuevo match");
-			self.pong.game.reMatch();
+		if(working){
+			//System.out.println("Nuevo match");
+			//self.pong.game.reMatch();
 			onGame = true;
 		}
 	}

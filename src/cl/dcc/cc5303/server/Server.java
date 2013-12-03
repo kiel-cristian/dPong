@@ -309,4 +309,9 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 			}
 		}
 	}
+
+	@Override
+	public void togglePause(String matchID) throws RemoteException {
+		matches.get(matchID).togglePause();
+	}
 }

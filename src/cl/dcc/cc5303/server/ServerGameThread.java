@@ -25,6 +25,15 @@ public class ServerGameThread extends PongThread {
 		resetActivity();
 	}
 	
+	public void togglePause() {
+		if (working) {
+			userPause();
+		}
+		else if (state.userPaused){
+			userUnPause();
+		}
+	}
+
 	public boolean alreadyStarted(){
 		return started;
 	}
@@ -105,6 +114,21 @@ public class ServerGameThread extends PongThread {
 			Thread.sleep(PongThread.UPDATE_RATE/ 60);
 		}
 	}
+
+	private void userPause() {
+		super.pause();
+		synchronized(state) {
+			state.userPause();
+		}
+	}
+	
+	private void userUnPause() {
+		super.unPause();
+		restartLastActivity();
+		synchronized(state){
+			this.state.userUnPause();
+		}
+	}
 	
 	@Override
 	public void pause(){
@@ -117,12 +141,16 @@ public class ServerGameThread extends PongThread {
 	@Override
 	public void unPause(){
 		super.unPause();
+		restartLastActivity();
+		synchronized(state){
+			this.state.unPause();
+		}
+	}
+	
+	private void restartLastActivity() {
 		long currentMilis = System.currentTimeMillis();
 		for (int i=0; i < ClientPong.MAX_PLAYERS; i++) {
 			lastActivity[i] = currentMilis;
-		}
-		synchronized(state){
-			this.state.unPause();
 		}
 	}
 	
