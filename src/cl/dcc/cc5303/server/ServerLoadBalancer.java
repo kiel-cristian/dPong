@@ -169,13 +169,13 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		synchronized (this) {
 			int lastLoad = getServersLoad().get(serverID);
 			serversLoad.put(serverID, load);
+			serverPriority = getPriorityList();
 			
 			// Si la carga del servidor es mayor o igual al 70%
 			if (load > lastLoad && load >= MAX_LOAD*0.7) {
 				return false;
 			}
 			else {
-				serverPriority = getPriorityList();
 				return true;
 			}
 		}
@@ -183,7 +183,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 
 	@Override
 	public ServerI getServerForMigration(int sourceServerID) throws RemoteException {
-		synchronized(this) {
+		synchronized(this.servers) {
 			for(ServerLoad s: getServerPriority()) {
 				if (s.right() != sourceServerID &&  s.left() < MAX_LOAD) {
 					return servers.get(s.right());

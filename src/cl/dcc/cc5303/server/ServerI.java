@@ -9,8 +9,11 @@ import cl.dcc.cc5303.client.PlayerI;
 
 public interface ServerI extends Remote {
   public ClientGameInfo connectPlayer(PlayerI playerI) throws RemoteException;
-  public void connectPlayer(PlayerI playerI, String targetMatchID, int playerNum) throws RemoteException;
+  
+  public void connectPlayerFromMigration(PlayerI playerI, String targetMatchID, int playerNum) throws RemoteException;
+  
   public GameStateInfo updatePositions(String matchID, int playerNum, int position) throws RemoteException;
+  
   public void disconnectPlayer(String matchID, int playerNum) throws RemoteException;
   
   /**

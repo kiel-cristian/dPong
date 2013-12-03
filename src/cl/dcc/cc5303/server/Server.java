@@ -266,10 +266,13 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	}
 	
 	@Override
-	public synchronized void connectPlayer(PlayerI playerI, String matchID, int playerNum) throws RemoteException {
+	public synchronized void connectPlayerFromMigration(PlayerI playerI, String matchID, int playerNum) throws RemoteException {
 		ServerMatch m = matches.get(matchID);
 		m.addPlayer(playerI, playerNum);
-		increasePlayerNum();
+
+		playerCount++;
+		reportLoad(false);
+
 		if (m.migrationReady()) {
 			m.stopMigration();
 		}

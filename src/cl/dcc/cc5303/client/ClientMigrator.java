@@ -39,7 +39,7 @@ public class ClientMigrator extends PongThread{
 
 			self.info.matchID = targetMatchID;
 			oldServer.disconnectPlayer(oldMatch, self.info.playerNum);
-			targetServer.connectPlayer(self, targetMatchID, self.info.playerNum);
+			targetServer.connectPlayerFromMigration(self, targetMatchID, self.info.playerNum);
 			
 			if(self.pong != null){
 				synchronized(self.pong){

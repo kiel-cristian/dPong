@@ -43,7 +43,10 @@ public class ServerHeartBeatThread extends PongThread {
 				System.out.println("Disconnecting server: " + serverID);
 				balancer.removeServer(serverID);
 			}
-			balancer.updatePriorityList();
+			
+			if(disconnectedServers.size() > 0){
+				balancer.updatePriorityList();
+			}
 		}
 	}
 
