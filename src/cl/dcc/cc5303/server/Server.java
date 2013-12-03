@@ -32,8 +32,8 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	private List<ServerMatchLoad> matchPriority;
 
 	private int minPlayers;
-	private volatile int matchCount;
-	private volatile int playerCount;
+	private int matchCount;
+	private int playerCount;
 	private int serverID;
 	private MigrationHandler migrationHandler;
 	private boolean migrating;
@@ -108,64 +108,68 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		return new ClientGameInfo(serverMatch.getID(), playerNum);
 	}
 	
+	private ArrayList<ServerMatchLoad> getMatchPriorityList(){
+		ArrayList<ServerMatchLoad> matchesPriority = new ArrayList<ServerMatchLoad>();
+		for(ServerMatch sm : matches.values()){
+			matchesPriority.add(new ServerMatchLoad(sm.playersCount(), sm.getID()));
+		}
+		Collections.sort(matchesPriority);
+		return matchesPriority;
+	}
+	
 	private ServerMatch getAvailableMatch() {
-		Collections.sort(matchPriority);
+		matchPriority = getMatchPriorityList();
 		
 		ServerMatchLoad matchLoad = null;
 		ServerMatch serverMatch   = null;
 		int i;
 		
 		// Busca el match con mas jugadores del servidor
-		for (i = 0; i < matchCount; i++) {
-			matchLoad   = matchPriority.get(i);
-			serverMatch = matches.get(matchLoad.right());
-			if (matchLoad.left() < ClientPong.MAX_PLAYERS && !serverMatch.migrating()) {
+		for (i = 0; i < matchPriority.size(); i++) {
+			
+			if ((matchLoad = matchPriority.get(i)).left() < ClientPong.MAX_PLAYERS && !matches.get(matchLoad.right()).migrating()) {
+				serverMatch = matches.get(matchLoad.right());
 				break;
 			}
 		}
 
 		// Si no hay , crea uno nuevo
 		if (serverMatch == null) {
-			++matchCount; 
 			String matchID = generateNewMatchKey();
 			serverMatch = new ServerMatch(this, matchID, minPlayers);
 			matches.put(serverMatch.getID(), serverMatch);
-			matchPriority.add(new ServerMatchLoad(1, matchID));
-		}
-		// Si existe, aumenta en uno su carga de jugadores
-		else {
-			int matchIndex = i > 0 ? i - 1 : i; 
-			matchPriority.set(matchIndex, new ServerMatchLoad(matchLoad.left() + 1, serverMatch.getID()));
 		}
 		return serverMatch;
 	}
 	
 	private String generateNewMatchKey(){
-		return "sID:" + serverID + " mC:" + matchCount;
+		return "sID:" + serverID + " mC:" + (++matchCount);
 	}
 
 	@Override
 	public synchronized void disconnectPlayer(String matchID, int playerNum) throws RemoteException {
-		ServerMatch serverMatch = matches.get(matchID);
-		if(serverMatch != null){
-			serverMatch.removePlayer(playerNum);
-			decreaseMatchLoad(serverMatch);
+		ServerMatch serverMatch = null;
+		synchronized(matches){
+			serverMatch = matches.get(matchID);
 		}
-		decreasePlayerNum();
+		if(serverMatch != null){
+			int players = serverMatch.removePlayer(playerNum);
+			if (players == 0){
+				removeMatch(serverMatch.getID());
+			}
+			decreasePlayerNum();
+		}
 	}
 	
-	private void decreaseMatchLoad(ServerMatch serverMatch) {
-		ServerMatchLoad matchLoad;
-		for (int i = 0; i < matchCount; i++) {
-			matchLoad = matchPriority.get(i);
-			if (matchLoad.right() == serverMatch.getID()) {
-				int newLoad = matchLoad.left() - 1;
-				matchPriority.set(i, new ServerMatchLoad(newLoad, serverMatch.getID()));
-				if (newLoad == 0) {
-					matchCount--;
-				}
-				break;
-			}
+	public synchronized void disconnectPlayerByTimeout(String matchID, int playerCount) {
+		ServerMatch serverMatch = null;
+		synchronized(matches){
+			serverMatch = matches.get(matchID);
+		}
+		if(serverMatch != null && playerCount == 0){
+			removeMatch(serverMatch.getID());
+		} else if(serverMatch != null){
+			decreasePlayerNum();
 		}
 	}
 
@@ -176,11 +180,8 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		if(m!= null && !m.migrating()){
 			return m.updatePositions(playerNum, position);
 		}
-		else if(m!= null){
+		else {
 			return m.lastPositions();
-		}
-		else{
-			return null;
 		}
 	}
 
@@ -191,19 +192,19 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	
 	private void increasePlayerNum() {
 		playerCount++;
-		reportLoad();
+		reportLoad(true);
 	}
 	
 	private void decreasePlayerNum() {
 		playerCount--;
-		reportLoad();
+		reportLoad(false);
 	}
 	
-	private void reportLoad() {
+	private void reportLoad(boolean increasing) {
 		if (loadBalancer != null) {
 			try {
 				boolean acceptableLoad = loadBalancer.reportLoad(serverID, playerCount);
-				if (!acceptableLoad) {
+				if (!acceptableLoad && increasing) {
 					migrateMatches();
 				}
 			} catch (RemoteException e) {
@@ -221,30 +222,31 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	}
 	
 	// Fijado en que el server migre 1/2 de sus matches
-	private boolean needToMigrate(int migratedMatchesCount, int currentMatches){
-		return migratedMatchesCount < currentMatches/2;
+	private boolean needToMigrate(int migratedMatchesCount){
+		return migratedMatchesCount < matchCount/2;
 	}
 	
 	private void migrateMatches(ServerI targetServer) {
 		try {
 			ServerMatch selectedMatch;
 			int migratedMatches = 0;
-			int currentMatches  = matches.size();
 			
-			for (Map.Entry<String, ServerMatch> e : matches.entrySet()) {
-				selectedMatch = matches.get(e.getKey());
-				
-				// Si el match acaba de ser migrado, no es escogible en la primera ronda de migracion
-				if (inmigratedMatches.remove(selectedMatch.getID()) != null) {
-					continue;
-				}
-				
-				String targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
-				selectedMatch.migratePlayers(targetServer, targetMatch);
-				migratedMatches++;
-
-				if(!needToMigrate(migratedMatches, currentMatches)){
-					break;
+			synchronized(matches){
+				for (Map.Entry<String, ServerMatch> e : matches.entrySet()) {
+					selectedMatch = matches.get(e.getKey());
+					
+					// Si el match acaba de ser migrado, no es escogible en la primera ronda de migracion
+					if (inmigratedMatches.remove(selectedMatch.getID()) != null) {
+						continue;
+					}
+					
+					String targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
+					selectedMatch.migratePlayers(targetServer, targetMatch);
+					migratedMatches++;
+	
+					if(!needToMigrate(migratedMatches)){
+						break;
+					}
 				}
 			}
 		} catch (RemoteException e) {

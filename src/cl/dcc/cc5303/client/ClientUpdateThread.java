@@ -11,40 +11,58 @@ public class ClientUpdateThread extends PongThread{
 	private Client self;
 	private GameStateInfo temporalState;
 	public boolean onGame;
+	public boolean onMigration;
 	
 	public ClientUpdateThread(Client client){
-		self = client;
-		onGame = true;
+		this.self = client;
+		this.onGame = true;
+		this.temporalState = null;
+		this.onMigration = false;
+	}
+	
+	public void startMigration(){
+		this.onMigration = true;
+	}
+	public void stopMigration(){
+		this.onMigration = false;
 	}
 
 	@Override
 	public void preWork() throws InterruptedException {
-		try {
-			synchronized(self.server){
-				temporalState = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
-			}
-			if(temporalState == null){
-				System.out.println("Deteniendo servicio update");
-				end();
-				return;
-			}
-			working = !temporalState.winner && temporalState.running;
-			if(!working && onGame){
-				if(!temporalState.winner){
-					System.out.println("Client update pausado por falta de jugadores");
+		synchronized(self.server){
+			try {
+				if(!onMigration){
+					temporalState = self.server.updatePositions(self.info.matchID, self.info.playerNum, self.getBarPosition());
 				}
-				else{
-					((ScoreBoardGUI) self.pong.scores).setWinner(temporalState.scores, temporalState.winnerPlayer, temporalState.playing);
-					((HistoricalScoreBoardGUI)self.pong.historical).setScores(temporalState.historicalScores);
-					self.pong.showWinner();
-				}
-				onGame = false;
-				work();
+			} catch (RemoteException e) {
+				System.out.println("Error en server al actualizar cliente");
+				e.printStackTrace();
+				System.exit(1); // TODO
 			}
-		} catch (RemoteException e) {
-			System.out.println("Server no responde");
-			System.exit(1); // TODO
 		}
+		
+		/*
+		if(temporalState.migrating && working){
+			System.out.println("Service client update detenido debido a migración");
+			pause();
+			return;
+		}*/
+
+		working = !temporalState.winner && temporalState.running;
+		if(!working && onGame){
+			if(!temporalState.winner){
+				System.out.println("Client update pausado por falta de jugadores");
+			}
+			else{
+				((ScoreBoardGUI) self.pong.scores).setWinner(temporalState.scores, temporalState.winnerPlayer, temporalState.playing);
+				((HistoricalScoreBoardGUI)self.pong.historical).setScores(temporalState.historicalScores);
+				self.pong.showWinner();
+			}
+			onGame = false;
+			work();
+		}
+
+		
 	}
 
 	@Override
@@ -53,7 +71,6 @@ public class ClientUpdateThread extends PongThread{
 			self.state().updateFromInfo(temporalState);
 			self.pong.scores.setScores(temporalState.scores, temporalState.playing);
 		}
-		
 	}
 
 	@Override

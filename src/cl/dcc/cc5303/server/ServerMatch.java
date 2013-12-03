@@ -50,10 +50,6 @@ public class ServerMatch {
 	private void stopGame(){
 		System.out.println("Juego " + matchID + " pausado por falta de jugadores");
 		game.pause();
-		if (game.playersCount() == 0) {
-			game.end();
-			server.removeMatch(matchID);
-		}
 	}
 	
 	private void resetGameDueMigration() {
@@ -87,15 +83,47 @@ public class ServerMatch {
 		return num;
 	}
 	
-	protected synchronized void removePlayer(int playerNum) {
-		playerIs[playerNum] = null;
-		game.removePlayer(playerNum);
+	protected synchronized int removePlayer(int playerNum) {
+		synchronized(playerIs){
+			if (playerIs[playerNum] == null) {
+				return this.game.playersCount();
+			}
+			playerIs[playerNum] = null;
+		}
+		
+		synchronized(game){
+			game.removePlayer(playerNum);
+		}
 		
 		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID);
 		if(!(this.game.playersReady())){
 			stopGame();
 		}
+		return this.game.playersCount();
 	}
+	
+	protected synchronized void removePlayerByTimeout(int playerNum) {
+		if (migrating()){
+			return;
+		}
+
+		synchronized(playerIs){
+			if (playerIs[playerNum] == null) {
+				return;
+			}
+			playerIs[playerNum] = null;
+		}
+		synchronized(game){
+			game.removePlayer(playerNum);
+		}
+		
+		System.out.println("Se ha desconectado el jugador " + playerNum + " de la partida " + matchID + " por inactividad");
+		if(!(this.game.playersReady())){
+			stopGame();
+		}
+		server.disconnectPlayerByTimeout(matchID, this.game.playersCount());
+	}
+	
 	
 	protected GameStateInfo updatePositions(int playerNum, int position) {
 		if(game.working){
@@ -120,12 +148,14 @@ public class ServerMatch {
 	public ServerMatchMigrationInfo startMigration(){
 		migration.emigrating = true;
 		game.updateServerScores();
+		game.startMigration();
 		return new ServerMatchMigrationInfo(game.state(), matchID);
 	}
 	
 	public void stopMigration(){
 		migration.emigrating = false;
 		migration.immigrating = false;
+		game.stopMigration();
 		resetGameDueMigration();
 	}
 	
@@ -134,16 +164,16 @@ public class ServerMatch {
 	}
 
 	public void migratePlayers(ServerI targetServer, String targetMatch) throws RemoteException {
-		for (int i=0; i<playerIs.length; i++) {
-			if (playerIs[i] != null) {
-				try {
+		try{
+			for (int i=0; i< playerIs.length; i++) {
+				if (playerIs[i] != null) {
 					playerIs[i].migrate(targetServer, targetMatch);
-				} catch (RemoteException e) {
-					e.printStackTrace();
 				}
 			}
+			System.out.println("Migracion lista");
+		} catch (RemoteException e) {
+			System.out.println("Error en migración");
 		}
-		System.out.println("Migracion lista");
 	}
 
 	class MigrationInfo {

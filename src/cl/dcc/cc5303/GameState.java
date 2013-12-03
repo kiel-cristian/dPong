@@ -14,6 +14,7 @@ public class GameState implements Serializable {
 	public int numPlayers;
 	public int lastPlayer;
 	public boolean running;
+	public boolean migrating;
 	public PongBall ball = new PongBall();
 	public GameBar[] bars = new GameBar[4];
 
@@ -41,6 +42,7 @@ public class GameState implements Serializable {
 		this.winnerPlayer = state.winnerPlayer;
 		this.numPlayers = state.numPlayers;
 		this.running = state.running;
+		this.migrating = state.migrating;
 
 		if(!playersReady()){
 			pause();
@@ -60,7 +62,7 @@ public class GameState implements Serializable {
 		
 		int ballX = (int)ball.x;
 		int ballY = (int)ball.y;
-		return new GameStateInfo(playing,iBars,winnerPlayer,lastPlayer,winner,running,ballX,ballY,scores,historicalScores, numPlayers);
+		return new GameStateInfo(playing,iBars,winnerPlayer,lastPlayer,winner,running,ballX,ballY,scores,historicalScores, numPlayers, migrating);
 	}
 	
 	public void pause(){
@@ -133,6 +135,7 @@ public class GameState implements Serializable {
 		}
 		numPlayers = ClientPong.MAX_PLAYERS;
 		running = true;
+		migrating = false;
 	}
 	
 	public void resetGame(){
@@ -141,6 +144,7 @@ public class GameState implements Serializable {
 		lastPlayer = -1;
 		winner     = false;
 		running    = true;
+		migrating = false;
 	}
 	
 	public void resetPlayerBars(){

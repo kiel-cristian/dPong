@@ -10,6 +10,7 @@ public class ServerMatchLoad extends Pair<Integer, String> implements Comparable
 
 	@Override
 	public int compareTo(ServerMatchLoad s) {
-		return this.left().compareTo(s.left());
+		// Orden decreciente
+		return -1*this.left().compareTo(s.left());
 	}
 }
