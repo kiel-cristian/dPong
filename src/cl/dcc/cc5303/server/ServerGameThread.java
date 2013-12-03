@@ -9,7 +9,7 @@ import cl.dcc.cc5303.Utils;
 import cl.dcc.cc5303.client.ClientPong;
 
 public class ServerGameThread extends PongThread {
-	private static final long INACTIVITY_TIMEOUT = 3000;
+	private static final long INACTIVITY_TIMEOUT = 5000;
 	private ServerMatch serverMatch;
 	public long[] lastActivity;
 	private boolean started;
@@ -89,13 +89,17 @@ public class ServerGameThread extends PongThread {
 		synchronized(state){
 			state = pong.doGameIteration(state);
 		}
+		
+		if(!started){
+			started = true;
+		}
 		checkPlayersActivity();
 	}
 
 	@Override
 	public void postWork() throws InterruptedException {
 		if(!started){
-			started = true;
+			touchPlayers();
 		}
 	}
 	
@@ -154,9 +158,8 @@ public class ServerGameThread extends PongThread {
 		long checkTime = System.currentTimeMillis();
 		for (int i=0; i < ClientPong.MAX_PLAYERS; i++) {
 			synchronized(state){
-				if (state.isPlaying(i) && (checkTime - lastActivity[i] > INACTIVITY_TIMEOUT)) {
-					System.out.println("Removiendo jugador por inactividad");
-					serverMatch.removePlayer(i);
+				if (checkTime - lastActivity[i] > INACTIVITY_TIMEOUT) {
+					serverMatch.removePlayerByTimeout(i);
 				}
 			}
 		}
@@ -193,6 +196,15 @@ public class ServerGameThread extends PongThread {
 		lastActivity[num] = System.currentTimeMillis();
 	}
 	
+	private void touchPlayers(){
+		long milis = System.currentTimeMillis();
+
+		for (int i = 0; i < Pong.MAX_PLAYERS; i++){
+			if (state.isPlaying(i)){
+				lastActivity[i] = milis;
+			}
+		}
+	}
 	
 	public boolean playersReady() {
 		synchronized(state){
@@ -239,6 +251,14 @@ public class ServerGameThread extends PongThread {
 
 	public void setScores(int[] scores, boolean[] playing) {
 		pong.scores.setScores(scores, playing);
+	}
+
+	public void startMigration() {
+		state.migrating = true;
+	}
+
+	public void stopMigration() {
+		state.migrating = false;
 	}
 
 }

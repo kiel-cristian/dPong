@@ -21,11 +21,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private static final long serialVersionUID = 8410514211761367368L;
 	private HashMap<Integer, ServerI> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
-
-
 	private HashMap<Integer, Integer> serverMatches;
-	private HashMap<Integer, Integer> serverInmigrations;
-
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;
@@ -37,7 +33,6 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		servers          = new HashMap<Integer, ServerI>();
 		serversLoad      = new HashMap<Integer, Integer>();
 		serverMatches	 = new HashMap<Integer, Integer>();
-		serverInmigrations = new HashMap<Integer, Integer>();
 		serverPriority   = new ArrayList<ServerLoad>();
 		lastTargetServer = null;
 		heartBeat        = new ServerHeartBeatThread(this);
@@ -80,9 +75,6 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		synchronized(serverMatches){
 			serverMatches.put(info.serverID, info.matches);
 		}
-		synchronized(serverInmigrations){
-			serverInmigrations.put(info.serverID, info.inmigrations);
-		}
 	}
 	
 	public synchronized void updatePriorityList(){
@@ -97,7 +89,6 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 		servers.remove(serverID);
 		serversLoad.remove(serverID);
 		serverMatches.remove(serverID);
-		serverInmigrations.remove(serverID);
 	}
 
 	@Override
@@ -185,7 +176,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	public ServerI getServerForMigration(int sourceServerID) throws RemoteException {
 		synchronized(this) {
 			for(ServerLoad s: getServerPriority()) {
-				if (s.right() != sourceServerID &&  s.left() < MAX_LOAD && serverInmigrations.get(s.right()) == 0) {
+				if (s.right() != sourceServerID &&  s.left() < MAX_LOAD) {
 					return servers.get(s.right());
 				}
 			}

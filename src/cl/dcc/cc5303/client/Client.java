@@ -14,10 +14,11 @@ import cl.dcc.cc5303.server.ServerI;
 
 public class Client extends UnicastRemoteObject implements PlayerI {
 	private static final long serialVersionUID = -1910265532826050466L;
-	private volatile ServerFinderI serverFinderI;
-	public volatile ServerI server;
-	public volatile ClientGameInfo info;
-	public volatile ClientPong pong;
+	private ServerFinderI serverFinderI;
+	private ClientMigrator migrator;
+	public ServerI server;
+	public ClientGameInfo info;
+	public ClientPong pong;
 
 	public static void main(String[] args) {
 		try {
@@ -60,9 +61,12 @@ public class Client extends UnicastRemoteObject implements PlayerI {
 			server = serverFinderI.getServer(serverID);
 		}
 		info = server.connectPlayer(this);
+		
 		pong = new ClientPong(this, info.playerNum);
-		pong.game.enablePlayer(info.playerNum);
-		pong.startGame();
+		synchronized(pong){
+			pong.game.enablePlayer(info.playerNum);	
+			pong.startGame();
+		}
 	}
 
 	public int getPlayerNum() {
@@ -88,31 +92,7 @@ public class Client extends UnicastRemoteObject implements PlayerI {
 
 	@Override
 	public void migrate(final ServerI targetServer, final String targetMatchID) throws RemoteException {
-		pong.serverUpdate.pause();
-		pong.game.pause();
-		final Client self = this;
-
-		Thread migrator = new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				try {
-					ServerI oldServer = self.server;
-					String oldMatch = self.info.matchID;
-					synchronized(self.server){
-						self.server = targetServer;
-					}
-					self.info.matchID = targetMatchID;
-					oldServer.disconnectPlayer(oldMatch, self.info.playerNum);
-					targetServer.connectPlayer(self, targetMatchID, self.info.playerNum);
-					pong.serverUpdate.unPause();
-					pong.game.unPause();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			}
-			
-		});
+		migrator = new ClientMigrator(this, targetServer, targetMatchID);
 		migrator.start();
 	}
 	

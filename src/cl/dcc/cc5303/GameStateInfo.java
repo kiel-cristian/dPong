@@ -19,6 +19,7 @@ public class GameStateInfo implements Serializable{
 
 	public GameStateInfo(boolean[] playing, int[] iBars, int winnerPlayer,
 			int lastPlayer, boolean winner, boolean running, int ballX,
+			int ballY, int[] scores, int[] historicalScores, int numPlayers
 			int ballY, int[] scores, int[] historicalScores, int numPlayers,
 			boolean userPaused) {
 		this.playing = playing;

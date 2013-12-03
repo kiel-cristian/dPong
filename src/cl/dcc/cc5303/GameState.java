@@ -24,19 +24,19 @@ public class GameState implements Serializable {
 			pause();
 		}
 	}
-	
+
 	public void userPause() {
 		userPaused = true;
 		pause();
 	}
-	
+
 	public void userUnPause() {
 		if (userPaused) {
 			userPaused = false;
 			unPause();
 		}
 	}
-	
+
 	public void updateFromInfo(GameStateInfo state){
 		for( int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			this.scores[i] = state.scores[i];
@@ -54,12 +54,13 @@ public class GameState implements Serializable {
 		this.winnerPlayer = state.winnerPlayer;
 		this.numPlayers = state.numPlayers;
 		this.running = state.running;
+		this.migrating = state.migrating;
 
 		if(!playersReady()){
 			pause();
 		}
 	}
-	
+
 	public GameStateInfo packInfo(){
 		int[] iBars = new int[4];
 		if(playing[0])
@@ -70,13 +71,14 @@ public class GameState implements Serializable {
 			iBars[2] = (int)bars[2].x;
 		if(playing[3])
 			iBars[3] = (int)bars[3].x;
-		
+
 		int ballX = (int)ball.x;
 		int ballY = (int)ball.y;
+
 		return new GameStateInfo(playing,iBars,winnerPlayer,lastPlayer,
 				winner,running,ballX,ballY,scores,historicalScores, numPlayers, userPaused);
 	}
-	
+
 	public void pause(){
 		this.running = false;
 	}
@@ -84,19 +86,19 @@ public class GameState implements Serializable {
 		this.running = true;
 		//ball = new PongBall();
 	}
-	
+
 	public boolean isPlaying(int playerNum){
 		return this.playing[playerNum];
 	}
-	
+
 	public void enablePlayer(int playerNum){
 		this.playing[playerNum] = true;
 	}
-	
+
 	public void disablePlayer(int playerNum){
 		this.playing[playerNum] = false;
 	}
-	
+
 	public void setMatchWinner(int winnerPlayer, int[] historicalScores2) {
 		this.winnerPlayer = winnerPlayer;
 		this.winner = true;
@@ -104,7 +106,7 @@ public class GameState implements Serializable {
 			this.historicalScores[i] = historicalScores2[i];
 		}
 	}
-	
+
 	public void serverUpdate(int[] scores, int[] historical, int playerNum, int pos){
 		updatePlayerPosition(playerNum, pos);
 		for( int i = 0; i < ClientPong.MAX_PLAYERS; i++){
@@ -112,14 +114,14 @@ public class GameState implements Serializable {
 			this.historicalScores[i] = historical[i];
 		}
 	}
-	
+
 	public void updateServerScores(int[] scores2, int[] historical){
 		for( int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			this.scores[i] = scores2[i];
 			this.historicalScores[i] = historical[i];
 		}
 	}
-	
+
 	public void fullUpdate(GameState state){
 		for( int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			this.scores[i] = state.scores[i];
@@ -133,7 +135,7 @@ public class GameState implements Serializable {
 		this.numPlayers = state.numPlayers;
 		this.running = state.running;
 	}
-	
+
 	private void initGame(){
 		bars[0] = new GameBar(10, ClientPong.HEIGHT / 2, 10, 100, 0); // jugadores
 		bars[1] = new GameBar(ClientPong.WIDTH - 10, ClientPong.HEIGHT / 2, 10, 100, 1);
@@ -147,16 +149,18 @@ public class GameState implements Serializable {
 		}
 		numPlayers = ClientPong.MAX_PLAYERS;
 		running = true;
+		migrating = false;
 	}
-	
+
 	public void resetGame(){
 		resetPlayerBars();
 		ball.reset();
 		lastPlayer = -1;
 		winner     = false;
 		running    = true;
+		migrating = false;
 	}
-	
+
 	public void resetPlayerBars(){
 		bars[0].reset(10, ClientPong.HEIGHT / 2, 10, 100, 0); // jugadores
 		bars[1].reset(ClientPong.WIDTH - 10, ClientPong.HEIGHT / 2, 10, 100, 1);
@@ -172,15 +176,15 @@ public class GameState implements Serializable {
 			bars[playerNum].x = position;
 		}
 	}
-	
+
 	public boolean playersReady() {
 		return Utils.countTrue(playing) >= numPlayers;
 	}
-	
+
 	public int playersCount(){
 		return Utils.countTrue(playing);
 	}
-	
+
 	public int getPlayerPosition(int playerNum) {
 		if(playerNum == 0 || playerNum == 1){
 			return (int) bars[playerNum].y;
@@ -192,7 +196,6 @@ public class GameState implements Serializable {
 
 	public void setLastPlayer(int nextPlayer) {
 		this.lastPlayer = nextPlayer;
-		
 	}
 
 }

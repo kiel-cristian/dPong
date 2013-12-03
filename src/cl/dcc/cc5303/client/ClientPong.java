@@ -32,6 +32,10 @@ public class ClientPong extends Pong implements KeyListener, PongI {
 		this.historical = new HistoricalScoreBoardGUI(playerNum, game.state().playing);
 		init(playerNum);
 	}
+	
+	public void reloadServerUpdate(){
+		this.serverUpdate = new ClientUpdateThread(this.client);
+	}
 
 	/* Initializes window frame and set it visible */
 	private void init(int playerNum) {
