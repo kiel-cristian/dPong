@@ -10,6 +10,7 @@ public class GameStateInfo implements Serializable{
 	public volatile int lastPlayer;
 	public volatile boolean winner;
 	public volatile boolean running;
+	public volatile boolean userPaused;
 	public volatile int ballX;
 	public volatile int ballY;
 	public volatile int[] scores;
@@ -18,7 +19,8 @@ public class GameStateInfo implements Serializable{
 
 	public GameStateInfo(boolean[] playing, int[] iBars, int winnerPlayer,
 			int lastPlayer, boolean winner, boolean running, int ballX,
-			int ballY, int[] scores, int[] historicalScores, int numPlayers) {
+			int ballY, int[] scores, int[] historicalScores, int numPlayers,
+			boolean userPaused) {
 		this.playing = playing;
 		this.iBars = iBars;
 		this.winnerPlayer = winnerPlayer;
@@ -30,6 +32,7 @@ public class GameStateInfo implements Serializable{
 		this.scores = scores;
 		this.historicalScores = historicalScores;
 		this.numPlayers = numPlayers;
+		this.userPaused = userPaused;
 	}
 
 }

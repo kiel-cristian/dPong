@@ -34,4 +34,6 @@ public interface ServerI extends Remote {
    * @return an integer with ID value
    */
   public int getServerID() throws RemoteException;
+  
+  public void togglePause(String matchID) throws RemoteException;
 }

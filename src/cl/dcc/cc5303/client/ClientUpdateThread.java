@@ -29,8 +29,13 @@ public class ClientUpdateThread extends PongThread{
 				return;
 			}
 			working = !temporalState.winner && temporalState.running;
+			if (working) self.userUnPaused();
 			if(!working && onGame){
-				if(!temporalState.winner){
+				if (temporalState.userPaused) {
+					self.userPaused();
+					System.out.println("Un jugador ha pausado el juego");
+				}
+				else if(!temporalState.winner){
 					System.out.println("Client update pausado por falta de jugadores");
 				}
 				else{
@@ -58,9 +63,9 @@ public class ClientUpdateThread extends PongThread{
 
 	@Override
 	public void postWork() throws InterruptedException {
-		if(working && !onGame){
-			System.out.println("Nuevo match");
-			self.pong.game.reMatch();
+		if(working){
+			//System.out.println("Nuevo match");
+			//self.pong.game.reMatch();
 			onGame = true;
 		}
 	}

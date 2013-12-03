@@ -14,6 +14,7 @@ public class GameState implements Serializable {
 	public int numPlayers;
 	public int lastPlayer;
 	public boolean running;
+	public boolean userPaused;
 	public PongBall ball = new PongBall();
 	public GameBar[] bars = new GameBar[4];
 
@@ -21,6 +22,18 @@ public class GameState implements Serializable {
 		initGame();
 		if(!playersReady()){
 			pause();
+		}
+	}
+	
+	public void userPause() {
+		userPaused = true;
+		pause();
+	}
+	
+	public void userUnPause() {
+		if (userPaused) {
+			userPaused = false;
+			unPause();
 		}
 	}
 	
@@ -60,7 +73,8 @@ public class GameState implements Serializable {
 		
 		int ballX = (int)ball.x;
 		int ballY = (int)ball.y;
-		return new GameStateInfo(playing,iBars,winnerPlayer,lastPlayer,winner,running,ballX,ballY,scores,historicalScores, numPlayers);
+		return new GameStateInfo(playing,iBars,winnerPlayer,lastPlayer,
+				winner,running,ballX,ballY,scores,historicalScores, numPlayers, userPaused);
 	}
 	
 	public void pause(){
@@ -68,7 +82,7 @@ public class GameState implements Serializable {
 	}
 	public void unPause(){
 		this.running = true;
-		ball = new PongBall();
+		//ball = new PongBall();
 	}
 	
 	public boolean isPlaying(int playerNum){
