@@ -9,10 +9,11 @@
 package cl.dcc.cc5303;
 
 import java.awt.Graphics;
+import java.io.Serializable;
 
 
-public class Rectangle {
-
+public class Rectangle implements Serializable{
+	private static final long serialVersionUID = -3140789364474834671L;
 	public double x, y;
 	public double w, h;
 
@@ -41,6 +42,21 @@ public class Rectangle {
 
 	public int right() {
 		return (int) (x + w * 0.5);
+	}
+
+	public void copy(Rectangle r) {
+		this.x = r.x;
+		this.y = r.y;
+		this.w = r.w;
+		this.h = r.h;
+	}
+
+	public void reset(int x, int y, int w, int h) {
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+		
 	}
 
 }

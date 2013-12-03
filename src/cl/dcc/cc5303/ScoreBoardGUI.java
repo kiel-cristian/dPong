@@ -8,9 +8,6 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 public class ScoreBoardGUI extends JPanel implements ScoreBoard {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -9079400188590075139L;
 	
 	private ScoreBoardSimple score;
@@ -26,7 +23,7 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 		this.setBackground(Color.DARK_GRAY);
 		initScores(playing);
 		add(message);
-		for (int i=0; i<4; i++){
+		for (int i=0; i<Pong.MAX_PLAYERS; i++){
 			add(scores[i]);
 		}
 		this.setOpaque(true);
@@ -102,6 +99,7 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	}
 	
 	public void setWinner(int[] scores, int winner, boolean[] playing){
+		System.out.println("winner: " + winner);
 		score.setScores(scores, playing);
 		score.setWinner(winner);
 	}
@@ -112,13 +110,18 @@ public class ScoreBoardGUI extends JPanel implements ScoreBoard {
 	}
 	
 	@Override
+	public boolean isAWinner(){
+		return getWinner()>= 0;
+	}
+	
+	@Override
 	public void reset(boolean[] playing) {
 		resetScores();
 		score.reset(playing);
 	}
 
 	public void showWinner() {
-		for (int i=0; i<4; i++) {
+		for (int i=0; i< Pong.MAX_PLAYERS; i++) {
 			scores[i].setText("");
 		}
 		int winner = score.getWinner();

@@ -2,20 +2,20 @@ package cl.dcc.cc5303;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.util.Collection;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-public class HistoricalScoreBoardGui extends JPanel implements HistoricalScoreBoard{
+import cl.dcc.cc5303.client.ClientPong;
+
+public class HistoricalScoreBoardGUI extends JPanel implements HistoricalScoreBoard{
 	private static final long serialVersionUID = 8916186821186929334L;
 	private JLabel[] labels;
 	private JLabel myLabel;
 	private HistoricalScoreBoardSimple board;
 	private int myPlayerNum;
 	
-	public HistoricalScoreBoardGui(int playerNum){
+	public HistoricalScoreBoardGUI(int playerNum, boolean[] playing){
 		myPlayerNum = playerNum + 1;
 		board = new HistoricalScoreBoardSimple();
 		labels = new JLabel[4];
@@ -25,7 +25,7 @@ public class HistoricalScoreBoardGui extends JPanel implements HistoricalScoreBo
 		this.setOpaque(true);
 		this.add(myLabel);
 		
-		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
+		for(int i = 0; i < ClientPong.MAX_PLAYERS; i++){
 			labels[i] = new JLabel();
 			labels[i].setFont(new Font("Monospaced", Font.BOLD, 15));
 			labels[i].setBorder(new EmptyBorder(0, 20, 0, 20));
@@ -37,7 +37,7 @@ public class HistoricalScoreBoardGui extends JPanel implements HistoricalScoreBo
 		myLabel.setBorder(new EmptyBorder(0, 20, 0, 20));
 		myLabel.setForeground(Color.RED);
 		
-		showScores();
+		showScores(playing);
 	}
 
 	@Override
@@ -50,11 +50,11 @@ public class HistoricalScoreBoardGui extends JPanel implements HistoricalScoreBo
 		board.removePlayer(player);
 	}
 
-	public void showScores() {
+	public void showScores(boolean[] playing) {
 		int[] scores = board.getScores();
 				
-		for(int i = 0; i < Pong.MAX_PLAYERS; i++){
-			if(myPlayerNum != (i+1)){
+		for(int i = 0; i < ClientPong.MAX_PLAYERS; i++){
+			if(myPlayerNum != (i+1) && playing[i]){
 				labels[i].setText("P" + (i +1) + ": " + scores[i]);
 			}
 			else{
@@ -64,6 +64,15 @@ public class HistoricalScoreBoardGui extends JPanel implements HistoricalScoreBo
 		
 		int myScore = board.getPlayerScore(myPlayerNum);
 		myLabel.setText("N° victorias: " +  + myScore + "      ->" );
+	}
+
+	@Override
+	public int[] getScores() {
+		return board.getScores();
+	}
+	
+	public void setScores(int[] historicalScores){
+		board.setScores(historicalScores);
 	}
 	
 }

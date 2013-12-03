@@ -1,8 +1,8 @@
 package cl.dcc.cc5303;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Map;
+
+import cl.dcc.cc5303.client.ClientPong;
 
 public class HistoricalScoreBoardSimple implements HistoricalScoreBoard{
 	LinkedHashMap<Integer, Integer> playersHistorical;
@@ -30,9 +30,9 @@ public class HistoricalScoreBoardSimple implements HistoricalScoreBoard{
 
 	public int[] getScores(){
 		Object playerScore;
-		int[] scores = new int[Pong.MAX_PLAYERS];
+		int[] scores = new int[ClientPong.MAX_PLAYERS];
 		
-		for(int i = 1; i <= Pong.MAX_PLAYERS; i++){
+		for(int i = 1; i <= ClientPong.MAX_PLAYERS; i++){
 			playerScore = playersHistorical.get(i-1);
 			if(playerScore != null){
 				scores[i-1] = (int)playerScore;
@@ -51,6 +51,12 @@ public class HistoricalScoreBoardSimple implements HistoricalScoreBoard{
 		}
 		else{
 			return (int) score;
+		}
+	}
+
+	public void setScores(int[] historicalScores) {
+		for(int i = 0; i < ClientPong.MAX_PLAYERS; i++){
+			playersHistorical.put(i, historicalScores[i]);
 		}
 	}
 

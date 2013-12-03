@@ -1,4 +1,4 @@
-package cl.dcc.cc5303;
+package cl.dcc.cc5303.server;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -11,26 +11,36 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import cl.dcc.cc5303.CommandLineParser;
+import cl.dcc.cc5303.FixedPortRMISocketFactory;
+import cl.dcc.cc5303.GameStateInfo;
 import cl.dcc.cc5303.CommandLineParser.ParserException;
+import cl.dcc.cc5303.client.ClientGameInfo;
+import cl.dcc.cc5303.client.PlayerI;
+import cl.dcc.cc5303.client.ClientPong;
 
-public class Server extends UnicastRemoteObject implements IServer, ServerFinder {
+public class Server extends UnicastRemoteObject implements ServerI, ServerFinderI {
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ServerOptions options;
-	private static ILoadBalancer loadBalancer;
-	private LinkedHashMap<Integer, Match> matches;
+	private static ServerLoadBalancerI loadBalancer;
+	private LinkedHashMap<String, ServerMatch> matches;
+	private LinkedHashMap<String, Boolean> inmigratedMatches;
 	private int minPlayers;
 	private volatile int matchCount;
 	private volatile int playerCount;
 	private int serverID;
 	private MigrationHandler migrationHandler;
 	private boolean migrating;
+	private int inmigrations;
 	
 	protected Server(int minPlayers) throws RemoteException {
 		super();
 		this.minPlayers = minPlayers;
-		matches = new LinkedHashMap<Integer, Match>();
+		this.matches = new LinkedHashMap<String, ServerMatch>();
+		this.inmigratedMatches = new LinkedHashMap<String, Boolean>();
+
 		if (loadBalancer != null) {
-			serverID = loadBalancer.connectServer(this);
+			this.serverID = loadBalancer.connectServer(this);
 			System.out.println("Server ID: " + serverID);
 		}
 	}
@@ -40,30 +50,22 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 			options = parseOptions(args);
 			
 			if (options.loadBalancer){
-				loadBalancer = (ILoadBalancer) Naming.lookup("rmi://" + options.balancerUrl + ":1099/serverfinder");
+				loadBalancer = (ServerLoadBalancerI) Naming.lookup("rmi://" + options.balancerUrl + ":1099/serverfinder");
 				new Server(options.minPlayers);
 			}
 			else {
-				ServerFinder server = new Server(options.minPlayers);
+				ServerFinderI server = new Server(options.minPlayers);
 				RMISocketFactory.setSocketFactory(new FixedPortRMISocketFactory());
 				LocateRegistry.createRegistry(1099);
 				Naming.rebind("rmi://localhost:1099/serverfinder", server);
 			}			
 			System.out.println("Escuchando...");
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (RemoteException | MalformedURLException | NotBoundException e) {
 			e.printStackTrace();
 		} catch (ParserException e) {
 			System.out.println(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -86,50 +88,65 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		public String balancerUrl;
 		public int minPlayers;
 	}
+	
+	public int getServerID(){
+		return serverID;
+	}
 
 	@Override
-	public synchronized GameInfo connectPlayer(Player player) throws RemoteException {
-		Match match = getAvailableMatch();
-		int playerNum = match.addPlayer(player);
+	public synchronized ClientGameInfo connectPlayer(PlayerI playerI) throws RemoteException {
+		ServerMatch serverMatch = getAvailableMatch();
+		int playerNum = serverMatch.addPlayer(playerI);
 		increasePlayerNum();
-		return new GameInfo(match.getID(), playerNum);
+		return new ClientGameInfo(serverMatch.getID(), playerNum);
 	}
 	
-	private Match getAvailableMatch() {
-		Match match = null;
-		for (Match m : matches.values()) {
-			if (m.playersCount() < Pong.MAX_PLAYERS && !m.migrating()) {
-				match = m;
+	private ServerMatch getAvailableMatch() {
+		ServerMatch serverMatch = null;
+		for (ServerMatch m : matches.values()) {
+			if (m.playersCount() < ClientPong.MAX_PLAYERS && !m.migrating()) {
+				serverMatch = m;
 				break;
 			}
 		}
-		if (match == null) {
-			match = new Match(this, ++matchCount, minPlayers);
-			matches.put(match.getID(), match);
+		if (serverMatch == null) {
+			++matchCount; 
+			serverMatch = new ServerMatch(this, generateNewMatchKey(), minPlayers);
+			matches.put(serverMatch.getID(), serverMatch);
 		}
-		return match;
+		return serverMatch;
+	}
+	
+	private String generateNewMatchKey(){
+		return "sID:" + serverID + " mC:" + matchCount;
 	}
 
 	@Override
-	public synchronized void disconnectPlayer(int matchID, int playerNum) throws RemoteException {
-		matches.get(matchID).removePlayer(playerNum);
+	public synchronized void disconnectPlayer(String matchID, int playerNum) throws RemoteException {
+		ServerMatch serverMatch = matches.get(matchID);
+		if(serverMatch != null){
+			serverMatch.removePlayer(playerNum);
+		}
 		decreasePlayerNum();
 	}
 
 	@Override
-	public synchronized GameState updatePositions(int matchID, int playerNum, int position) throws RemoteException {
-		Match m = matches.get(matchID);
+	public synchronized GameStateInfo updatePositions(String matchID, int playerNum, int position) throws RemoteException {
+		ServerMatch m = matches.get(matchID);
 			
-		if(!m.migrating()){
+		if(m!= null && !m.migrating()){
 			return m.updatePositions(playerNum, position);
 		}
-		else {
+		else if(m!= null){
 			return m.lastPositions();
+		}
+		else{
+			return null;
 		}
 	}
 
 	@Override
-	public IServer getServer() throws RemoteException {
+	public ServerI getServer() throws RemoteException {
 		return this;
 	}
 	
@@ -169,60 +186,69 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		return migratedMatchesCount < currentMatches/2;
 	}
 	
-	private void migrateMatches(IServer targetServer) {
+	private void migrateMatches(ServerI targetServer) {
 		try {
-			Match selectedMatch;
+			ServerMatch selectedMatch;
 			int migratedMatches = 0;
 			int currentMatches  = matches.size();
 			
-			for (Map.Entry<Integer, Match> e : matches.entrySet()) {
+			for (Map.Entry<String, ServerMatch> e : matches.entrySet()) {
 				selectedMatch = matches.get(e.getKey());
-				int targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
+				
+				// Si el match ya fue migrado, no es escogible (debe partir alguna vez)
+				if (inmigratedMatches.get(selectedMatch.getID()) != null) {
+					continue;
+				}
+				
+				String targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
 				selectedMatch.migratePlayers(targetServer, targetMatch);
 				migratedMatches++;
+
 				if(!needToMigrate(migratedMatches, currentMatches)){
 					break;
 				}
 			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error en comunicacion al migrar\n");
 			e.printStackTrace();
 		}
 	}
 
 	@Override
-	public synchronized int getMatchForMigration(GameState stateToMigrate)
-			throws RemoteException {
-		Match match = new Match(this, ++matchCount, stateToMigrate.minPlayers);
-		match.receiveMigration(stateToMigrate);
-		matches.put(match.getID(), match);
-		return match.getID();
+	public synchronized String getMatchForMigration(ServerMatchMigrationInfo originalMatch) throws RemoteException {
+		GameStateInfo stateToMigrate = originalMatch.state;
+		++matchCount;
+		++inmigrations;
+		ServerMatch serverMatch = new ServerMatch(this, originalMatch.matchID, stateToMigrate.numPlayers);
+		serverMatch.receiveMigration(stateToMigrate);
+		matches.put(serverMatch.getID(), serverMatch);
+		inmigratedMatches.put(serverMatch.getID(), true);
+		return serverMatch.getID();
 	}
 	
 	@Override
-	public synchronized void connectPlayer(Player player, int matchID, int playerNum)
-			throws RemoteException {
-		Match m = matches.get(matchID);
-		m.addPlayer(player, playerNum);
+	public synchronized void connectPlayer(PlayerI playerI, String matchID, int playerNum) throws RemoteException {
+		ServerMatch m = matches.get(matchID);
+		m.addPlayer(playerI, playerNum);
 		increasePlayerNum();
 		if (m.migrationReady()) {
 			m.stopMigration();
 		}
 	}
 
-	public void removeMatch(int matchID) {
+	public void removeMatch(String matchID) {
 		matches.remove(matchID);
 		System.out.println("Partida " + matchID + " eliminada por falta de jugadores");
 	}
 
 	@Override
-	public IServer getServer(int serverID) throws RemoteException {
+	public ServerI getServer(int serverID) throws RemoteException {
 		return getServer();
 	}
 	
 	@Override
-	public void heartBeat() throws RemoteException{
-		return;
+	public ServerInfo heartBeat() throws RemoteException{
+		return new ServerInfo(matches.size(), inmigrations, serverID);
 	}
 	
 	private class MigrationHandler extends Thread {
@@ -230,7 +256,7 @@ public class Server extends UnicastRemoteObject implements IServer, ServerFinder
 		@Override
 		public void run() {
 			try {
-				IServer migrationServer = loadBalancer.getServerForMigration(serverID);
+				ServerI migrationServer = loadBalancer.getServerForMigration(serverID);
 				if (migrationServer != null) {
 					migrateMatches(migrationServer);
 				}
