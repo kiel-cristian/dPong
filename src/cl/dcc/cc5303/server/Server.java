@@ -221,11 +221,6 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		}
 	}
 	
-	// Fijado en que el server migre 1/2 de sus matches
-	private boolean needToMigrate(int migratedMatchesCount){
-		return migratedMatchesCount < matchCount/2;
-	}
-	
 	private void migrateMatches(ServerI targetServer) {
 		try {
 			ServerMatch selectedMatch;
@@ -241,10 +236,13 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 					}
 					
 					String targetMatch = targetServer.getMatchForMigration(selectedMatch.startMigration());
+					
+					System.out.println("Migrando match: " + selectedMatch.getID() + " desde server: " + serverID + " hacia server: " + targetServer.getServerID());
 					selectedMatch.migratePlayers(targetServer, targetMatch);
+
 					migratedMatches++;
 	
-					if(!needToMigrate(migratedMatches)){
+					if(migratedMatches >= matches.size()/2){
 						break;
 					}
 				}
