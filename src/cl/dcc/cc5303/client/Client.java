@@ -23,8 +23,8 @@ public class Client extends UnicastRemoteObject implements PlayerI {
 		try {
 			Client client = new Client();
 			CommandLineParser parser = new CommandLineParser(args);
-			parser.addOption("a", "string");
-			parser.addOption("n", "int", "1");
+			parser.addStringOption("a");
+			parser.addIntegerOption("n", 1);
 			parser.parse();
 			String serverFinderAddress = parser.getString("a", "localhost");
 			int serverID = parser.getInt("n", -1);

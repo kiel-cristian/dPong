@@ -72,9 +72,8 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	private static ServerOptions parseOptions(String[] args) throws ParserException {
 		ServerOptions options = new ServerOptions();
 		CommandLineParser parser = new CommandLineParser(args);
-		parser.addOption("b", "string", "localhost"); 	// Balanceador: localhost por defecto
-		parser.addOption("n", "int");
-		parser.addOption("m", "int", "1"); //Marcar si un servidor puede recibir migraciones o no
+		parser.addStringOption("b", "localhost"); 	// Balanceador: localhost por defecto
+		parser.addIntegerOption("n");
 		parser.greaterThanRule("n", 1, "Debe introducir un número válido de jugadores para las partidas (mínimo 2)");
 		parser.lessThanRule("n", 5, "Debe introducir un número válido de jugadores para las partidas (máximo 4)");
 		parser.parse();
