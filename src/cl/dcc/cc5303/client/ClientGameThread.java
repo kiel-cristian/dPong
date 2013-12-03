@@ -19,7 +19,10 @@ public class ClientGameThread extends PongThread{
 		synchronized(state){
 			working = !state.winner && state.running;
 			if(onGame && !working){
-				if(!state.winner){
+				if (!state.winner && state.userPaused) {
+					pong.showPauseMessage("Juego pausado...");
+				}
+				else if(!state.winner){
 					System.out.println("Client game pausado por falta de jugadores");
 					pong.showPauseMessage("Esperando jugadores ...");
 				}
@@ -45,6 +48,7 @@ public class ClientGameThread extends PongThread{
 			}
 		}
 		pong.rePaint();
+		pong.handlePauseEvent();
 		pong.handleQuitEvent();
 	}
 

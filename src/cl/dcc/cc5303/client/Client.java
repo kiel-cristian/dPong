@@ -42,6 +42,14 @@ public class Client extends UnicastRemoteObject implements PlayerI {
 	protected Client() throws RemoteException {
 		super();
 	}
+	
+	public void userPaused() {
+		pong.userPaused();
+	}
+	
+	public void userUnPaused() {
+		pong.userUnPaused();
+	}
 
 	public void play(String serverFinderAddress, int serverID) throws MalformedURLException, RemoteException, NotBoundException {
 		serverFinderI = (ServerFinderI) Naming.lookup("rmi://" + serverFinderAddress + ":1099/serverfinder");
@@ -106,5 +114,14 @@ public class Client extends UnicastRemoteObject implements PlayerI {
 			
 		});
 		migrator.start();
+	}
+	
+	public void togglePause() {
+		try {
+			server.togglePause(info.matchID);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

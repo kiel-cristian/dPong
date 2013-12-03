@@ -36,6 +36,10 @@ public class ServerMatch {
 		game.setScores(migratedGameState.scores, game.getPlaying());
 	}
 	
+	public void togglePause() {
+		game.togglePause();
+	}
+	
 	private void startGame() {
 		if(game.alreadyStarted()){
 			game.unPause();

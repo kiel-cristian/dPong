@@ -59,6 +59,14 @@ public class ClientPong extends Pong implements KeyListener, PongI {
 		((HistoricalScoreBoardGUI)historical).showScores(game.state().playing);
 	}
 	
+	public void userPaused() {
+		game.state().userPaused = true;
+	}
+	
+	public void userUnPaused() {
+		game.state().userPaused = false;
+	}
+	
 	public void startGame() {
 		serverUpdate.start();
 		game.start();
@@ -84,6 +92,13 @@ public class ClientPong extends Pong implements KeyListener, PongI {
 			if(this.game.state().isPlaying(i)){
 				canvas.rectangles.add((GameBar) game.state().bars[i]);
 			}
+		}
+	}
+	
+	public void handlePauseEvent() {
+		if (keys[KeyEvent.VK_PAUSE]) {
+			keys[KeyEvent.VK_PAUSE] = false;
+			client.togglePause();
 		}
 	}
 
