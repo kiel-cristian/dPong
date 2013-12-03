@@ -96,8 +96,8 @@ public class ClientPong extends Pong implements KeyListener, PongI {
 	}
 	
 	public void handlePauseEvent() {
-		if (keys[KeyEvent.VK_PAUSE]) {
-			keys[KeyEvent.VK_PAUSE] = false;
+		if (keys[KeyEvent.VK_SPACE]) {
+			keys[KeyEvent.VK_SPACE] = false;
 			client.togglePause();
 		}
 	}
