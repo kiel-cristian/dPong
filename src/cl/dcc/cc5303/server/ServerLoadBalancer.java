@@ -21,9 +21,7 @@ public class ServerLoadBalancer extends UnicastRemoteObject implements ServerLoa
 	private static final long serialVersionUID = 8410514211761367368L;
 	private HashMap<Integer, ServerI> servers;		// (ID, Server)
 	private HashMap<Integer, Integer> serversLoad;	// (ID, Load)
-
 	private HashMap<Integer, Integer> serverMatches;
-
 	private List<ServerLoad> serverPriority;
 	private int lastServerID;
 	private ServerLoad lastTargetServer;

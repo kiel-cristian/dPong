@@ -8,7 +8,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import cl.dcc.cc5303.CommandLineParser;
@@ -23,8 +26,11 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	private static final long serialVersionUID = -8181276888826913071L;
 	private static ServerOptions options;
 	private static ServerLoadBalancerI loadBalancer;
+
 	private LinkedHashMap<String, ServerMatch> matches;
 	private LinkedHashMap<String, Boolean> inmigratedMatches;
+	private List<ServerMatchLoad> matchPriority;
+
 	private int minPlayers;
 	private volatile int matchCount;
 	private volatile int playerCount;
@@ -35,9 +41,10 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	
 	protected Server(int minPlayers) throws RemoteException {
 		super();
-		this.minPlayers = minPlayers;
-		this.matches = new LinkedHashMap<String, ServerMatch>();
+		this.minPlayers        = minPlayers;
+		this.matches           = new LinkedHashMap<String, ServerMatch>();
 		this.inmigratedMatches = new LinkedHashMap<String, Boolean>();
+		this.matchPriority     = new ArrayList<ServerMatchLoad>();
 
 		if (loadBalancer != null) {
 			this.serverID = loadBalancer.connectServer(this);
@@ -102,17 +109,33 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 	}
 	
 	private ServerMatch getAvailableMatch() {
-		ServerMatch serverMatch = null;
-		for (ServerMatch m : matches.values()) {
-			if (m.playersCount() < ClientPong.MAX_PLAYERS && !m.migrating()) {
-				serverMatch = m;
+		Collections.sort(matchPriority);
+		
+		ServerMatchLoad matchLoad = null;
+		ServerMatch serverMatch   = null;
+		int i;
+		
+		// Busca el match con mas jugadores del servidor
+		for (i = 0; i < matchCount; i++) {
+			matchLoad   = matchPriority.get(i);
+			serverMatch = matches.get(matchLoad.right());
+			if (matchLoad.left() < ClientPong.MAX_PLAYERS && !serverMatch.migrating()) {
 				break;
 			}
 		}
+
+		// Si no hay , crea uno nuevo
 		if (serverMatch == null) {
 			++matchCount; 
-			serverMatch = new ServerMatch(this, generateNewMatchKey(), minPlayers);
+			String matchID = generateNewMatchKey();
+			serverMatch = new ServerMatch(this, matchID, minPlayers);
 			matches.put(serverMatch.getID(), serverMatch);
+			matchPriority.add(new ServerMatchLoad(1, matchID));
+		}
+		// Si existe, aumenta en uno su carga de jugadores
+		else {
+			int matchIndex = i > 0 ? i - 1 : i; 
+			matchPriority.set(matchIndex, new ServerMatchLoad(matchLoad.left() + 1, serverMatch.getID()));
 		}
 		return serverMatch;
 	}
@@ -126,8 +149,24 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 		ServerMatch serverMatch = matches.get(matchID);
 		if(serverMatch != null){
 			serverMatch.removePlayer(playerNum);
+			decreaseMatchLoad(serverMatch);
 		}
 		decreasePlayerNum();
+	}
+	
+	private void decreaseMatchLoad(ServerMatch serverMatch) {
+		ServerMatchLoad matchLoad;
+		for (int i = 0; i < matchCount; i++) {
+			matchLoad = matchPriority.get(i);
+			if (matchLoad.right() == serverMatch.getID()) {
+				int newLoad = matchLoad.left() - 1;
+				matchPriority.set(i, new ServerMatchLoad(newLoad, serverMatch.getID()));
+				if (newLoad == 0) {
+					matchCount--;
+				}
+				break;
+			}
+		}
 	}
 
 	@Override
@@ -195,8 +234,8 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 			for (Map.Entry<String, ServerMatch> e : matches.entrySet()) {
 				selectedMatch = matches.get(e.getKey());
 				
-				// Si el match ya fue migrado, no es escogible (debe partir alguna vez)
-				if (inmigratedMatches.get(selectedMatch.getID()) != null) {
+				// Si el match acaba de ser migrado, no es escogible en la primera ronda de migracion
+				if (inmigratedMatches.remove(selectedMatch.getID()) != null) {
 					continue;
 				}
 				
@@ -238,6 +277,7 @@ public class Server extends UnicastRemoteObject implements ServerI, ServerFinder
 
 	public void removeMatch(String matchID) {
 		matches.remove(matchID);
+		inmigratedMatches.remove(matchID);
 		System.out.println("Partida " + matchID + " eliminada por falta de jugadores");
 	}
 
